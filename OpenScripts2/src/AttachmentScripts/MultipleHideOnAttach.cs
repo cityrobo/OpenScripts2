@@ -1,0 +1,50 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+using FistVR;
+
+namespace OpenScripts2
+{
+    public class MultipleHideOnAttach : OpenScripts2_BasePlugin
+    {
+        [Header("Mount to monitor for attachments:")]
+        public FVRFireArmAttachmentMount attachmentMount;
+
+        [Header("List of GameObjects to affect:")]
+        public List<GameObject> objectToHideOrShow;
+
+        [Header("Enable to show Objects instead:")]
+        public bool showOnAttach = false;
+
+        public void Awake()
+        {
+            attachmentMount.HasHoverDisablePiece = true;
+            if (attachmentMount.DisableOnHover == null)
+            {
+                attachmentMount.DisableOnHover = new GameObject("MultipleHideOnAttach_Proxy");
+            }
+        }
+#if !DEBUG
+        public void Update()
+        {
+
+            if (attachmentMount.DisableOnHover.activeInHierarchy == false)
+            {
+                foreach (GameObject gameObject in objectToHideOrShow)
+                {
+                    gameObject.SetActive(showOnAttach);
+                }
+            }
+            else
+            {
+                foreach (GameObject gameObject in objectToHideOrShow)
+                {
+                    gameObject.SetActive(!showOnAttach);
+                }
+            }
+        }
+#endif
+    }
+}
