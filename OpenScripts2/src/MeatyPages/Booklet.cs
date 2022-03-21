@@ -71,7 +71,7 @@ namespace OpenScripts2
         void CloseBooklet()
         {
             if (_isClosing) return;
-            SM.PlayGenericSound(CloseBooklet, this.transform.position);
+            SM.PlayGenericSound(CloseBookletSounds, this.transform.position);
 
             if (_isFlipping)
             {

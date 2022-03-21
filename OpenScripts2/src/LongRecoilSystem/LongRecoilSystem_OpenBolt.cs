@@ -45,7 +45,7 @@ namespace OpenScripts2
             {
                 float boltLerp = GetBoltLerpBetweenRearAndFore();
                 Vector3 lerpPos = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, boltLerp);
-                NnewBolt.transform.localPosition = lerpPos;
+                NewBolt.transform.localPosition = lerpPos;
                 _wasHeld = true;
             }
 
@@ -53,7 +53,7 @@ namespace OpenScripts2
             {
                 float boltLerp = GetBoltLerpBetweenRearAndFore();
                 Vector3 lerpPos = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, boltLerp);
-                NnewBolt.transform.localPosition = lerpPos;
+                NewBolt.transform.localPosition = lerpPos;
                 if (OriginalBolt.CurPos == OpenBoltReceiverBolt.BoltPos.Forward) _wasHeld = false;
             }
 
@@ -68,7 +68,7 @@ namespace OpenScripts2
                         Vector3 lerpPosBolt = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, inverseLerp);
                         Vector3 lerpPosBarrel = Vector3.Lerp(BarrelRearwardPos.localPosition, BarrelForwardPos.localPosition, inverseLerp);
 
-                        NnewBolt.transform.localPosition = lerpPosBolt;
+                        NewBolt.transform.localPosition = lerpPosBolt;
                         Barrel.transform.localPosition = lerpPosBarrel;
                     }
                     else if (boltLerp < (1f - BarrelForwardThreshhold))
@@ -81,7 +81,7 @@ namespace OpenScripts2
                 }
                 else if (OriginalBolt.CurPos == OpenBoltReceiverBolt.BoltPos.Locked && _currentZ < _lastZ)
                 {
-                    NnewBolt.transform.localPosition = NewBoltRearwardPos.localPosition;
+                    NewBolt.transform.localPosition = NewBoltRearwardPos.localPosition;
                     Barrel.transform.localPosition = BarrelLockingPos.localPosition;
                 }
                 else if (OriginalBolt.CurPos == OpenBoltReceiverBolt.BoltPos.LockedToRear && _currentZ < _lastZ)
@@ -93,7 +93,7 @@ namespace OpenScripts2
                 }
                 else if (OriginalBolt.CurPos == OpenBoltReceiverBolt.BoltPos.Rear && (_currentZ < _lastZ || _currentZ == _lastZ))
                 {
-                    NnewBolt.transform.localPosition = NewBoltRearwardPos.localPosition;
+                    NewBolt.transform.localPosition = NewBoltRearwardPos.localPosition;
                     Barrel.transform.localPosition = BarrelForwardPos.localPosition;
                 }
                 else if ((OriginalBolt.CurPos == OpenBoltReceiverBolt.BoltPos.LockedToRear || OriginalBolt.CurPos == OpenBoltReceiverBolt.BoltPos.ForwardToMid) && _currentZ > _lastZ)
@@ -101,18 +101,18 @@ namespace OpenScripts2
                     float boltLerp = GetBoltLerpBetweenRearAndFore();
                     Vector3 lerpPosBolt = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, boltLerp);
 
-                    NnewBolt.transform.localPosition = lerpPosBolt;
+                    NewBolt.transform.localPosition = lerpPosBolt;
                 }
                 else if (OriginalBolt.CurPos == OpenBoltReceiverBolt.BoltPos.Forward && (_currentZ > _lastZ || _currentZ == _lastZ))
                 {
-                    NnewBolt.transform.localPosition = NewBoltForwardPos.localPosition;
+                    NewBolt.transform.localPosition = NewBoltForwardPos.localPosition;
                     Barrel.transform.localPosition = BarrelForwardPos.localPosition;
 
                     _soundPlayed = false;
                 }
                 else if (OriginalBolt.CurPos == OpenBoltReceiverBolt.BoltPos.Locked && _currentZ == _lastZ)
                 {
-                    NnewBolt.transform.localPosition = NewBoltLockingPos.localPosition;
+                    NewBolt.transform.localPosition = NewBoltLockingPos.localPosition;
                     Barrel.transform.localPosition = BarrelForwardPos.localPosition;
                 }
 

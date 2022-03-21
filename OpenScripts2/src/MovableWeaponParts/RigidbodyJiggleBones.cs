@@ -235,13 +235,13 @@ namespace OpenScripts2
 					{
 						ConfigurableJoint joint = child.gameObject.AddComponent<ConfigurableJoint>();
 						configureJoint(joint, connectedRB);
-						_addedJoints.Add(joint);
+						AddedJoints.Add(joint);
 					}
 					else
                     {
 						CharacterJoint joint = child.gameObject.AddComponent<CharacterJoint>();
 						configureJoint(joint, connectedRB);
-						_addedJoints.Add(joint);
+						AddedJoints.Add(joint);
 					}
 					Transform[] immediateGrandChildren = child.GetComponentsInDirectChildren<Transform>();
 
@@ -360,12 +360,12 @@ namespace OpenScripts2
 				DestroyImmediate(col.gameObject);
 			}
 			AddedColliders.Clear();
-			if (_addedJoints == null) _addedJoints = new List<Joint>();
-			foreach (var joint in _addedJoints)
+			if (AddedJoints == null) AddedJoints = new List<Joint>();
+			foreach (var joint in AddedJoints)
 			{
 				DestroyImmediate(joint);
 			}
-			_addedJoints.Clear();
+			AddedJoints.Clear();
 			if (RootJoints == null) RootJoints = new List<Joint>();
 			foreach (var joint in RootJoints)
 			{

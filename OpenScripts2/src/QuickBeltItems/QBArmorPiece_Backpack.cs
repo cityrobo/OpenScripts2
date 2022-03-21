@@ -58,7 +58,7 @@ namespace OpenScripts2
 			}
 			if (slot != null && !base.IsHeld)
 			{
-				base.SetAllCollidersToLayer(false, MainItemLayerName);
+				base.SetAllCollidersToLayer(false, MainItemLayerNameInsideQBSlot);
 				slot.HeldObject = this;
 				slot.CurObject = this;
 				slot.IsKeepingTrackWithHead = this.DoesQuickbeltSlotFollowHead;
