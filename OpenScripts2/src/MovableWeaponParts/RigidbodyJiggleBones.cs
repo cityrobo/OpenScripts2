@@ -287,7 +287,7 @@ namespace OpenScripts2
         {
 			if (parent == null)
             {
-                Debug.LogError("Couldn't find new Rigidbody to connect jiggle bones to!");
+                this.LogError("Couldn't find new Rigidbody to connect jiggle bones to!");
 				return null;
             }
 

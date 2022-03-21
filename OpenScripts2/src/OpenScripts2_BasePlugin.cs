@@ -51,6 +51,34 @@ namespace OpenScripts2
                     return w.Chambers[w.CurChamber];
                 case Flaregun w:
                     return w.Chamber;
+                case RollingBlock w:
+                    return w.Chamber;
+                case Derringer w:
+                    return w.Barrels[w.m_curBarrel].Chamber;
+                case LAPD2019 w:
+                    return w.Chambers[w.CurChamber];
+                case BAP w:
+                    return w.Chamber;
+                case HCB w:
+                    return w.Chamber;
+                case M72 w:
+                    return w.Chamber;
+                case MF2_RL w:
+                    return w.Chamber;
+                case RGM40 w:
+                    return w.Chamber;
+                case RPG7 w:
+                    return w.Chamber;
+                case SimpleLauncher w:
+                    return w.Chamber;
+                case SimpleLauncher2 w:
+                    return w.Chamber;
+                case RemoteMissileLauncher w:
+                    return w.Chamber;
+                case PotatoGun w:
+                    return w.Chamber;
+                case GrappleGun w:
+                    return w.Chambers[w.m_curChamber];
                 default:
                     if (fireArm.FChambers.Count > 0) return fireArm.FChambers[0];
                     else return null;

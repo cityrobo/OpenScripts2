@@ -132,8 +132,8 @@ namespace OpenScripts2
                 }
                 else
                 {
-                    Debug.LogError("Error in MagazineTapeMK2 Script!");
-                    Debug.LogException(e);
+                    this.LogError("Error in MagazineTapeMK2 Script!");
+                    this.LogException(e);
                 }
                 
             }

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace OpenScripts2
 {
-    [BepInPlugin("h3vr.openscripts2", "OpenScripts2: Main Plugin", "1.0.0")]
+    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2: Main Plugin", "1.0.0")]
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {
         public BepInEx.Logging.ManualLogSource Logging
@@ -35,6 +35,10 @@ namespace OpenScripts2
         {
             Instance.Logging.LogError(string.Format("{0}: {1}", nameof(plugin), message));
         }
+        public static void LogException(MonoBehaviour plugin, Exception e)
+        {
+            Instance.Logging.LogError(string.Format("{0}: {1}", nameof(plugin), e.Message));
+        }
     }
 
     public static class OpenScripts2_Extensions
@@ -50,6 +54,11 @@ namespace OpenScripts2
         public static void LogError(this OpenScripts2_BasePlugin plugin, string message)
         {
             OpenScripts2_BepInExPlugin.Instance.Logging.LogError(string.Format("{0}: {1}", nameof(plugin), message));
+        }
+
+        public static void LogException(this OpenScripts2_BasePlugin plugin, Exception e)
+        {
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogError(string.Format("{0}: {1}", nameof(plugin), e.Message));
         }
     }
 }

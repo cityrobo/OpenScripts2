@@ -135,7 +135,7 @@ namespace OpenScripts2
                 _attachment = this.gameObject.GetComponent<FVRFireArmAttachment>();
             }
 
-            if (!IsIntegrated && _attachment == null) Debug.LogWarning("Attachment not found. Scope zeroing disabled!");
+            if (!IsIntegrated && _attachment == null) this.LogWarning("Attachment not found. Scope zeroing disabled!");
 
             UpdateMenu();
 
@@ -439,7 +439,7 @@ namespace OpenScripts2
             {
                 if (!IsIntegrated) FireArm = this._attachment.curMount.Parent as FVRFireArm;
 
-                if (IsIntegrated && FireArm == null) Debug.LogError("ScopeShaderZoom: FireArm not set on integrated Scope! Can't zero sight!");
+                if (IsIntegrated && FireArm == null) this.LogError("ScopeShaderZoom: FireArm not set on integrated Scope! Can't zero sight!");
 
                 FireArmRoundType roundType = FireArm.RoundType;
                 float zeroDistance = this.ZeroDistances[this.ZeroDistanceIndex];

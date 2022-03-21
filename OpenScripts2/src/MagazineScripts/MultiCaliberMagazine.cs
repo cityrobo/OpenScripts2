@@ -109,7 +109,7 @@ namespace OpenScripts2
                 {
                     foreach (var DisplayBullet in DisplayBullets)
                     {
-                        Debug.Log("DisplayBullets: " + DisplayBullet.name);
+                        this.Log("DisplayBullets: " + DisplayBullet.name);
                     }
                 }
             }

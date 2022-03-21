@@ -73,7 +73,7 @@ namespace OpenScripts2
 				{
 					try
 					{
-						Debug.Log($"Item ID {set.PrimaryItemID} not found; attempting to spawn backupID");
+						this.Log($"Item ID {set.PrimaryItemID} not found; attempting to spawn backupID!");
 						obj = IM.OD[set.BackupItemID];
 						gameObject = Instantiate(obj.GetGameObject(), set.AttachmentPoint.position, set.AttachmentPoint.rotation);
 						spawned_attachment = gameObject.GetComponent<FVRFireArmAttachment>();
@@ -82,7 +82,7 @@ namespace OpenScripts2
 					}
 					catch
 					{
-						Debug.Log($"Item ID {set.BackupItemID} not found; Continuing load with next object in list!");
+						this.LogWarning($"Item ID {set.BackupItemID} not found; Continuing load with next object in list!");
 					}
 				}
 			}

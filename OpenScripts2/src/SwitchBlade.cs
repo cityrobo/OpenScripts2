@@ -10,11 +10,18 @@ namespace OpenScripts2
 		public Vector2 BladeRotRange = new Vector2(-90f, 90f);
 		public float BladeOpeningTime;
 		public float BladeClosingTime;
-		public AudioSource audio_source;
-		public AudioClip open_clip;
-		public AudioClip close_clip;
-		private SwitchBladeState sbState = SwitchBladeState.Closed;
-		private float timeElapsed;
+		public AudioEvent OpenSounds;
+		public AudioEvent CloseSounds;
+		public enum SwitchBladeState
+		{
+			Closing,
+			Closed,
+			Opening,
+			Open,
+		}
+
+		private SwitchBladeState _switchbladeState = SwitchBladeState.Closed;
+		private float _timeElapsed;
 
 		public override void UpdateInteraction(FVRViveHand hand)
 		{
@@ -31,15 +38,15 @@ namespace OpenScripts2
 			{
 				return;
 			}
-			if (this.sbState == SwitchBladeState.Closed)
+			if (this._switchbladeState == SwitchBladeState.Closed)
 			{
-				PlaySound(audio_source, open_clip);
+				SM.PlayGenericSound(OpenSounds, transform.position);
 				this.StartCoroutine("OpenBlade");
 				this.MP.CanNewStab = true;
 			}
-			else if (this.sbState == SwitchBladeState.Open)
+			else if (this._switchbladeState == SwitchBladeState.Open)
 			{
-				PlaySound(audio_source, close_clip);
+				SM.PlayGenericSound(CloseSounds, transform.position);
 				this.StartCoroutine("CloseBlade");
 				this.MP.CanNewStab = false;
 			}
@@ -52,44 +59,31 @@ namespace OpenScripts2
 
 		private IEnumerator OpenBlade()
         {
-			this.sbState = SwitchBladeState.Opening;
-			timeElapsed = 0f;
-			while (timeElapsed < BladeOpeningTime)
+			this._switchbladeState = SwitchBladeState.Opening;
+			_timeElapsed = 0f;
+			while (_timeElapsed < BladeOpeningTime)
 			{
-				timeElapsed += Time.deltaTime;
-				SetBladeRot(timeElapsed / BladeOpeningTime);
+				_timeElapsed += Time.deltaTime;
+				SetBladeRot(_timeElapsed / BladeOpeningTime);
 				yield return null;
 			}
 			SetBladeRot(1f);
-			this.sbState = SwitchBladeState.Open;
+			this._switchbladeState = SwitchBladeState.Open;
 		}
 
 		private IEnumerator CloseBlade()
 		{
-			this.sbState = SwitchBladeState.Closing;
-			timeElapsed = 0f;
-			while (timeElapsed < BladeClosingTime)
+			this._switchbladeState = SwitchBladeState.Closing;
+			_timeElapsed = 0f;
+			while (_timeElapsed < BladeClosingTime)
             {
-				timeElapsed += Time.deltaTime;
-				SetBladeRot(1f - (timeElapsed / BladeClosingTime));
+				_timeElapsed += Time.deltaTime;
+				SetBladeRot(1f - (_timeElapsed / BladeClosingTime));
 				yield return null;
 			}
 			SetBladeRot(0f);
-			this.sbState = SwitchBladeState.Closed;
+			this._switchbladeState = SwitchBladeState.Closed;
 		}
 
-		private void PlaySound(AudioSource A_source, AudioClip A_clip)
-        {
-			A_source.clip = A_clip;
-			A_source.Play();
-        }
-
-		public enum SwitchBladeState
-		{
-			Closing,
-			Closed,
-			Opening,
-			Open,
-		}
     }
 }

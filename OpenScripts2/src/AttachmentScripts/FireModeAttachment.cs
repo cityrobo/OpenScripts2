@@ -101,7 +101,7 @@ namespace OpenScripts2
                             newFireSelectorMode.ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
                             break;
                         default:
-                            Debug.LogError("FireSelectorMode not supported: " + FireSelectorModeType);
+                            this.LogError("FireSelectorMode not supported: " + FireSelectorModeType);
                             continue;
                     }
 
@@ -156,7 +156,7 @@ namespace OpenScripts2
                             newFireSelectorMode.ModeType = ClosedBoltWeapon.FireSelectorModeType.FullAuto;
                             break;
                         default:
-                            Debug.LogError("FireSelectorMode not supported: " + FireSelectorModeType);
+                            this.LogError("FireSelectorMode not supported: " + FireSelectorModeType);
                             continue;
                     }
                     if (!addsSelectorPositions) newFireSelectorMode.SelectorPosition = originalClosedBoltFireModes[originalClosedBoltFireModes.Length - 1].SelectorPosition;
@@ -206,7 +206,7 @@ namespace OpenScripts2
                             newFireSelectorMode.ModeType = Handgun.FireSelectorModeType.FullAuto;
                             break;
                         default:
-                            Debug.LogError("FireSelectorMode not supported: " + FireSelectorModeType);
+                            this.LogError("FireSelectorMode not supported: " + FireSelectorModeType);
                             continue;
                     }
 

@@ -218,17 +218,17 @@ namespace OpenScripts2
                 //Debug.Log("new fire");
                 this.PlayAudioEvent(FirearmAudioEventType.HammerHit);
 
-                bool capFired = this._capCylinder.capNipples[this.CurChamber].Fire();
+                bool capFired = _capCylinder.capNipples[this.CurChamber].Fire();
 
                 if (capFired)
                 {
                     this.PlayAudioEvent(FirearmAudioEventType.Shots_LowPressure);
                 }
 
-                if (!capFired || !this._capCylinder.ChamberRammed(this.CurChamber) || !this._capCylinder.Chambers[this.CurChamber].Fire())
+                if (!capFired || !_capCylinder.ChamberRammed(this.CurChamber) || !_capCylinder.Chambers[this.CurChamber].Fire())
                     return;
 
-                FVRFireArmChamber chamber = this._capCylinder.Chambers[this.CurChamber];
+                FVRFireArmChamber chamber = _capCylinder.Chambers[this.CurChamber];
                 this.Fire(chamber, this.GetMuzzle(), true);
                 this.FireMuzzleSmoke();
                 this.Recoil(this.IsTwoHandStabilized(), (Object)this.AltGrip != (Object)null, this.IsShoulderStabilized());

@@ -102,7 +102,7 @@ namespace OpenScripts2
                             w.Chamber.RoundType = roundType;
                             break;
                         default:
-                            Debug.LogWarning("ModifyWeaponCartrideAndMagazineAttachment: FireArm type not supported!");
+                            this.LogWarning("ModifyWeaponCartrideAndMagazineAttachment: FireArm type not supported!");
                             break;
                     }
                 }
@@ -151,7 +151,7 @@ namespace OpenScripts2
                             w.Chamber.RoundType = origRoundType;
                             break;
                         default:
-                            Debug.LogWarning("ModifyWeaponCartrideAndMagazineAttachment: FireArm type not supported!");
+                            this.LogWarning("ModifyWeaponCartrideAndMagazineAttachment: FireArm type not supported!");
                             break;
                     }
                 }

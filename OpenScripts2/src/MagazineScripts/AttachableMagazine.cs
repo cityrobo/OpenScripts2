@@ -54,7 +54,7 @@ namespace OpenScripts2
 			}
             else
             {
-				Debug.LogError("Attachable Mag Setup failed!");
+				this.LogError("Attachable Mag Setup failed!");
             }
 
 
