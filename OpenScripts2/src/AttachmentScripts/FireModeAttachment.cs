@@ -79,15 +79,6 @@ namespace OpenScripts2
                             break;
                         case ClosedBoltWeapon.FireSelectorModeType.Burst:
                             newFireSelectorMode.ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
-                            /*
-                            GameObject openBoltBurstGM = new GameObject("openBoltBurstGM");
-                            openBoltBurstGM.transform.SetParent(openBoltReceiver.transform);
-                            openBoltBurstGM.transform.localPosition = Vector3.zero;
-                            openBoltBurstGM.transform.localRotation = Quaternion.identity;
-                            openBoltBurstGM.SetActive(false);
-
-                            H3VRUtils.OpenBoltBurstFire openBoltBurst = openBoltBurstGM.AddComponent<H3VRUtils.OpenBoltBurstFire>();
-                            */
                             OpenBoltBurstFire openBoltBurst = openBoltReceiver.gameObject.AddComponent<OpenBoltBurstFire>();
                             openBoltBursts.Add(openBoltBurst);
                             openBoltBurst.Receiver = openBoltReceiver;

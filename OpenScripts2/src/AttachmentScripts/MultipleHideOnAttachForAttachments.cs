@@ -4,13 +4,12 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using FistVR;
-
 namespace OpenScripts2
 {
-    public class MultipleHideOnAttach : OpenScripts2_BasePlugin
+    public class MultipleHideOnAttachForAttachments : OpenScripts2_BasePlugin
     {
         [Header("Mount to monitor for attachments:")]
-        public FVRFireArmAttachmentMount attachmentMount;
+        public FVRFireArmAttachment Attachment;
 
         [Header("List of GameObjects to affect:")]
         public List<GameObject> ObjectToHideOrShow;
@@ -20,16 +19,11 @@ namespace OpenScripts2
 
         public void Awake()
         {
-            attachmentMount.HasHoverDisablePiece = true;
-            if (attachmentMount.DisableOnHover == null)
-            {
-                attachmentMount.DisableOnHover = new GameObject("MultipleHideOnAttach_Proxy");
-            }
         }
         public void Update()
         {
 
-            if (attachmentMount.DisableOnHover.activeInHierarchy == false)
+            if (Attachment.Sensor.CurHoveredMount != null)
             {
                 foreach (GameObject gameObject in ObjectToHideOrShow)
                 {

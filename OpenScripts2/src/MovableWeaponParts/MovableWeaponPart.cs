@@ -47,7 +47,6 @@ namespace OpenScripts2
 
 		private bool _debug = false;
 
-#if !(UNITY_EDITOR || UNITY_5)
 		public override void Start()
         {
 			base.Start();
@@ -116,7 +115,7 @@ namespace OpenScripts2
                     break;
             }
 
-			float lerp = Mathf.InverseLerp(this.LowerLimit, this.UpperLimit, this._posFloat);
+			float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
 			CheckSound(lerp);
 
 		}
@@ -133,21 +132,21 @@ namespace OpenScripts2
 					rhs = Vector3.ProjectOnPlane(this._lastHandPlane, -base.transform.right);
 					_posFloat = Mathf.Atan2(Vector3.Dot(-base.transform.right, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
 
-					this.ObjectToMove.localEulerAngles = new Vector3(this._posFloat, 0f, 0f);
+					this.ObjectToMove.localEulerAngles = new Vector3(_posFloat, 0f, 0f);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Y:
 					lhs = Vector3.ProjectOnPlane(this.m_hand.transform.forward, base.transform.up);
 					rhs = Vector3.ProjectOnPlane(this._lastHandPlane, -base.transform.up);
 					_posFloat = Mathf.Atan2(Vector3.Dot(-base.transform.up, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
 
-					this.ObjectToMove.localEulerAngles = new Vector3(0f, this._posFloat, 0f);
+					this.ObjectToMove.localEulerAngles = new Vector3(0f, _posFloat, 0f);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Z:
 					lhs = Vector3.ProjectOnPlane(this.m_hand.transform.up, -base.transform.forward);
 					rhs = Vector3.ProjectOnPlane(this._lastHandPlane, -base.transform.forward);
 					_posFloat = Mathf.Atan2(Vector3.Dot(-base.transform.forward, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
 
-					this.ObjectToMove.localEulerAngles = new Vector3(0f, 0f, this._posFloat);
+					this.ObjectToMove.localEulerAngles = new Vector3(0f, 0f, _posFloat);
 					break;
                 default:
 					lhs = Vector3.ProjectOnPlane(this.m_hand.transform.up, -base.transform.right);
@@ -156,7 +155,7 @@ namespace OpenScripts2
 			this._lastHandPlane = lhs;
 
 
-			float lerp = Mathf.InverseLerp(this.LowerLimit, this.UpperLimit, this._posFloat);
+			float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
 			CheckSound(lerp);
 
 		}
@@ -197,32 +196,32 @@ namespace OpenScripts2
 				
 			}
 
-			if (Mathf.Abs(this._posFloat - this.LowerLimit) < 5f)
+			if (Mathf.Abs(_posFloat - LowerLimit) < 5f)
 			{
-				this._posFloat = this.LowerLimit;
+				_posFloat = LowerLimit;
 			}
-			if (Mathf.Abs(this._posFloat - this.UpperLimit) < 5f)
+			if (Mathf.Abs(_posFloat - UpperLimit) < 5f)
 			{
-				this._posFloat = this.UpperLimit;
+				_posFloat = UpperLimit;
 			}
-			if (this._posFloat >= this.LowerLimit && this._posFloat <= this.UpperLimit)
+			if (_posFloat >= LowerLimit && _posFloat <= UpperLimit)
 			{
 				switch (axis)
 				{
 					case OpenScripts2_BasePlugin.Axis.X:
-						this.ObjectToMove.localEulerAngles = new Vector3(this._posFloat, 0f, 0f);
+						this.ObjectToMove.localEulerAngles = new Vector3(_posFloat, 0f, 0f);
 						break;
 					case OpenScripts2_BasePlugin.Axis.Y:
-						this.ObjectToMove.localEulerAngles = new Vector3(0f, this._posFloat, 0f);
+						this.ObjectToMove.localEulerAngles = new Vector3(0f, _posFloat, 0f);
 						break;
 					case OpenScripts2_BasePlugin.Axis.Z:
-						this.ObjectToMove.localEulerAngles = new Vector3(0f, 0f, this._posFloat);
+						this.ObjectToMove.localEulerAngles = new Vector3(0f, 0f, _posFloat);
 						break;
 					default:
 						break;
 				}
 
-				float lerp = Mathf.InverseLerp(this.LowerLimit, this.UpperLimit, this._posFloat);
+				float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
 				CheckSound(lerp);
 			}
 		}
@@ -231,27 +230,26 @@ namespace OpenScripts2
         {
 			if (lerp < LimitWiggleRoom)
 			{
-				this._state = State.Open;
+				_state = State.Open;
 
 			}
 			else if (lerp > 1f - LimitWiggleRoom)
 			{
-				this._state = State.Closed;
+				_state = State.Closed;
 			}
 			else
 			{
-				this._state = State.Mid;
+				_state = State.Mid;
 			}
-			if (this._state == State.Open && this._lastState != State.Open)
+			if (_state == State.Open && _lastState != State.Open)
 			{
 				SM.PlayGenericSound(OpenSounds, ObjectToMove.position);
 			}
-			if (this._state == State.Closed && this._lastState != State.Closed)
+			if (_state == State.Closed && _lastState != State.Closed)
 			{
 				SM.PlayGenericSound(CloseSounds, ObjectToMove.position);
 			}
-			this._lastState = this._state;
+			_lastState = _state;
 		}
-#endif
 	}
 }

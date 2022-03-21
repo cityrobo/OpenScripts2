@@ -27,7 +27,6 @@ namespace Cityrobo
         private FVRFireArmRecoilProfile _origRecoilProfileStocked;
         private bool _recoilProfileSet = false;
 
-#if !(UNITY_EDITOR || UNITY_5)
         public override void Awake()
         {
             base.Awake();
@@ -146,6 +145,5 @@ namespace Cityrobo
                     else return null;
             }
         }
-#endif
     }
 }

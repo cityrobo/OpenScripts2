@@ -10,7 +10,6 @@ namespace OpenScripts2
 
         private int _lastFireMode;
         private bool _magSafetyEngaged;
-#if !(UNITY_EDITOR || UNITY_5)
         public void Update()
         {
             switch (FireArm)
@@ -71,6 +70,5 @@ namespace OpenScripts2
                 _magSafetyEngaged = false;
             }
         }
-#endif
     }
 }

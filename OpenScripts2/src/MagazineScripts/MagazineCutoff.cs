@@ -35,7 +35,6 @@ namespace OpenScripts2
         private bool _isActive = false;
 
         private OpenScripts2_BepInExPlugin plugin = OpenScripts2_BepInExPlugin.Instance;
-#if !(UNITY_EDITOR || UNITY_5)
         public override void Start()
         {
             base.Start();
@@ -164,6 +163,5 @@ namespace OpenScripts2
                 FireArm.Magazine.IsExtractable = true;
             }
         }
-#endif
     }
 }

@@ -32,17 +32,15 @@ namespace OpenScripts2
         public string TargetPath;
 
         private FVRPhysicalObject _weapon;
-        private Transform proxy = null;
+        private Transform _proxy = null;
 
-        private bool debug = false;
-
-#if !(UNITY_EDITOR || UNITY_5 || DEBUG)
+        private bool _debug = false;
 
         public void Update()
         {
             if (Attachment.curMount != null && !UseAlternativeMethod)
             {
-                if (proxy == null)
+                if (_proxy == null)
                 {
                     DebugMessage("Grabbing mounted item.");
 
@@ -81,17 +79,17 @@ namespace OpenScripts2
                             break;
                     }
                 }
-                if (proxy != null)
+                if (_proxy != null)
                 {
-                    this.transform.localPosition = proxy.localPosition;
-                    this.transform.localRotation = proxy.localRotation;
-                    this.transform.localScale = proxy.localScale;
+                    this.transform.localPosition = _proxy.localPosition;
+                    this.transform.localRotation = _proxy.localRotation;
+                    this.transform.localScale = _proxy.localScale;
                 }
 
             }
             else if (Attachment.curMount != null && UseAlternativeMethod)
             {
-                if (proxy == null)
+                if (_proxy == null)
                 {
                     DebugMessage("Grabbing mounted item.");
 
@@ -99,13 +97,13 @@ namespace OpenScripts2
 
                     DebugMessage("Mounted Item: " + _weapon.name);
 
-                    proxy = _weapon.transform.Find(TargetPath);
+                    _proxy = _weapon.transform.Find(TargetPath);
                 }
-                if (proxy != null)
+                if (_proxy != null)
                 {
-                    this.transform.localPosition = proxy.localPosition;
-                    this.transform.localRotation = proxy.localRotation;
-                    this.transform.localScale = proxy.localScale;
+                    this.transform.localPosition = _proxy.localPosition;
+                    this.transform.localRotation = _proxy.localRotation;
+                    this.transform.localScale = _proxy.localScale;
                 }
                 else
                 {
@@ -114,33 +112,32 @@ namespace OpenScripts2
             }
             else
             {
-                proxy = null;
+                _proxy = null;
             }
         }
 
-#endif
         private void SetProxy(OpenBoltReceiver s)
         {
             switch (targetType)
             {
                 case TargetType.Bolt:
-                    proxy = s.Bolt.transform;
+                    _proxy = s.Bolt.transform;
                     break;
                 case TargetType.Trigger:
-                    proxy = s.Trigger;
+                    _proxy = s.Trigger;
                     break;
                 case TargetType.BoltHandle:
                     OpenBoltChargingHandle openBoltChargingHandle = s.GetComponentInChildren<OpenBoltChargingHandle>();
-                    proxy = openBoltChargingHandle.transform;
+                    _proxy = openBoltChargingHandle.transform;
                     break;
                 case TargetType.Safety:
-                    proxy = s.FireSelectorSwitch;
+                    _proxy = s.FireSelectorSwitch;
                     break;
                 case TargetType.FireSelector:
-                    proxy = s.FireSelectorSwitch2;
+                    _proxy = s.FireSelectorSwitch2;
                     break;
                 case TargetType.MagazineRelease:
-                    proxy = s.MagReleaseButton;
+                    _proxy = s.MagReleaseButton;
                     break;
                 default:
                     this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
@@ -152,22 +149,22 @@ namespace OpenScripts2
             switch (targetType)
             {
                 case TargetType.Bolt:
-                    proxy = s.Bolt.transform;
+                    _proxy = s.Bolt.transform;
                     break;
                 case TargetType.Trigger:
-                    proxy = s.Trigger;
+                    _proxy = s.Trigger;
                     break;
                 case TargetType.BoltHandle:
-                    proxy = s.Handle.transform;
+                    _proxy = s.Handle.transform;
                     break;
                 case TargetType.Safety:
-                    proxy = s.FireSelectorSwitch;
+                    _proxy = s.FireSelectorSwitch;
                     break;
                 case TargetType.FireSelector:
-                    proxy = s.FireSelectorSwitch2;
+                    _proxy = s.FireSelectorSwitch2;
                     break;
                 case TargetType.Hammer:
-                    proxy = s.Bolt.Hammer;
+                    _proxy = s.Bolt.Hammer;
                     break;
                 default:
                     this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
@@ -179,50 +176,50 @@ namespace OpenScripts2
             switch (targetType)
             {
                 case TargetType.Bolt:
-                    proxy = s.Slide.transform;
+                    _proxy = s.Slide.transform;
                     break;
                 case TargetType.Trigger:
-                    proxy = s.Trigger;
+                    _proxy = s.Trigger;
                     break;
                 case TargetType.MagazineRelease:
-                    proxy = s.MagazineReleaseButton;
+                    _proxy = s.MagazineReleaseButton;
                     break;
                 case TargetType.Safety:
-                    if (debug && s.Safety == null) this.LogWarning("ManipulateObjectAttachmentProxy: Handgun.Safety == null");
-                    if (debug) DebugMessage("Safety: " + s.Safety);
-                    proxy = s.Safety;
-                    if (debug) DebugMessage("proxy: " + proxy);
+                    if (_debug && s.Safety == null) this.LogWarning("ManipulateObjectAttachmentProxy: Handgun.Safety == null");
+                    if (_debug) DebugMessage("Safety: " + s.Safety);
+                    _proxy = s.Safety;
+                    if (_debug) DebugMessage("proxy: " + _proxy);
                     break;
                 case TargetType.FireSelector:
-                    proxy = s.FireSelector;
+                    _proxy = s.FireSelector;
                     break;
                 case TargetType.BoltRelease:
-                    proxy = s.SlideRelease;
+                    _proxy = s.SlideRelease;
                     break;
                 case TargetType.Hammer:
-                    proxy = s.Hammer;
+                    _proxy = s.Hammer;
                     break;
                 default:
                     this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
                     break;
             }
-            if (debug && proxy == null) this.LogWarning("ManipulateObjectAttachmentProxy: Proxy should be set but isn't!");
+            if (_debug && _proxy == null) this.LogWarning("ManipulateObjectAttachmentProxy: Proxy should be set but isn't!");
         }
         private void SetProxy(TubeFedShotgun s)
         {
             switch (targetType)
             {
                 case TargetType.Bolt:
-                    proxy = s.Bolt.transform;
+                    _proxy = s.Bolt.transform;
                     break;
                 case TargetType.Trigger:
-                    proxy = s.Trigger;
+                    _proxy = s.Trigger;
                     break;
                 case TargetType.Safety:
-                    proxy = s.Safety;
+                    _proxy = s.Safety;
                     break;
                 case TargetType.Hammer:
-                    proxy = s.Bolt.Hammer;
+                    _proxy = s.Bolt.Hammer;
                     break;
                 default:
                     this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
@@ -234,16 +231,16 @@ namespace OpenScripts2
             switch (targetType)
             {
                 case TargetType.Bolt:
-                    proxy = s.BoltHandle.transform;
+                    _proxy = s.BoltHandle.transform;
                     break;
                 case TargetType.Trigger:
-                    proxy = s.Trigger_Display.transform;
+                    _proxy = s.Trigger_Display.transform;
                     break;
                 case TargetType.Safety:
-                    proxy = s.FireSelector_Display;
+                    _proxy = s.FireSelector_Display;
                     break;
                 case TargetType.Hammer:
-                    proxy = s.Hammer;
+                    _proxy = s.Hammer;
                     break;
                 default:
                     this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
@@ -256,10 +253,10 @@ namespace OpenScripts2
             switch (targetType)
             {
                 case TargetType.Trigger:
-                    proxy = s.Trigger.transform;
+                    _proxy = s.Trigger.transform;
                     break;
                 case TargetType.Hammer:
-                    proxy = s.Hammer;
+                    _proxy = s.Hammer;
                     break;
                 default:
                     this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
@@ -268,7 +265,7 @@ namespace OpenScripts2
         }
         private void DebugMessage(string message)
         {
-            if (debug) this.Log("ManipulateObjectAttachmentProxy: " + message);
+            if (_debug) this.Log("ManipulateObjectAttachmentProxy: " + message);
         }
     }
 }

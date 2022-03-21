@@ -27,7 +27,7 @@ namespace OpenScripts2
 
         public static float GetFloatFromAxis(Vector3 vector, Axis axis) { return vector[(int)axis]; }
 
-        public static FVRFireArmChamber GetCurentChamber(FVRFireArm fireArm)
+        public static FVRFireArmChamber GetCurrentChamber(FVRFireArm fireArm)
         {
             switch (fireArm)
             {

@@ -35,7 +35,6 @@ namespace OpenScripts2
             this.HeldObject = QBS.HeldObject;
         }
 
-#if !(UNITY_EDITOR || UNITY_5)
         SM.AudioSourcePool audioSource;
         public void Start()
         {
@@ -123,6 +122,5 @@ namespace OpenScripts2
             }
             else orig(self);
         }
-#endif
     }
 }

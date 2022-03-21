@@ -10,7 +10,6 @@ namespace OpenScripts2
 {
 	public class StandaloneQBSlot : FVRQuickBeltSlot
 	{
-#if !(UNITY_EDITOR || UNITY_5)
 		public virtual void Start()
 		{
 			if (GM.CurrentPlayerBody != null)
@@ -58,6 +57,5 @@ namespace OpenScripts2
 				GM.CurrentPlayerBody.QuickbeltSlots.Remove(this);
 			}
 		}
-#endif
 	}
 }

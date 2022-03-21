@@ -13,7 +13,6 @@ namespace OpenScripts2
         public ClosedBoltWeapon closedBoltWeapon;
         public bool RequiresEmptyHand = false;
 
-#if !(UNITY_EDITOR || UNITY_5)
         public void Start()
         {
             Hook();
@@ -50,6 +49,5 @@ namespace OpenScripts2
         {
             
         }
-#endif
     }
 }

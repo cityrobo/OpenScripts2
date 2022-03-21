@@ -51,7 +51,6 @@ namespace OpenScripts2
             public Quaternion localRot;
         }
 
-#if !(UNITY_EDITOR || UNITY_5)
         public override void Start()
         {
             base.Start();
@@ -125,7 +124,6 @@ namespace OpenScripts2
                 else this.IsSelectable = true;
             }
         }
-
         public void CreateNewQBSlotPos(FVRPhysicalObject physicalObject)
         {
             FVRPhysicalObject.FVRPhysicalObjectSize size = physicalObject.Size;
@@ -196,6 +194,5 @@ namespace OpenScripts2
             ItemDidCollide = false;
             CreateNewQBSlotPos(physicalObject);
         }
-#endif
     }
 }

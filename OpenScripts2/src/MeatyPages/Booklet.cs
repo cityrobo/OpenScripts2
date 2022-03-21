@@ -27,7 +27,6 @@ namespace OpenScripts2
         private int _currentPage = 0;
         private bool _isFlipping = false;
         private bool _isClosing = false;
-#if !(UNITY_EDITOR || UNITY_5)
         public override void UpdateInteraction(FVRViveHand hand)
         {
             base.UpdateInteraction(hand);
@@ -130,6 +129,5 @@ namespace OpenScripts2
 
             return angleVector;
         }
-#endif
     }
 }

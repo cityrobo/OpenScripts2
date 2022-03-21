@@ -50,7 +50,6 @@ namespace OpenScripts2
             }
         }
 
-#if !(UNITY_EDITOR || UNITY_5)
         private FVRViveHand m_hand;
 
 		public void Start()
@@ -81,6 +80,5 @@ namespace OpenScripts2
 
 		}
 
-#endif
 	}
 }

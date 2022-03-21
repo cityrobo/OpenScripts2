@@ -17,7 +17,6 @@ namespace OpenScripts2
 
         public Vector3 TouchingRamRodRotation;
         public float RamRodWiggleRoom = 5f;
-
         public int NumberOfChambersBackwardsToRam;
 
         private CapAndBallRevolverCylinder _capCylinder;
@@ -26,14 +25,13 @@ namespace OpenScripts2
 
         private bool _isRamRodExtended = false;
 
-#if!(UNITY_EDITOR||UNITY_5)
         public override void Start()
         {
             base.Start();
-            Hook();
             _capCylinder = base.Cylinder as CapAndBallRevolverCylinder;
-
             NumberOfChambersBackwardsToRam = Mathf.Abs(NumberOfChambersBackwardsToRam);
+
+            Hook();
         }
 
         public override void OnDestroy()
@@ -41,22 +39,8 @@ namespace OpenScripts2
             Unhook();
             base.OnDestroy();
         }
-        private void Unhook()
-        {
-            On.FistVR.SingleActionRevolver.Fire -= SingleActionRevolver_Fire;
-            //On.FistVR.SingleActionRevolver.EjectPrevCylinder -= SingleActionRevolver_EjectPrevCylinder;
-            On.FistVR.SingleActionRevolver.UpdateCylinderRot -= SingleActionRevolver_UpdateCylinderRot;
-            On.FistVR.SingleActionRevolver.AdvanceCylinder -= SingleActionRevolver_AdvanceCylinder;
-        }
 
-        private void Hook()
-        {
-            On.FistVR.SingleActionRevolver.Fire += SingleActionRevolver_Fire;
-            //On.FistVR.SingleActionRevolver.EjectPrevCylinder += SingleActionRevolver_EjectPrevCylinder;
-            On.FistVR.SingleActionRevolver.UpdateCylinderRot += SingleActionRevolver_UpdateCylinderRot;
-            On.FistVR.SingleActionRevolver.AdvanceCylinder += SingleActionRevolver_AdvanceCylinder;
-        }
-
+        // Returns the Chamber that would be rammed
         public int RammingChamber
         {
             get
@@ -70,6 +54,7 @@ namespace OpenScripts2
             }
         }
 
+        // Returns the third previous Chamber
         public int PrevChamber3
         {
             get
@@ -87,24 +72,44 @@ namespace OpenScripts2
             base.FVRUpdate();
 
             Vector3 wiggleRoomVector = new Vector3(RamRodWiggleRoom, RamRodWiggleRoom, RamRodWiggleRoom);
-            if (RamRodLever.localEulerAngles.IsLesserOrEqual( LowerRamRodRotationLimit + wiggleRoomVector) && RamRodLever.localEulerAngles.IsGreaterOrEqual(LowerRamRodRotationLimit - wiggleRoomVector))
+            if (RamRodLever.localEulerAngles.IsLessThanOrEqual(LowerRamRodRotationLimit + wiggleRoomVector) && RamRodLever.localEulerAngles.IsGreaterThanOrEqual(LowerRamRodRotationLimit - wiggleRoomVector))
             {
                 _isRamRodExtended = false;
             }
             else _isRamRodExtended = true;
 
-            float lerp = ExtendingVector3.InverseLerp(TouchingRamRodRotation,UpperRamRodRotationLimit, RamRodLever.localEulerAngles);
+            float lerp = Vector3Utils.InverseLerp(TouchingRamRodRotation, UpperRamRodRotationLimit, RamRodLever.localEulerAngles);
             if (_capCylinder.Chambers[RammingChamber].IsFull && lerp > 0f)
             {
                 _capCylinder.RamChamber(RammingChamber, lerp);
             }
         }
 
+        private void Unhook()
+        {
+#if !MEATKIT
+            On.FistVR.SingleActionRevolver.Fire -= SingleActionRevolver_Fire;
+            //On.FistVR.SingleActionRevolver.EjectPrevCylinder -= SingleActionRevolver_EjectPrevCylinder;
+            On.FistVR.SingleActionRevolver.UpdateCylinderRot -= SingleActionRevolver_UpdateCylinderRot;
+            On.FistVR.SingleActionRevolver.AdvanceCylinder -= SingleActionRevolver_AdvanceCylinder;
+#endif
+        }
+
+        private void Hook()
+        {
+#if !MEATKIT
+            On.FistVR.SingleActionRevolver.Fire += SingleActionRevolver_Fire;
+            //On.FistVR.SingleActionRevolver.EjectPrevCylinder += SingleActionRevolver_EjectPrevCylinder;
+            On.FistVR.SingleActionRevolver.UpdateCylinderRot += SingleActionRevolver_UpdateCylinderRot;
+            On.FistVR.SingleActionRevolver.AdvanceCylinder += SingleActionRevolver_AdvanceCylinder;
+#endif
+        }
+#if !MEATKIT
         private void SingleActionRevolver_AdvanceCylinder(On.FistVR.SingleActionRevolver.orig_AdvanceCylinder orig, SingleActionRevolver self)
         {
             if (self == this)
             {
-                if (_isRamRodExtended || (!_capCylinder.ChamberRammed(RammingChamber) && _capCylinder.Chambers[RammingChamber].IsFull))
+                if (_isRamRodExtended || (!_capCylinder.GetChamberRammed(RammingChamber) && _capCylinder.Chambers[RammingChamber].IsFull))
                 {
                     return;
                 }
@@ -136,19 +141,19 @@ namespace OpenScripts2
                     for (int index = 0; index < this._capCylinder.Chambers.Length; ++index)
                     {
                         this._capCylinder.Chambers[index].IsAccessible = index == num;
-                        this._capCylinder.capNipples[index].IsAccessible = index == num;
+                        this._capCylinder.CapNipples[index].IsAccessible = index == num;
 
                         if (_lastChamber == this.CurChamber)
                         {
                             if (!this.IsAccessTwoChambersBack)
                             {
                                 this._capCylinder.Chambers[index].IsAccessible = index == this.PrevChamber2;
-                                this._capCylinder.capNipples[index].IsAccessible = index == this.PrevChamber2;
+                                this._capCylinder.CapNipples[index].IsAccessible = index == this.PrevChamber2;
                             }
                             else
                             {
                                 this._capCylinder.Chambers[index].IsAccessible = index == this.PrevChamber3;
-                                this._capCylinder.capNipples[index].IsAccessible = index == this.PrevChamber3;
+                                this._capCylinder.CapNipples[index].IsAccessible = index == this.PrevChamber3;
                             }
                         }
                     }
@@ -174,7 +179,7 @@ namespace OpenScripts2
                     for (int index = 0; index < this._capCylinder.Chambers.Length; ++index)
                     {
                         this._capCylinder.Chambers[index].IsAccessible = false;
-                        this._capCylinder.capNipples[index].IsAccessible = false;
+                        this._capCylinder.CapNipples[index].IsAccessible = false;
                     }
                     this.m_tarChamberLerp = !this.m_isHammerCocking ? 0.0f : this.m_hammerCockLerp;
                     this.m_curChamberLerp = Mathf.Lerp(this.m_curChamberLerp, this.m_tarChamberLerp, Time.deltaTime * 16f);
@@ -218,14 +223,14 @@ namespace OpenScripts2
                 //Debug.Log("new fire");
                 this.PlayAudioEvent(FirearmAudioEventType.HammerHit);
 
-                bool capFired = _capCylinder.capNipples[this.CurChamber].Fire();
+                bool capFired = _capCylinder.CapNipples[this.CurChamber].Fire();
 
                 if (capFired)
                 {
                     this.PlayAudioEvent(FirearmAudioEventType.Shots_LowPressure);
                 }
 
-                if (!capFired || !_capCylinder.ChamberRammed(this.CurChamber) || !_capCylinder.Chambers[this.CurChamber].Fire())
+                if (!capFired || !_capCylinder.GetChamberRammed(this.CurChamber) || !_capCylinder.Chambers[this.CurChamber].Fire())
                     return;
 
                 FVRFireArmChamber chamber = _capCylinder.Chambers[this.CurChamber];
@@ -237,7 +242,7 @@ namespace OpenScripts2
                 if (GM.CurrentSceneSettings.IsAmmoInfinite && GM.CurrentPlayerBody.IsInfiniteAmmo)
                 {
                     chamber.IsSpent = false;
-                    this._capCylinder.capNipples[this.CurChamber].IsSpent = false;
+                    _capCylinder.CapNipples[this.CurChamber].IsSpent = false;
 
                     chamber.UpdateProxyDisplay();
                 }
@@ -245,55 +250,11 @@ namespace OpenScripts2
                 {
                     chamber.SetRound(null);
 
-                    this._capCylinder.ChamberRammed(this.CurChamber, true, false);
+                    _capCylinder.RamChamber(this.CurChamber, true);
                 }
             }
             else orig(self);
         }
 #endif
     }
-#if !(UNITY_EDITOR || UNITY_5)
-    public static class ExtendingVector3
-    {
-        public static bool IsGreaterOrEqual(this Vector3 local, Vector3 other)
-        {
-            if (local.x >= other.x && local.y >= other.y && local.z >= other.z)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public static bool IsLesserOrEqual(this Vector3 local, Vector3 other)
-        {
-            if (local.x <= other.x && local.y <= other.y && local.z <= other.z)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public static float InverseLerp(Vector3 a, Vector3 b, Vector3 value)
-        {
-            /*
-            float lerpx = Mathf.InverseLerp(a.x, b.x, value.x);
-            float lerpy = Mathf.InverseLerp(a.y, b.y, value.y);
-            float lerpz = Mathf.InverseLerp(a.z, b.z, value.z);
-
-            Vector3 lerp = new Vector3(lerpx, lerpy, lerpz);
-            return lerp.magnitude;
-            */
-
-            Vector3 AB = b - a;
-            Vector3 AV = value - a;
-            return Mathf.Clamp01(Vector3.Dot(AV, AB) / Vector3.Dot(AB, AB));
-        }
-    }
-#endif
 }

@@ -13,7 +13,6 @@ namespace OpenScripts2
 		public bool HasActiveShoulderStock = true;
 		public Transform StockPos;
 
-#if !(UNITY_EDITOR || UNITY_5)
 		public override bool HasStockPos()
 		{
 			return this.HasActiveShoulderStock;
@@ -23,6 +22,5 @@ namespace OpenScripts2
 		{
 			return this.StockPos;
 		}
-#endif
 	}
 }

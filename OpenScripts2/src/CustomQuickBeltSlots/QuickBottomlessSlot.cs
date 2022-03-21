@@ -49,7 +49,6 @@ namespace OpenScripts2
             this.HeldObject = QBS.HeldObject;
         }
 
-#if !(UNITY_EDITOR || UNITY_5)
         private GameObject _currentSelectedObject;
 
         private List<GameObject> _storedGameObjects;
@@ -335,6 +334,5 @@ namespace OpenScripts2
             _currentSelectedObject = _storedGameObjects[_selectedObjectIndex];
             _currentSelectedObject.SetActive(true);
         }
-#endif
     }
 }

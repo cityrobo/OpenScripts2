@@ -21,7 +21,6 @@ namespace OpenScripts2
 		public GameObject IsDisabledInQB;
 
 		private int _attachmentCountOnQBSlotEnter;
-#if !(UNITY_EDITOR || UNITY_5)
 		public override void SetQuickBeltSlot(FVRQuickBeltSlot slot)
 		{
 			if (slot != null && !base.IsHeld)
@@ -106,6 +105,5 @@ namespace OpenScripts2
 				}
 			}
 		}
-#endif
 	}
 }

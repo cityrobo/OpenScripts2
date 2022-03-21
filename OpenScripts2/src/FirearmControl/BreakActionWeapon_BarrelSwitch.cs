@@ -19,20 +19,18 @@ namespace OpenScripts2
         public TransformType transformType = TransformType.Movement;
         public Axis TransformAxis = Axis.X;
 
-        public float primaryMode;
-        public float secondaryMode;
-
-#if!DEBUG
+        public float FireSelectorInPrimaryMode;
+        public float FireSelectorInSecondaryMode;
 
         private enum SelectedBarrelGroup
         {
-            primary,
-            secondary
+            Primary,
+            Secondary
         }
 
-        private class _BarrelGroup
+        private class BarrelGroup
         {
-            public _BarrelGroup()
+            public BarrelGroup()
             {
                 this.IndexList = new List<int>();
                 this.Barrels = new List<BreakActionWeapon.BreakActionBarrel>();
@@ -41,28 +39,24 @@ namespace OpenScripts2
             public List<BreakActionWeapon.BreakActionBarrel> Barrels;
         }
 
-        private _BarrelGroup _PrimaryBarrelGroup = new _BarrelGroup();
-        private _BarrelGroup _SecondaryBarrelGroup = new _BarrelGroup();
+        private BarrelGroup _primaryBarrelGroup = new BarrelGroup();
+        private BarrelGroup _secondaryBarrelGroup = new BarrelGroup();
 
-        private SelectedBarrelGroup _SelectedBarrelGroup = SelectedBarrelGroup.primary;
-
-        private Transform _OrigTransformFireSelector;
+        private SelectedBarrelGroup _selectedBarrelGroup = SelectedBarrelGroup.Primary;
 
         public void Start()
         {
             foreach (int index in PrimaryBarrelGroupIndex)
             {
-                _PrimaryBarrelGroup.IndexList.Add(index);
-                _PrimaryBarrelGroup.Barrels.Add(BreakActionWeapon.Barrels[index]);
+                _primaryBarrelGroup.IndexList.Add(index);
+                _primaryBarrelGroup.Barrels.Add(BreakActionWeapon.Barrels[index]);
             }
 
             foreach (int index in SecondaryBarrelGroupIndex)
             {
-                _SecondaryBarrelGroup.IndexList.Add(index);
-                _SecondaryBarrelGroup.Barrels.Add(BreakActionWeapon.Barrels[index]);
+                _secondaryBarrelGroup.IndexList.Add(index);
+                _secondaryBarrelGroup.Barrels.Add(BreakActionWeapon.Barrels[index]);
             }
-
-            _OrigTransformFireSelector = FireSelector;
 
             Hook();
 
@@ -76,16 +70,16 @@ namespace OpenScripts2
 
         public void NextBarrelGroup()
         {
-            switch (_SelectedBarrelGroup)
+            switch (_selectedBarrelGroup)
             {
-                case SelectedBarrelGroup.primary:
-                    _SelectedBarrelGroup = SelectedBarrelGroup.secondary;
+                case SelectedBarrelGroup.Primary:
+                    _selectedBarrelGroup = SelectedBarrelGroup.Secondary;
                     break;
-                case SelectedBarrelGroup.secondary:
-                    _SelectedBarrelGroup = SelectedBarrelGroup.primary;
+                case SelectedBarrelGroup.Secondary:
+                    _selectedBarrelGroup = SelectedBarrelGroup.Primary;
                     break;
                 default:
-                    _SelectedBarrelGroup = SelectedBarrelGroup.primary;
+                    _selectedBarrelGroup = SelectedBarrelGroup.Primary;
                     break;
             }
 
@@ -95,12 +89,15 @@ namespace OpenScripts2
         public void UpdateFireSelector()
         {
             if (!HasFireSelector) return;
-            switch (_SelectedBarrelGroup)
+
+            switch (_selectedBarrelGroup)
             {
-                case SelectedBarrelGroup.primary:
+                case SelectedBarrelGroup.Primary:
                     switch (transformType)
                     {
                         case TransformType.Movement:
+                            FireSelector.transform.ModifyLocalPositionAxis(TransformAxis, FireSelectorInPrimaryMode);
+                            /*
                             switch (TransformAxis)
                             {
                                 case Axis.X:
@@ -115,8 +112,11 @@ namespace OpenScripts2
                                 default:
                                     break;
                             }
+                            */
                             break;
                         case TransformType.Rotation:
+                            FireSelector.transform.ModifyLocalRotationAxis(TransformAxis, FireSelectorInPrimaryMode);
+                            /*
                             switch (TransformAxis)
                             {
                                 case Axis.X:
@@ -131,46 +131,21 @@ namespace OpenScripts2
                                 default:
                                     break;
                             }
+                            */
                             break;
                         default:
                             break;
                     }
 
                     break;
-                case SelectedBarrelGroup.secondary:
+                case SelectedBarrelGroup.Secondary:
                     switch (transformType)
                     {
                         case TransformType.Movement:
-                            switch (TransformAxis)
-                            {
-                                case Axis.X:
-                                    FireSelector.transform.localPosition = new Vector3(secondaryMode, _OrigTransformFireSelector.localPosition.y, _OrigTransformFireSelector.localPosition.z);
-                                    break;
-                                case Axis.Y:
-                                    FireSelector.transform.localPosition = new Vector3(_OrigTransformFireSelector.localPosition.x, secondaryMode, _OrigTransformFireSelector.localPosition.z);
-                                    break;
-                                case Axis.Z:
-                                    FireSelector.transform.localPosition = new Vector3(_OrigTransformFireSelector.localPosition.x, _OrigTransformFireSelector.localPosition.y, secondaryMode);
-                                    break;
-                                default:
-                                    break;
-                            }
+                            FireSelector.transform.ModifyLocalPositionAxis(TransformAxis, FireSelectorInSecondaryMode);
                             break;
                         case TransformType.Rotation:
-                            switch (TransformAxis)
-                            {
-                                case Axis.X:
-                                    FireSelector.transform.localEulerAngles = new Vector3(secondaryMode, _OrigTransformFireSelector.localEulerAngles.y, _OrigTransformFireSelector.localEulerAngles.z);
-                                    break;
-                                case Axis.Y:
-                                    FireSelector.transform.localEulerAngles = new Vector3(_OrigTransformFireSelector.localEulerAngles.x, secondaryMode, _OrigTransformFireSelector.localEulerAngles.z);
-                                    break;
-                                case Axis.Z:
-                                    FireSelector.transform.localEulerAngles = new Vector3(_OrigTransformFireSelector.localEulerAngles.x, _OrigTransformFireSelector.localEulerAngles.y, secondaryMode);
-                                    break;
-                                default:
-                                    break;
-                            }
+                            FireSelector.transform.ModifyLocalRotationAxis(TransformAxis, FireSelectorInSecondaryMode);
                             break;
                         default:
                             break;
@@ -183,16 +158,20 @@ namespace OpenScripts2
 
         public void Unhook()
         {
+#if !MEATKIT
             On.FistVR.BreakActionWeapon.DropHammer -= BreakActionWeapon_DropHammer;
             On.FistVR.BreakActionWeapon.UpdateInputAndAnimate -= BreakActionWeapon_UpdateInputAndAnimate;
+#endif
         }
 
         public void Hook()
         {
+#if !MEATKIT
             On.FistVR.BreakActionWeapon.DropHammer += BreakActionWeapon_DropHammer;
             On.FistVR.BreakActionWeapon.UpdateInputAndAnimate += BreakActionWeapon_UpdateInputAndAnimate;
+#endif
         }
-
+#if !MEATKIT
         private void BreakActionWeapon_UpdateInputAndAnimate(On.FistVR.BreakActionWeapon.orig_UpdateInputAndAnimate orig, BreakActionWeapon self, FVRViveHand hand)
         {
             orig(self, hand);
@@ -216,17 +195,17 @@ namespace OpenScripts2
                 }
                 self.firedOneShot = false;
 
-                switch (_SelectedBarrelGroup)
+                switch (_selectedBarrelGroup)
                 {
-                    case SelectedBarrelGroup.primary:
-                        for (int i = 0; i < _PrimaryBarrelGroup.Barrels.Count; i++)
+                    case SelectedBarrelGroup.Primary:
+                        for (int i = 0; i < _primaryBarrelGroup.Barrels.Count; i++)
                         {
-                            if (_PrimaryBarrelGroup.Barrels[i].m_isHammerCocked)
+                            if (_primaryBarrelGroup.Barrels[i].m_isHammerCocked)
                             {
                                 self.PlayAudioEvent(FirearmAudioEventType.HammerHit, 1f);
-                                _PrimaryBarrelGroup.Barrels[i].m_isHammerCocked = false;
+                                _primaryBarrelGroup.Barrels[i].m_isHammerCocked = false;
                                 self.UpdateVisualHammers();
-                                self.Fire(_PrimaryBarrelGroup.IndexList[i], self.FireAllBarrels, _PrimaryBarrelGroup.IndexList[i]);
+                                self.Fire(_primaryBarrelGroup.IndexList[i], self.FireAllBarrels, _primaryBarrelGroup.IndexList[i]);
                                 if (!self.FireAllBarrels)
                                 {
                                     break;
@@ -234,15 +213,15 @@ namespace OpenScripts2
                             }
                         }
                         break;
-                    case SelectedBarrelGroup.secondary:
-                        for (int i = 0; i < _SecondaryBarrelGroup.Barrels.Count; i++)
+                    case SelectedBarrelGroup.Secondary:
+                        for (int i = 0; i < _secondaryBarrelGroup.Barrels.Count; i++)
                         {
-                            if (_SecondaryBarrelGroup.Barrels[i].m_isHammerCocked)
+                            if (_secondaryBarrelGroup.Barrels[i].m_isHammerCocked)
                             {
                                 self.PlayAudioEvent(FirearmAudioEventType.HammerHit, 1f);
-                                _SecondaryBarrelGroup.Barrels[i].m_isHammerCocked = false;
+                                _secondaryBarrelGroup.Barrels[i].m_isHammerCocked = false;
                                 self.UpdateVisualHammers();
-                                self.Fire(_SecondaryBarrelGroup.IndexList[i], self.FireAllBarrels, _SecondaryBarrelGroup.IndexList[i]);
+                                self.Fire(_secondaryBarrelGroup.IndexList[i], self.FireAllBarrels, _secondaryBarrelGroup.IndexList[i]);
                                 if (!self.FireAllBarrels)
                                 {
                                     break;

@@ -22,7 +22,6 @@ namespace Cityrobo
 		[Tooltip("Should the Launcher automatically align the object in the slot so it points forward?")]
 		public bool AutoAlignZAxis = true;
 
-#if !(UNITY_EDITOR || UNITY_5)
         public void Start()
         {
 			if (GM.CurrentPlayerBody != null)
@@ -153,6 +152,5 @@ namespace Cityrobo
 				this.PoseOverride.transform.localRotation = Quaternion.Inverse(objectRot);
 			}
 		}
-#endif
 	}
 }

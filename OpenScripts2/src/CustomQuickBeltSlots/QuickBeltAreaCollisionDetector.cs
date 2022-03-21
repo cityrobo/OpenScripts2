@@ -15,7 +15,6 @@ namespace OpenScripts2
 
         [HideInInspector]
         public FVRPhysicalObject PhysicalObjectToDetect;
-#if !(UNITY_EDITOR || UNITY_5)
         public void OnCollisionEnter(Collision col)
         {
             if (col == null || col.collider == null || col.collider.attachedRigidbody == null) return;
@@ -27,6 +26,5 @@ namespace OpenScripts2
                 PhysicalObjectToDetect = null;
             }
         }
-#endif
     }
 }

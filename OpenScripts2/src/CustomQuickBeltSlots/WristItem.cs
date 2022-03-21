@@ -12,7 +12,6 @@ namespace OpenScripts2
     {
         [Header("WristItem Config")]
         public bool RequiresEmptyHand = false;
-#if !(UNITY_EDITOR || UNITY_5)
         private WristQBSlot _wristQBSlot = null;
         private FVRViveHand _wristHand;
         public WristQBSlot WristQBSlot
@@ -49,6 +48,5 @@ namespace OpenScripts2
             else _wristHand = null;
 
         }
-#endif
     }
 }

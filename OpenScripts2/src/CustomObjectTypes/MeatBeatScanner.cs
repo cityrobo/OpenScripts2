@@ -20,29 +20,27 @@ namespace OpenScripts2
 
         public bool CanRotateScreen = false;
         [Tooltip("Different Screen orientations")]
-        public GameObject[] Images;
+        public GameObject[] Screens;
 		//public LayerMask BlockingMask;
 
-        private Dictionary<SosigLink,GameObject> Pings;
-        private GameObject DirectionReference;
+        private Dictionary<SosigLink,GameObject> _pings;
+        private GameObject _directionReference;
 
         private int _currentImage;
-
-#if !(UNITY_EDITOR || UNITY_5)
 
         public override void Awake()
         {
             base.Awake();
 
             PingDotReference.SetActive(false);
-            Pings = new Dictionary<SosigLink, GameObject>();
+            _pings = new Dictionary<SosigLink, GameObject>();
 
-            DirectionReference = new GameObject("MeatBeatScanner DirectionReference");
+            _directionReference = new GameObject("MeatBeatScanner DirectionReference");
 
-            DirectionReference.transform.parent = transform;
-            DirectionReference.transform.localPosition = new Vector3();
+            _directionReference.transform.parent = transform;
+            _directionReference.transform.localPosition = new Vector3();
 
-            if (CanRotateScreen) CurrentScreen = Images[0].GetComponent<RectTransform>();
+            if (CanRotateScreen) CurrentScreen = Screens[0].GetComponent<RectTransform>();
         }
 
         public override void Start()
@@ -75,17 +73,17 @@ namespace OpenScripts2
                 Vector3 sosigPos = sosig.transform.position;
                 Vector3 correctedForwardDir = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
 
-                DirectionReference.transform.rotation = Quaternion.LookRotation(correctedForwardDir, Vector3.up);
+                _directionReference.transform.rotation = Quaternion.LookRotation(correctedForwardDir, Vector3.up);
 
-                Vector3 projectedPos = DirectionReference.transform.InverseTransformPoint(sosigPos);
+                Vector3 projectedPos = _directionReference.transform.InverseTransformPoint(sosigPos);
                 float distance = projectedPos.magnitude;
                 GameObject pingObject;
-                if (!Pings.TryGetValue(sosig, out pingObject))
+                if (!_pings.TryGetValue(sosig, out pingObject))
                 {
                     pingObject = Instantiate(PingDotReference);
                     pingObject.transform.SetParent(CurrentScreen);
 
-                    Pings.Add(sosig, pingObject);
+                    _pings.Add(sosig, pingObject);
                 }
 
                 Vector3 screenTransform = new Vector3(0f, 0f, -0.0001f);
@@ -158,28 +156,28 @@ namespace OpenScripts2
 
         void ClearPings(List<SosigLink> sosigs)
         {
-            if (Pings == null) Pings = new Dictionary<SosigLink, GameObject>();
+            if (_pings == null) _pings = new Dictionary<SosigLink, GameObject>();
             if (sosigs.Count > 0)
             {
-                for (int i = 0; i < Pings.Count; i++)
+                for (int i = 0; i < _pings.Count; i++)
                 {
-                    SosigLink toRemove = Pings.ElementAt(i).Key;
+                    SosigLink toRemove = _pings.ElementAt(i).Key;
                     if (!sosigs.Contains(toRemove))
                     {
                         GameObject toRemoveValue;
-                        Pings.TryGetValue(toRemove, out toRemoveValue);
+                        _pings.TryGetValue(toRemove, out toRemoveValue);
                         Destroy(toRemoveValue);
-                        Pings.Remove(toRemove);
+                        _pings.Remove(toRemove);
                     }
                 }
             }
             else
             {
-                foreach (var ping in Pings)
+                foreach (var ping in _pings)
                 {
                     Destroy(ping.Value);
                 }
-                Pings.Clear();
+                _pings.Clear();
             }
         }
 
@@ -199,16 +197,16 @@ namespace OpenScripts2
         void NextRotation()
         {
             _currentImage++;
-            if (_currentImage >= Images.Length) _currentImage = 0;
+            if (_currentImage >= Screens.Length) _currentImage = 0;
 
-            for (int i = 0; i < Images.Length; i++)
+            for (int i = 0; i < Screens.Length; i++)
             {
-                Images[i].SetActive(i == (int)_currentImage);
+                Screens[i].SetActive(i == (int)_currentImage);
             }
 
-            CurrentScreen = Images[(int)_currentImage].GetComponent<RectTransform>();
+            CurrentScreen = Screens[(int)_currentImage].GetComponent<RectTransform>();
 
-            foreach (var ping in Pings)
+            foreach (var ping in _pings)
             {
                 Vector3 pos = ping.Value.transform.localPosition;
                 ping.Value.transform.SetParent(CurrentScreen);
@@ -219,22 +217,21 @@ namespace OpenScripts2
         void PreviousRotation()
         {
             _currentImage--;
-            if (_currentImage < 0) _currentImage = Images.Length - 1;
+            if (_currentImage < 0) _currentImage = Screens.Length - 1;
 
-            for (int i = 0; i < Images.Length; i++)
+            for (int i = 0; i < Screens.Length; i++)
             {
-                Images[i].SetActive(i == (int)_currentImage);
+                Screens[i].SetActive(i == (int)_currentImage);
             }
 
-            CurrentScreen = Images[(int)_currentImage].GetComponent<RectTransform>();
+            CurrentScreen = Screens[(int)_currentImage].GetComponent<RectTransform>();
 
-            foreach (var ping in Pings)
+            foreach (var ping in _pings)
             {
                 Vector3 pos = ping.Value.transform.localPosition;
                 ping.Value.transform.SetParent(CurrentScreen);
                 ping.Value.transform.localPosition = pos;
             }
         }
-#endif
     }
 }

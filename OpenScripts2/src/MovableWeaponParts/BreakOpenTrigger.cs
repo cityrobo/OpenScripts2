@@ -42,7 +42,6 @@ namespace OpenScripts2
 		private bool _latchHeldOpen;
 		private bool _hasEjectedMag = false;
 
-#if !(UNITY_EDITOR || UNITY_5)
 
 		public void Awake()
         {
@@ -275,7 +274,6 @@ namespace OpenScripts2
             }
 			orig(self);
         }
-#endif
 #endif
 	}
 }

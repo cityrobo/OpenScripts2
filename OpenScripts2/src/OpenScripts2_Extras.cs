@@ -205,6 +205,54 @@ namespace UnityEngine
             return parent.GetComponents<T>();
         }
 
+        public static bool IsGreaterThan(this Vector3 local, Vector3 other)
+        {
+            if (local.x > other.x && local.y > other.y && local.z > other.z)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool IsGreaterThanOrEqual(this Vector3 local, Vector3 other)
+        {
+            if (local.x >= other.x && local.y >= other.y && local.z >= other.z)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool IsLessThan(this Vector3 local, Vector3 other)
+        {
+            if (local.x < other.x && local.y < other.y && local.z < other.z)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool IsLessThanOrEqual(this Vector3 local, Vector3 other)
+        {
+            if (local.x <= other.x && local.y <= other.y && local.z <= other.z)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public static Vector3 ProjectOnPlaneThroughPoint(this Vector3 vector, Vector3 point, Vector3 planeNormal)
         {
             return Vector3.ProjectOnPlane(vector, planeNormal) + Vector3.Dot(point, planeNormal) * planeNormal;

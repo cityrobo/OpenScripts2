@@ -10,7 +10,6 @@ namespace OpenScripts2
 {
     public class QBArmorPiece_Headgear : QBArmorPiece_Backpack
 	{
-#if !(UNITY_EDITOR || UNITY_5)
 
         public override void Awake()
         {
@@ -32,6 +31,5 @@ namespace OpenScripts2
                 this.SetParentage(null);
             }
 		}
-#endif
     }
 }
