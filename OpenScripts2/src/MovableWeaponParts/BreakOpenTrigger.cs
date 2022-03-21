@@ -10,47 +10,47 @@ namespace OpenScripts2
 {
 	public class BreakOpenTrigger : OpenScripts2_BasePlugin
 	{
-		public FVRPhysicalObject physicalObject;
+		public FVRPhysicalObject PhysicalObject;
 
 		[Header("Break Parts")]
 		public HingeJoint Hinge;
 		public float HingeLimit = 45f;
 		public float HingeEjectThreshhold = 30f;
-		public Transform centerOfMassOverride;
+		public Transform CenterOfMassOverride;
 
 		[Header("LatchGeo (leave at default if no visible latch)")]
-		public float maxLatchRot = 45f;
+		public float MaxLatchRot = 45f;
 		[Tooltip("If latch is below this angle the fore will latch. Latch rot dependend on how far up you press on touchpad (like break action shotgun)")]
-		public float latchLatchingRot = 5f;
-		public bool hasLatchObject;
+		public float LatchLatchingRot = 5f;
+		public bool HasLatchObject;
 		public Transform Latch;
 
 		[Header("Objects that turn off or on dependend on break state")]
 		public GameObject[] TurnOffObjectsOnOpen;
 		public GameObject[] TurnOnObjectsOnOpen;
-		public bool doesEjectMag = false;
+		public bool DoesEjectMag = false;
 		public float MagEjectSpeed = 5f;
 
 		[Header("Audio")]
 		public AudioEvent BreakOpenAudio;
 		public AudioEvent BreakCloseAudio;
 
-		private float m_latchRot;
-		private Vector3 m_foreStartPos;
+		private float _latchRot;
+		private Vector3 _foreStartPos;
 
-		private bool m_isLatched = true;
-		private bool m_latchHeldOpen;
-		private bool m_hasEjectedMag = false;
+		private bool _isLatched = true;
+		private bool _latchHeldOpen;
+		private bool _hasEjectedMag = false;
 
 #if !(UNITY_EDITOR || UNITY_5)
 
 		public void Awake()
         {
-			m_foreStartPos = Hinge.transform.localPosition;
-            if (centerOfMassOverride != null)
+			_foreStartPos = Hinge.transform.localPosition;
+            if (CenterOfMassOverride != null)
             {
 				Rigidbody RB = Hinge.GetComponent<Rigidbody>();
-				RB.centerOfMass = centerOfMassOverride.localPosition;
+				RB.centerOfMass = CenterOfMassOverride.localPosition;
 			}
 
 			SetBreakObjectsState(false);
@@ -73,70 +73,70 @@ namespace OpenScripts2
 
 		public void Update()
         {
-			FVRViveHand hand = physicalObject.m_hand;
+			FVRViveHand hand = PhysicalObject.m_hand;
 			if (hand != null) UpdateInputAndAnimate(hand);
-			else this.m_latchHeldOpen = false;
+			else this._latchHeldOpen = false;
 		}
 
 		void UpdateInputAndAnimate(FVRViveHand hand)
 		{
-			this.m_latchHeldOpen = false;
+			this._latchHeldOpen = false;
 			if (hand.IsInStreamlinedMode)
 			{
 				if (hand.Input.BYButtonPressed)
 				{
-					this.m_latchHeldOpen = true;
-					this.m_latchRot = 1f * this.maxLatchRot;
+					this._latchHeldOpen = true;
+					this._latchRot = 1f * this.MaxLatchRot;
 				}
 				else
 				{
-					this.m_latchRot = Mathf.MoveTowards(this.m_latchRot, 0f, Time.deltaTime * this.maxLatchRot * 3f);
+					this._latchRot = Mathf.MoveTowards(this._latchRot, 0f, Time.deltaTime * this.MaxLatchRot * 3f);
 				}
 			}
 			else
 			{
 				if (hand.Input.TouchpadPressed && hand.Input.TouchpadAxes.y > 0.1f)
 				{
-					this.m_latchHeldOpen = true;
-					this.m_latchRot = hand.Input.TouchpadAxes.y * this.maxLatchRot;
+					this._latchHeldOpen = true;
+					this._latchRot = hand.Input.TouchpadAxes.y * this.MaxLatchRot;
 				}
 				else
 				{
-					this.m_latchRot = Mathf.MoveTowards(this.m_latchRot, 0f, Time.deltaTime * this.maxLatchRot * 3f);
+					this._latchRot = Mathf.MoveTowards(this._latchRot, 0f, Time.deltaTime * this.MaxLatchRot * 3f);
 				}
 			}
 
-			if (this.hasLatchObject)
+			if (this.HasLatchObject)
 			{
-				this.Latch.localEulerAngles = new Vector3(0f, this.m_latchRot, 0f);
+				this.Latch.localEulerAngles = new Vector3(0f, this._latchRot, 0f);
 			}
 		}
 
 		void UpdateBreakFore()
 		{
-			if (this.m_isLatched && Mathf.Abs(this.m_latchRot) > 5f)
+			if (this._isLatched && Mathf.Abs(this._latchRot) > 5f)
 			{
-				this.m_isLatched = false;
-				SM.PlayGenericSound(BreakOpenAudio, physicalObject.transform.position);
+				this._isLatched = false;
+				SM.PlayGenericSound(BreakOpenAudio, PhysicalObject.transform.position);
 				JointLimits limits = this.Hinge.limits;
 				limits.max = this.HingeLimit;
 				this.Hinge.limits = limits;
 				SetBreakObjectsState(true);
 			}
-			if (!this.m_isLatched)
+			if (!this._isLatched)
 			{
-				if (!this.m_latchHeldOpen && this.Hinge.transform.localEulerAngles.x <= 1f && Mathf.Abs(this.m_latchRot) < latchLatchingRot)
+				if (!this._latchHeldOpen && this.Hinge.transform.localEulerAngles.x <= 1f && Mathf.Abs(this._latchRot) < LatchLatchingRot)
 				{
-					this.m_isLatched = true;
-					SM.PlayGenericSound(BreakCloseAudio, physicalObject.transform.position);
+					this._isLatched = true;
+					SM.PlayGenericSound(BreakCloseAudio, PhysicalObject.transform.position);
 					JointLimits limits = this.Hinge.limits;
 					limits.max = 0f;
 					this.Hinge.limits = limits;
 					SetBreakObjectsState(false);
-					this.Hinge.transform.localPosition = this.m_foreStartPos;
-					m_hasEjectedMag = false;
+					this.Hinge.transform.localPosition = this._foreStartPos;
+					_hasEjectedMag = false;
 				}
-				if (doesEjectMag && Mathf.Abs(this.Hinge.transform.localEulerAngles.x) >= this.HingeEjectThreshhold && Mathf.Abs(this.Hinge.transform.localEulerAngles.x) <= HingeLimit)
+				if (DoesEjectMag && Mathf.Abs(this.Hinge.transform.localEulerAngles.x) >= this.HingeEjectThreshhold && Mathf.Abs(this.Hinge.transform.localEulerAngles.x) <= HingeLimit)
 				{
 					TryEjectMag();
 				}
@@ -145,16 +145,16 @@ namespace OpenScripts2
 
 		void TryEjectMag()
 		{
-			if (!m_hasEjectedMag)
+			if (!_hasEjectedMag)
 			{
 				EjectMag();
-				m_hasEjectedMag = true;
+				_hasEjectedMag = true;
 			}
 		}
 
 		public void EjectMag(bool PhysicalRelease = false)
 		{
-			FVRFireArm fireArm = physicalObject as FVRFireArm;
+			FVRFireArm fireArm = PhysicalObject as FVRFireArm;
 
 			if (fireArm.Magazine != null)
 			{
@@ -198,7 +198,7 @@ namespace OpenScripts2
 		void Unhook()
 		{
 #if !MEATKIT
-			switch (physicalObject)
+			switch (PhysicalObject)
 			{
 				case ClosedBoltWeapon w:
 					On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
@@ -220,7 +220,7 @@ namespace OpenScripts2
 		void Hook()
 		{
 #if !MEATKIT
-			switch (physicalObject)
+			switch (PhysicalObject)
             {
 				case ClosedBoltWeapon w:
                     On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
@@ -242,36 +242,36 @@ namespace OpenScripts2
 #if !MEATKIT
 		private void TubeFedShotgun_ReleaseHammer(On.FistVR.TubeFedShotgun.orig_ReleaseHammer orig, TubeFedShotgun self)
         {
-			if (self == physicalObject)
+			if (self == PhysicalObject)
 			{
-				if (!m_isLatched || m_latchHeldOpen) return;
+				if (!_isLatched || _latchHeldOpen) return;
 			}
 			orig(self);
 		}
 
         private void Handgun_ReleaseSeer(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
         {
-			if (self == physicalObject)
+			if (self == PhysicalObject)
 			{
-				if (!m_isLatched || m_latchHeldOpen) return;
+				if (!_isLatched || _latchHeldOpen) return;
 			}
 			orig(self);
 		}
 
         private void OpenBoltReceiver_ReleaseSeer(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
         {
-			if (self == physicalObject)
+			if (self == PhysicalObject)
 			{
-				if (!m_isLatched || m_latchHeldOpen) return;
+				if (!_isLatched || _latchHeldOpen) return;
 			}
 			orig(self);
 		}
 
         private void ClosedBoltWeapon_DropHammer(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
-            if (self == physicalObject)
+            if (self == PhysicalObject)
             {
-				if (!m_isLatched || m_latchHeldOpen) return;
+				if (!_isLatched || _latchHeldOpen) return;
             }
 			orig(self);
         }

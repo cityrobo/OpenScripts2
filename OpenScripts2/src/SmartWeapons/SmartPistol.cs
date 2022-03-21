@@ -9,9 +9,9 @@ namespace OpenScripts2
 {
     public class SmartPistol : OpenScripts2_BasePlugin
 	{
-        public Handgun pistol;
-		public MeshRenderer reticle;
-		public bool disableReticleWithoutTarget = true;
+        public Handgun handgun;
+		public MeshRenderer Reticle;
+		public bool DisableReticleWithoutTarget = true;
 		public float EngageRange = 15f;
 		[Range(1f,179f)]
 		public float EngageAngle = 45f;
@@ -20,11 +20,11 @@ namespace OpenScripts2
 		public LayerMask LatchingMask;
 		public LayerMask BlockingMask;
 
-		public bool locksUpWithoutTarget = true;
-		public bool doesRandomRotationWithoutTarget = true;
-		public float randomAngleMagnitude = 5f;
+		public bool LocksUpWithoutTarget = true;
+		public bool DoesRandomRotationWithoutTarget = true;
+		public float RandomAngleMagnitude = 5f;
 		//constants
-		private string nameOfDistanceVariable = "_RedDotDist";
+		private string _nameOfDistanceVariable = "_RedDotDist";
 
 #if !DEBUG
 		public void Start()
@@ -39,7 +39,7 @@ namespace OpenScripts2
 
         private void Handgun_UpdateInputAndAnimate(On.FistVR.Handgun.orig_UpdateInputAndAnimate orig, Handgun self, FVRViveHand hand)
         {
-			if (self == pistol)
+			if (self == handgun)
 			{
 				EarlyUpdate();
 			}
@@ -49,53 +49,49 @@ namespace OpenScripts2
 
         public void EarlyUpdate()
         {
-            if (pistol.m_hand != null)
+            if (handgun.m_hand != null)
             {
 				Vector3 target = FindTarget();
 
 				if (target != new Vector3(0, 0, 0))
                 {
-                    //Debug.Log(target);
+					if (LocksUpWithoutTarget) handgun.m_isSafetyEngaged = false;
 
-					if (locksUpWithoutTarget) pistol.m_isSafetyEngaged = false;
-					//Debug.DrawRay(pistol.MuzzlePos.position, target, Color.green);
-					//Popcron.Gizmos.Line(pistol.MuzzlePos.position, target, Color.green);
+					handgun.CurrentMuzzle.LookAt(target);
+					handgun.MuzzlePos.LookAt(target);
 
-					pistol.CurrentMuzzle.LookAt(target);
-					pistol.MuzzlePos.LookAt(target);
-
-                    if (reticle != null)
+                    if (Reticle != null)
                     {
-						reticle.material.SetFloat(nameOfDistanceVariable, (target - pistol.CurrentMuzzle.position).magnitude);
-						if (disableReticleWithoutTarget) reticle.gameObject.SetActive(true);
+						Reticle.material.SetFloat(_nameOfDistanceVariable, (target - handgun.CurrentMuzzle.position).magnitude);
+						if (DisableReticleWithoutTarget) Reticle.gameObject.SetActive(true);
 					}
                 }
 				else
                 {
-					if(locksUpWithoutTarget) pistol.m_isSafetyEngaged = true;
-					if (doesRandomRotationWithoutTarget)
+					if(LocksUpWithoutTarget) handgun.m_isSafetyEngaged = true;
+					if (DoesRandomRotationWithoutTarget)
 					{
 						Vector3 randRot = new Vector3();
-						randRot.x = UnityEngine.Random.Range(-randomAngleMagnitude, randomAngleMagnitude);
-						randRot.y = UnityEngine.Random.Range(-randomAngleMagnitude, randomAngleMagnitude);
+						randRot.x = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
+						randRot.y = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
 
-						pistol.CurrentMuzzle.localEulerAngles = randRot;
-						pistol.MuzzlePos.localEulerAngles = randRot;
+						handgun.CurrentMuzzle.localEulerAngles = randRot;
+						handgun.MuzzlePos.localEulerAngles = randRot;
 					}
 					else
 					{
-						pistol.CurrentMuzzle.localEulerAngles = new Vector3(0, 0, 0);
-						pistol.MuzzlePos.localEulerAngles = new Vector3(0, 0, 0);
+						handgun.CurrentMuzzle.localEulerAngles = new Vector3(0, 0, 0);
+						handgun.MuzzlePos.localEulerAngles = new Vector3(0, 0, 0);
 					}
 
-					if (disableReticleWithoutTarget && reticle != null) reticle.gameObject.SetActive(false);
+					if (DisableReticleWithoutTarget && Reticle != null) Reticle.gameObject.SetActive(false);
 				}
             }
         }
 		private Vector3 FindTarget()
         {
 			float radius = EngageRange * Mathf.Tan(0.5f * EngageAngle * Mathf.Deg2Rad);
-			Collider[] array = Physics.OverlapCapsule(pistol.CurrentMuzzle.position, pistol.CurrentMuzzle.position + pistol.transform.forward * this.EngageRange, radius, this.LatchingMask);
+			Collider[] array = Physics.OverlapCapsule(handgun.CurrentMuzzle.position, handgun.CurrentMuzzle.position + handgun.transform.forward * this.EngageRange, radius, this.LatchingMask);
 			List<Rigidbody> list = new List<Rigidbody>();
 			for (int i = 0; i < array.Length; i++)
 			{
@@ -117,15 +113,15 @@ namespace OpenScripts2
 					{
 						if (true || component.S.E.IFFCode == 1)
 						{
-							Vector3 from = list[j].transform.position - pistol.CurrentMuzzle.position;
-							float num2 = Vector3.Angle(from, pistol.transform.forward);
+							Vector3 from = list[j].transform.position - handgun.CurrentMuzzle.position;
+							float num2 = Vector3.Angle(from, handgun.transform.forward);
 
 							Sosig s = component.S;
 							if (num2 <= PrecisionAngle) sosigLink2 = s.Links[0];
 							else sosigLink2 = s.Links[1];
 
 
-							if (num2 < num &&  !Physics.Linecast(pistol.CurrentMuzzle.position, sosigLink2.transform.position, this.BlockingMask, QueryTriggerInteraction.Ignore))
+							if (num2 < num &&  !Physics.Linecast(handgun.CurrentMuzzle.position, sosigLink2.transform.position, this.BlockingMask, QueryTriggerInteraction.Ignore))
 							{
 								sosigLink = sosigLink2;
 								num = num2;

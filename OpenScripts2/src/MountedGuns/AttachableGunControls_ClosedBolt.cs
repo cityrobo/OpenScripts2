@@ -11,13 +11,13 @@ namespace OpenScripts2
 {
     public class AttachableGunControls_ClosedBolt : OpenScripts2_BasePlugin
 	{
-        public FVRInteractiveObject controlHandle;
+        public FVRInteractiveObject ControlHandle;
         public ClosedBoltWeapon closedBoltWeapon;
-		public FVRFireArmAttachment attachment;
+		public FVRFireArmAttachment Attachment;
 
 
-		private FVRViveHand hand = null;
-		private FVRAlternateGrip alternateGrip = null;
+		private FVRViveHand _hand = null;
+		private FVRAlternateGrip _alternateGrip = null;
 
         public void Start()
         {
@@ -30,7 +30,7 @@ namespace OpenScripts2
         }
         public void Update()
         {
-            if (hand != null) closedBoltWeapon.UpdateInputAndAnimate(hand);
+            if (_hand != null) closedBoltWeapon.UpdateInputAndAnimate(_hand);
         }
 
         private void Hook()
@@ -68,7 +68,7 @@ namespace OpenScripts2
 
 				if (hand != null)
 				{
-					self.m_triggerFloat = this.hand.Input.TriggerFloat;
+					self.m_triggerFloat = this._hand.Input.TriggerFloat;
 				}
 				else
 				{
@@ -85,9 +85,9 @@ namespace OpenScripts2
 					}
 					self.PlayAudioEvent(FirearmAudioEventType.TriggerReset, 1f);
 				}
-				if (this.hand.IsInStreamlinedMode)
+				if (this._hand.IsInStreamlinedMode)
 				{
-					if (this.hand.Input.BYButtonDown)
+					if (this._hand.Input.BYButtonDown)
 					{
 						if (self.Bolt.IsBoltLocked() && self.HasBoltReleaseButton)
 						{
@@ -102,17 +102,17 @@ namespace OpenScripts2
 							self.Detonate();
 						}
 					}
-					if (this.hand.Input.AXButtonDown && self.HasMagReleaseButton && (!self.EjectsMagazineOnEmpty || (self.Bolt.CurPos >= ClosedBolt.BoltPos.Locked && self.Bolt.IsHeld && !self.m_proxy.IsFull)))
+					if (this._hand.Input.AXButtonDown && self.HasMagReleaseButton && (!self.EjectsMagazineOnEmpty || (self.Bolt.CurPos >= ClosedBolt.BoltPos.Locked && self.Bolt.IsHeld && !self.m_proxy.IsFull)))
 					{
 						self.ReleaseMag();
 					}
 					if (self.UsesStickyDetonation)
 					{
-						if (this.hand.Input.BYButtonDown)
+						if (this._hand.Input.BYButtonDown)
 						{
 							self.SetAnimatedComponent(self.StickyTrigger, self.StickyRotRange.y, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
 						}
-						else if (this.hand.Input.BYButtonUp)
+						else if (this._hand.Input.BYButtonUp)
 						{
 							self.SetAnimatedComponent(self.StickyTrigger, self.StickyRotRange.x, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
 						}
@@ -120,8 +120,8 @@ namespace OpenScripts2
 				}
 				else
 				{
-					Vector2 touchpadAxes = this.hand.Input.TouchpadAxes;
-					if (this.hand.Input.TouchpadDown)
+					Vector2 touchpadAxes = this._hand.Input.TouchpadAxes;
+					if (this._hand.Input.TouchpadDown)
 					{
 						if (self.UsesStickyDetonation)
 						{
@@ -148,16 +148,16 @@ namespace OpenScripts2
 					}
 					if (self.UsesStickyDetonation)
 					{
-						if (this.hand.Input.TouchpadDown)
+						if (this._hand.Input.TouchpadDown)
 						{
 							self.SetAnimatedComponent(self.StickyTrigger, self.StickyRotRange.y, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
 						}
-						else if (this.hand.Input.TouchpadUp)
+						else if (this._hand.Input.TouchpadUp)
 						{
 							self.SetAnimatedComponent(self.StickyTrigger, self.StickyRotRange.x, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
 						}
 					}
-					if (this.hand.Input.TouchpadPressed && touchpadAxes.magnitude > 0.2f)
+					if (this._hand.Input.TouchpadPressed && touchpadAxes.magnitude > 0.2f)
 					{
 						if (Vector2.Angle(touchpadAxes, Vector2.up) <= 45f)
 						{
@@ -179,7 +179,7 @@ namespace OpenScripts2
 					{
 						if (self.Bolt.CurPos == ClosedBolt.BoltPos.Forward && self.Chamber.IsFull && !self.Chamber.IsSpent)
 						{
-							if (this.hand.Input.TriggerPressed && self.m_hasTriggerReset)
+							if (this._hand.Input.TriggerPressed && self.m_hasTriggerReset)
 							{
 								self.m_hasStickTriggerDown = true;
 								self.m_stickyChargeUp += Time.deltaTime * 0.25f * self.StickyChargeUpSpeed;
@@ -197,7 +197,7 @@ namespace OpenScripts2
 								}
 								self.m_stickyChargeUp = 0f;
 							}
-							if (self.m_hasStickTriggerDown && (this.hand.Input.TriggerUp || self.m_stickyChargeUp >= 1f))
+							if (self.m_hasStickTriggerDown && (this._hand.Input.TriggerUp || self.m_stickyChargeUp >= 1f))
 							{
 								self.m_hasStickTriggerDown = false;
 								self.DropHammer();
@@ -282,7 +282,7 @@ namespace OpenScripts2
 
 		private void AttachableForegrip_BeginInteraction(On.FistVR.AttachableForegrip.orig_BeginInteraction orig, AttachableForegrip self, FVRViveHand hand)
 		{
-			if (self == controlHandle)
+			if (self == ControlHandle)
 			{
 				FVRFireArm fvrfireArm = self.OverrideFirearm;
 				if (fvrfireArm == null)
@@ -294,8 +294,8 @@ namespace OpenScripts2
 					FVRAlternateGrip component = fvrfireArm.Foregrip.GetComponent<FVRAlternateGrip>();
 					hand.ForceSetInteractable(component);
 					component.BeginInteractionFromAttachedGrip(self, hand);
-					this.hand = component.m_hand;
-					this.alternateGrip = component;
+					this._hand = component.m_hand;
+					this._alternateGrip = component;
 				}
 			}
 			else orig(self, hand);
@@ -303,27 +303,27 @@ namespace OpenScripts2
 
 		private void FVRAlternateGrip_EndInteraction(On.FistVR.FVRAlternateGrip.orig_EndInteraction orig, FVRAlternateGrip self, FVRViveHand hand)
 		{
-			if (this.alternateGrip == self)
+			if (this._alternateGrip == self)
 			{
-				this.hand = null;
-				alternateGrip = null;
+				this._hand = null;
+				_alternateGrip = null;
 			}
 			orig(self, hand);
 		}
 
 		private void FVRFireArmAttachment_BeginInteraction(On.FistVR.FVRFireArmAttachment.orig_BeginInteraction orig, FVRFireArmAttachment self, FVRViveHand hand)
 		{
-			if (self == attachment) this.hand = hand;
+			if (self == Attachment) this._hand = hand;
 			orig(self, hand);
 		}
 		private void FVRFireArmAttachment_EndInteraction(On.FistVR.FVRFireArmAttachment.orig_EndInteraction orig, FVRFireArmAttachment self, FVRViveHand hand)
 		{
-			if (self == attachment) this.hand = null;
+			if (self == Attachment) this._hand = null;
 			orig(self, hand);
 		}
 		private void FVRPhysicalObject_EndInteractionIntoInventorySlot(On.FistVR.FVRPhysicalObject.orig_EndInteractionIntoInventorySlot orig, FVRPhysicalObject self, FVRViveHand hand, FVRQuickBeltSlot slot)
 		{
-			if (self == attachment) this.hand = null;
+			if (self == Attachment) this._hand = null;
 			orig(self, hand, slot);
 		}
 #endif

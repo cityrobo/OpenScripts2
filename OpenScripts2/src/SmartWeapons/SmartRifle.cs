@@ -11,8 +11,8 @@ namespace OpenScripts2
     public class SmartRifle : OpenScripts2_BasePlugin
 	{
         public ClosedBoltWeapon rifle;
-		public MeshRenderer reticle;
-		public bool disableReticleWithoutTarget = true;
+		public MeshRenderer Reticle;
+		public bool DisableReticleWithoutTarget = true;
 		public float EngageRange = 15f;
 		[Range(1f,179f)]
 		public float EngageAngle = 45f;
@@ -21,16 +21,16 @@ namespace OpenScripts2
 		public LayerMask LatchingMask;
 		public LayerMask BlockingMask;
 
-		public bool locksUpWithoutTarget = false;
-		public int safetyIndex = 0;
+		public bool LocksUpWithoutTarget = false;
+		public int SafetyIndex = 0;
 
-		public bool doesRandomRotationWithoutTarget = true;
-		public float randomAngleMagnitude = 5f;
+		public bool DoesRandomRotationWithoutTarget = true;
+		public float RandomAngleMagnitude = 5f;
 		//constants
-		private string nameOfDistanceVariable = "_RedDotDist";
+		private string _nameOfDistanceVariable = "_RedDotDist";
 
-		private bool isLocked;
-		private int lastSelectorPos;
+		private bool _isLocked;
+		private int _lastSelectorPos;
 
 #if !DEBUG
 		public void Start()
@@ -62,26 +62,26 @@ namespace OpenScripts2
                 {
                     //Debug.Log(target);
 
-					if (locksUpWithoutTarget) LockRifle(false);
+					if (LocksUpWithoutTarget) LockRifle(false);
 					//Debug.DrawRay(pistol.MuzzlePos.position, target, Color.green);
 					//Popcron.Gizmos.Line(pistol.MuzzlePos.position, target, Color.green);
 
 					rifle.CurrentMuzzle.LookAt(target);
 					rifle.MuzzlePos.LookAt(target);
-                    if (reticle != null)
+                    if (Reticle != null)
                     {
-						reticle.material.SetFloat(nameOfDistanceVariable, (target - rifle.CurrentMuzzle.position).magnitude);
-						if (disableReticleWithoutTarget) reticle.gameObject.SetActive(true);
+						Reticle.material.SetFloat(_nameOfDistanceVariable, (target - rifle.CurrentMuzzle.position).magnitude);
+						if (DisableReticleWithoutTarget) Reticle.gameObject.SetActive(true);
 					}
                 }
 				else
                 {
-					if(locksUpWithoutTarget) LockRifle(true);
-					if (doesRandomRotationWithoutTarget)
+					if(LocksUpWithoutTarget) LockRifle(true);
+					if (DoesRandomRotationWithoutTarget)
 					{
 						Vector3 randRot = new Vector3();
-						randRot.x = UnityEngine.Random.Range(-randomAngleMagnitude, randomAngleMagnitude);
-						randRot.y = UnityEngine.Random.Range(-randomAngleMagnitude, randomAngleMagnitude);
+						randRot.x = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
+						randRot.y = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
 
 						rifle.CurrentMuzzle.localEulerAngles = randRot;
 						rifle.MuzzlePos.localEulerAngles = randRot;
@@ -92,7 +92,7 @@ namespace OpenScripts2
 						rifle.MuzzlePos.localEulerAngles = new Vector3(0, 0, 0);
 					}
 
-					if (disableReticleWithoutTarget && reticle != null) reticle.gameObject.SetActive(false);
+					if (DisableReticleWithoutTarget && Reticle != null) Reticle.gameObject.SetActive(false);
 				}
             }
         }
@@ -151,22 +151,22 @@ namespace OpenScripts2
 		}
 		public void LockRifle(bool lockRifle)
         {
-			if (lockRifle && !isLocked)
+			if (lockRifle && !_isLocked)
             {
-				lastSelectorPos = rifle.m_fireSelectorMode;
-				rifle.m_fireSelectorMode = safetyIndex;
+				_lastSelectorPos = rifle.m_fireSelectorMode;
+				rifle.m_fireSelectorMode = SafetyIndex;
 
-				isLocked = true;
+				_isLocked = true;
             }
-            else if (lockRifle && isLocked)
+            else if (lockRifle && _isLocked)
 			{
-				rifle.m_fireSelectorMode = safetyIndex;
+				rifle.m_fireSelectorMode = SafetyIndex;
 			}
-			else if (!lockRifle && isLocked)
+			else if (!lockRifle && _isLocked)
             {
-				rifle.m_fireSelectorMode = lastSelectorPos;
+				rifle.m_fireSelectorMode = _lastSelectorPos;
 
-				isLocked = false;
+				_isLocked = false;
 			}
         }
 #endif

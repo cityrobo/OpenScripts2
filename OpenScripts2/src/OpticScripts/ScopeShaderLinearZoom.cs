@@ -24,11 +24,11 @@ namespace OpenScripts2
         public bool ZoomIncreasesReticleMagnification = false;
 
         [Header("Text Screen Settings")]
-        public GameObject CanvasRoot;
-        public Text ZoomText;
-        public Text ZeroText;
-        public Text ElevationText;
-        public Text WindageText;
+        public GameObject TextScreenRoot;
+        public Text ZoomTextField;
+        public Text ZeroTextField;
+        public Text ElevationTextField;
+        public Text WindageTextField;
         public GameObject TextFrame;
 
         public string ZoomPrefix = "Zoom: ";
@@ -106,7 +106,7 @@ namespace OpenScripts2
 
         public void Start()
         {
-            if (CanvasRoot != null) _hasZoomText = true;
+            if (TextScreenRoot != null) _hasZoomText = true;
             else _hasZoomText = false;
 
 
@@ -143,16 +143,16 @@ namespace OpenScripts2
 
             if (IsIntegrated) Zero();
 
-            if (ZoomText == null) 
+            if (ZoomTextField == null) 
             { 
                 _currentMenu++;
-                if (ZeroText == null)
+                if (ZeroTextField == null)
                 {
                     _currentMenu++;
-                    if (ElevationText == null)
+                    if (ElevationTextField == null)
                     {
                         _currentMenu++;
-                        if (WindageText == null)
+                        if (WindageTextField == null)
                         {
                             _currentMenu = 0;
                             _hasZoomText = false;
@@ -189,9 +189,9 @@ namespace OpenScripts2
                 else if (_currentMenu == 3 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) PreviousReticle();
                 else if (_currentMenu == 3 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) NextReticle();
 
-                CanvasRoot.gameObject.SetActive(true);
+                TextScreenRoot.gameObject.SetActive(true);
             }
-            else if (_hasZoomText) CanvasRoot.gameObject.SetActive(false);
+            else if (_hasZoomText) TextScreenRoot.gameObject.SetActive(false);
 
             if (!ActiveWithoutMount)
             {
@@ -305,7 +305,7 @@ namespace OpenScripts2
         }
         public void NextMenu()
         {
-            if (ZoomText == null && ZeroText == null && ElevationText == null && WindageText == null)
+            if (ZoomTextField == null && ZeroTextField == null && ElevationTextField == null && WindageTextField == null)
                 return;
             _currentMenu++;
 
@@ -314,21 +314,21 @@ namespace OpenScripts2
             switch (_currentMenu)
             {
                 case 0:
-                    if (ZeroText == null)
+                    if (ZeroTextField == null)
                     {
                         NextMenu();
                         return;
                     }
                     break;
                 case 1:
-                    if (ElevationText == null)
+                    if (ElevationTextField == null)
                     {
                         NextMenu();
                         return;
                     }
                     break;
                 case 2:
-                    if (WindageText == null)
+                    if (WindageTextField == null)
                     {
                         NextMenu();
                         return;
@@ -354,20 +354,20 @@ namespace OpenScripts2
                 switch (_currentMenu)
                 {
                     case 0:
-                        if (ZoomText == null) break;
-                        TextFrame.transform.position = ZoomText.transform.position;
+                        if (ZoomTextField == null) break;
+                        TextFrame.transform.position = ZoomTextField.transform.position;
                         break;
                     case 1:
-                        if (ZeroText == null) break;
-                        TextFrame.transform.position = ZeroText.transform.position;
+                        if (ZeroTextField == null) break;
+                        TextFrame.transform.position = ZeroTextField.transform.position;
                         break;
                     case 2:
-                        if (ElevationText == null) break;
-                        TextFrame.transform.position = ElevationText.transform.position;
+                        if (ElevationTextField == null) break;
+                        TextFrame.transform.position = ElevationTextField.transform.position;
                         break;
                     case 3:
-                        if (WindageText == null) break;
-                        TextFrame.transform.position = WindageText.transform.position;
+                        if (WindageTextField == null) break;
+                        TextFrame.transform.position = WindageTextField.transform.position;
                         break;
                     case 4:
                         if (ReticleText == null) break;
@@ -377,10 +377,10 @@ namespace OpenScripts2
                         break;
                 }
 
-            if (ZoomText != null) ZoomText.text = ZoomPrefix + _zoomFactor + "x";
-            if (ZeroText != null) ZeroText.text = ZeroPrefix + ZeroDistances[ZeroDistanceIndex] + "m";
-            if (ElevationText != null) ElevationText.text = ElevationPrefix + _elevationStep + " MOA";
-            if (WindageText != null) WindageText.text = WindagePrefix + _windageStep + " MOA";
+            if (ZoomTextField != null) ZoomTextField.text = ZoomPrefix + _zoomFactor + "x";
+            if (ZeroTextField != null) ZeroTextField.text = ZeroPrefix + ZeroDistances[ZeroDistanceIndex] + "m";
+            if (ElevationTextField != null) ElevationTextField.text = ElevationPrefix + _elevationStep + " MOA";
+            if (WindageTextField != null) WindageTextField.text = WindagePrefix + _windageStep + " MOA";
             if (ReticleText != null) ReticleText.text = ReticlePrefix + ReticleNames[CurrentReticle];
         }
         public void Zero()

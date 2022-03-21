@@ -10,40 +10,39 @@ namespace OpenScripts2
 {
     class RangeFinder_HandHeld : OpenScripts2_BasePlugin
     {
-        public FVRFireArmAttachment attachment;
-        public GameObject laserSystem;
-        public AudioSource audioSource;
-        public AudioClip audioClip;
+        public FVRFireArmAttachment Attachment;
+        public GameObject LaserSystem;
+        public AudioEvent Sounds;
 
-        private bool isOn = false;
-        private bool lockControls = false;
+        private bool _isOn = false;
+        private bool _lockControls = false;
 
         public void Start()
         {
-            attachment = this.gameObject.GetComponent<FVRFireArmAttachment>();
+            Attachment = this.gameObject.GetComponent<FVRFireArmAttachment>();
         }
         public void Update()
         {
-            FVRViveHand hand = attachment.m_hand;
-            if (hand != null && attachment.curMount == null)
+            FVRViveHand hand = Attachment.m_hand;
+            if (hand != null && Attachment.curMount == null)
             {
-                if (hand.Input.TriggerDown && !lockControls) StartCoroutine("MeasureOnce");
-                else if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes,Vector2.up) < 45f && !lockControls) ToggleMeasure();
-                else if (hand.Input.TouchpadUp && lockControls) lockControls = false;
+                if (hand.Input.TriggerDown && !_lockControls) StartCoroutine("MeasureOnce");
+                else if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes,Vector2.up) < 45f && !_lockControls) ToggleMeasure();
+                else if (hand.Input.TouchpadUp && _lockControls) _lockControls = false;
             }
-            else if (attachment.curMount != null)
+            else if (Attachment.curMount != null)
             {
-                if (attachment.AttachmentInterface.m_hand != null)
+                if (Attachment.AttachmentInterface.m_hand != null)
                 {
-                    if (attachment.AttachmentInterface.m_hand.Input.TouchpadDown && Vector2.Angle(attachment.AttachmentInterface.m_hand.Input.TouchpadAxes, Vector2.up) < 45f) ToggleMeasure();
-                    else if (attachment.AttachmentInterface.m_hand.Input.TouchpadDown && Vector2.Angle(attachment.AttachmentInterface.m_hand.Input.TouchpadAxes, Vector2.down) < 45f) lockControls = true;
+                    if (Attachment.AttachmentInterface.m_hand.Input.TouchpadDown && Vector2.Angle(Attachment.AttachmentInterface.m_hand.Input.TouchpadAxes, Vector2.up) < 45f) ToggleMeasure();
+                    else if (Attachment.AttachmentInterface.m_hand.Input.TouchpadDown && Vector2.Angle(Attachment.AttachmentInterface.m_hand.Input.TouchpadAxes, Vector2.down) < 45f) _lockControls = true;
                 }
             }
         }
 
         public IEnumerator MeasureOnce()
         {
-            if (!isOn)
+            if (!_isOn)
             {
                 ToggleMeasure();
             }
@@ -53,16 +52,16 @@ namespace OpenScripts2
 
         public void ToggleMeasure()
         {
-            switch (isOn)
+            switch (_isOn)
             {
                 case false:
-                    laserSystem.SetActive(true);
-                    audioSource.PlayOneShot(audioClip);
-                    isOn = true;
+                    LaserSystem.SetActive(true);
+                    SM.PlayGenericSound(Sounds,transform.position);
+                    _isOn = true;
                     break;
                 case true:
-                    laserSystem.SetActive(false);
-                    isOn = false;
+                    LaserSystem.SetActive(false);
+                    _isOn = false;
                     break;
                 default:
                     break;

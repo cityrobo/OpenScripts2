@@ -9,19 +9,19 @@ namespace OpenScripts2
 {
     public class HandDependentPoseOverride : OpenScripts2_BasePlugin
     {
-        public FVRPhysicalObject physicalObject;
-        public Transform leftPoseOverride;
-        public Transform leftPoseOverride_Touch;
-        public Transform rightPoseOverride;
-        public Transform rightPoseOverride_Touch;
+        public FVRPhysicalObject PhysicalObject;
+        public Transform LeftPoseOverride;
+        public Transform LeftPoseOverride_Touch;
+        public Transform RightPoseOverride;
+        public Transform RightPoseOverride_Touch;
 
-        private bool hasPoseOverride_Touch = false;
+        private bool _hasPoseOverride_Touch = false;
 
 #if !(UNITY_EDITOR || UNITY_5 || MEATKIT || DEBUG)
 
         public void Start()
         {
-            if (leftPoseOverride_Touch != null && rightPoseOverride_Touch != null) hasPoseOverride_Touch = true;
+            if (LeftPoseOverride_Touch != null && RightPoseOverride_Touch != null) _hasPoseOverride_Touch = true;
 
             Hook();
         }
@@ -42,17 +42,17 @@ namespace OpenScripts2
 
         private void FVRPhysicalObject_BeginInteraction(On.FistVR.FVRPhysicalObject.orig_BeginInteraction orig, FVRPhysicalObject self, FVRViveHand hand)
         {
-            if (self == physicalObject)
+            if (self == PhysicalObject)
             {
                 if (!hand.IsThisTheRightHand)
                 {
-                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && hasPoseOverride_Touch) self.PoseOverride = leftPoseOverride_Touch;
-                    else physicalObject.PoseOverride = leftPoseOverride;
+                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && _hasPoseOverride_Touch) self.PoseOverride = LeftPoseOverride_Touch;
+                    else PhysicalObject.PoseOverride = LeftPoseOverride;
                 }
                 else
                 {
-                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && hasPoseOverride_Touch) self.PoseOverride = rightPoseOverride_Touch;
-                    else physicalObject.PoseOverride = rightPoseOverride;
+                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && _hasPoseOverride_Touch) self.PoseOverride = RightPoseOverride_Touch;
+                    else PhysicalObject.PoseOverride = RightPoseOverride;
                 }
             }
         

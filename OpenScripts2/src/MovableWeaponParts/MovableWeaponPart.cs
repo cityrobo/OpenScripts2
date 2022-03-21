@@ -16,7 +16,7 @@ namespace OpenScripts2
             Rotation,
             Tilt
         }
-		public Mode mode;
+		public Mode MovementMode;
 
 		public OpenScripts2_BasePlugin.Axis axis;
 
@@ -76,7 +76,7 @@ namespace OpenScripts2
 		public override void UpdateInteraction(FVRViveHand hand)
         {
             base.UpdateInteraction(hand);
-            switch (mode)
+            switch (MovementMode)
             {
                 case Mode.Translation:
 					TranslationMode(hand);

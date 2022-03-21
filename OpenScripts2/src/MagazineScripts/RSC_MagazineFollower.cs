@@ -12,74 +12,67 @@ namespace OpenScripts2
     public class RSC_MagazineFollower : FVRInteractiveObject
     {
         [Header("RSC-MagazineFollower Config")]
-        public ClosedBoltWeapon fireArm;
-        public GameObject magazineWell;
-        public GameObject magazineGrabTrigger;
-        public Transform follower;
+        public ClosedBoltWeapon FireArm;
+        public GameObject MagazineWell;
+        public GameObject MagazineGrabTrigger;
+        public Transform Follower;
 
         [Tooltip("Index number the safety position is at (starts at 0!).")]
-        public int safetyIndex;
+        public int SafetyIndex;
 
-        public enum Axis
-        {
-            x,
-            y,
-            z
-        }
-
-        public Axis rotationalAxis;
-        public float rotSpeed = 100f;
+        public OpenScripts2_BasePlugin.Axis RotationalAxis;
+        public float RotSpeed = 100f;
 
         [Tooltip("first entry is Angle when open to load magazine, all following are for the ammount loaded in the magazine, starting with full mag. Last pos is follower with empty mag.")]
-        public float[] rotationalAngles;
+        public float[] RotationalAngles;
 
 
-        private bool open = true;
-        private bool lockedSafety = false;
-        private int origSafetyPos;
-        private float lastRot;
+        private bool _open = true;
+        private bool _lockedSafety = false;
+        private int _origSafetyPos;
+        private float _lastRot;
 
 #if!(UNITY_EDITOR || UNITY_5)
         public override void Start()
         {
             base.Start();
-            StartCoroutine(SetFollowerRot(rotationalAngles[0]));
+            StartCoroutine(SetFollowerRot(RotationalAngles[0]));
         }
 
 
         public override void SimpleInteraction(FVRViveHand hand)
         {
             base.SimpleInteraction(hand);
-            switch (open)
+            switch (_open)
             {
                 case false:
-                    open = true;
-                    fireArm.PlayAudioEvent(FirearmAudioEventType.BreachOpen);
+                    _open = true;
+                    FireArm.PlayAudioEvent(FirearmAudioEventType.BreachOpen);
                     break;
                 case true:
-                    open = false;
-                    fireArm.PlayAudioEvent(FirearmAudioEventType.BreachClose);
+                    _open = false;
+                    FireArm.PlayAudioEvent(FirearmAudioEventType.BreachClose);
                     break;
                 default:
                     break;
             }
 
-            if (open)
+            if (_open)
             {
                 StopAllCoroutines();
-                StartCoroutine(SetFollowerRot(rotationalAngles[0]));
+                StartCoroutine(SetFollowerRot(RotationalAngles[0]));
             }
-            else if (!open)
+            else if (!_open)
             {
-                magazineWell.SetActive(false);
-                magazineGrabTrigger.SetActive(false);
+                MagazineWell.SetActive(false);
+                MagazineGrabTrigger.SetActive(false);
                 //Debug.Log("magazine inactive");
 
-                if (fireArm.Magazine == null)
+                if (FireArm.Magazine == null)
                 {
                     //Debug.Log("magazine no inserted");
                     StopAllCoroutines();
-                    StartCoroutine(SetFollowerRot(rotationalAngles[rotationalAngles.Length-1]));
+                    StartCoroutine(SetFollowerRot(RotationalAngles[RotationalAngles.Length-1]));
                 }
             }
         }
@@ -88,34 +81,34 @@ namespace OpenScripts2
         {
             base.FVRUpdate();
 
-            if (open && !lockedSafety)
+            if (_open && !_lockedSafety)
             {
-                origSafetyPos = fireArm.m_fireSelectorMode;
-                fireArm.m_fireSelectorMode = safetyIndex;
+                _origSafetyPos = FireArm.m_fireSelectorMode;
+                FireArm.m_fireSelectorMode = SafetyIndex;
 
-                lockedSafety = true;
+                _lockedSafety = true;
             }
-            else if (open && lockedSafety)
+            else if (_open && _lockedSafety)
             {
-                fireArm.m_fireSelectorMode = safetyIndex;
+                FireArm.m_fireSelectorMode = SafetyIndex;
             }
-            else if (!open && lockedSafety)
+            else if (!_open && _lockedSafety)
             {
-                fireArm.m_fireSelectorMode = origSafetyPos;
-                lockedSafety = false;
+                FireArm.m_fireSelectorMode = _origSafetyPos;
+                _lockedSafety = false;
             }
-            FVRFireArmMagazine magazine = fireArm.Magazine;
-            if (!open && fireArm.Magazine != null)
+            FVRFireArmMagazine magazine = FireArm.Magazine;
+            if (!_open && FireArm.Magazine != null)
             {
                 int roundCount = magazine.m_numRounds;
                 int magCap = magazine.m_capacity;
 
                 int rotIndex = magCap - roundCount + 1;
 
-                if (lastRot != rotationalAngles[rotIndex])
+                if (_lastRot != RotationalAngles[rotIndex])
                 {
                     StopAllCoroutines();
-                    StartCoroutine(SetFollowerRot(rotationalAngles[rotIndex]));
+                    StartCoroutine(SetFollowerRot(RotationalAngles[rotIndex]));
                 }
             }
         }
@@ -125,36 +118,38 @@ namespace OpenScripts2
         {
             bool rotDone = false;
             //lastRot = rot;
-            lastRot = rot;
+            _lastRot = rot;
 
-            Quaternion targetRotation;
+            Quaternion targetRotation = OpenScripts2_BasePlugin.GetTargetQuaternion(rot, RotationalAxis);
 
+            /*
             switch (rotationalAxis)
             {
-                case Axis.x:
+                case OpenScripts2_BasePlugin.Axis.X:
                     targetRotation = Quaternion.Euler(rot, 0, 0);
                     break;
-                case Axis.y:
+                case OpenScripts2_BasePlugin.Axis.Y:
                     targetRotation = Quaternion.Euler(0, rot, 0);
                     break;
-                case Axis.z:
+                case OpenScripts2_BasePlugin.Axis.Z:
                     targetRotation = Quaternion.Euler(0, 0, rot);
                     break;
                 default:
                     targetRotation = Quaternion.Euler(0, 0, 0);
                     break;
             }
+            */
 
             while (!rotDone)
             {
-                follower.localRotation = Quaternion.RotateTowards(follower.localRotation, targetRotation, rotSpeed * Time.deltaTime);
-                rotDone = follower.localRotation == targetRotation;
+                Follower.localRotation = Quaternion.RotateTowards(Follower.localRotation, targetRotation, RotSpeed * Time.deltaTime);
+                rotDone = Follower.localRotation == targetRotation;
                 yield return null;
             }
-            if (open)
+            if (_open)
             {
-                magazineWell.SetActive(true);
-                magazineGrabTrigger.SetActive(true);
+                MagazineWell.SetActive(true);
+                MagazineGrabTrigger.SetActive(true);
                 //Debug.Log("magazine active");
             }
         }

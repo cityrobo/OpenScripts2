@@ -8,94 +8,91 @@ namespace OpenScripts2
 {
     public class AdjustableReflexSight : OpenScripts2_BasePlugin
     {
-        public FVRFireArmAttachment attachment;
-        [Tooltip("This can be an AttachmentInterface or a standalone FVRInteractiveObject set to \" is simple interact \" ")]
-        public FVRInteractiveObject reflexSightInterface;
-        public MeshRenderer reticle;
+        public FVRFireArmAttachment Attachment;
+        [Tooltip("This can be an AttachmentInterface or a standalone FVRInteractiveObject set to \"is simple interact\" ")]
+        public FVRInteractiveObject ReflexSightInterface;
+        public MeshRenderer Reticle;
 
         [Tooltip("Switch that moves with the selected texture")]
-        public Transform buttonSwitch;
+        public Transform SwitchObject;
 
-        public Vector3[] switchPositions;
+        public Axis SwitchAxis;
+        public float[] SwitchPositions;
 
-        public Texture2D[] textures;
+        public Texture2D[] ReticleTextures;
 
-        public int currentTexture = 0;
+        public int CurrentReticleTexture = 0;
 
-        [Header("If you want a Screen above the scope that shows stuff, use this:")]
-        public Transform textFrame;
-        public Text reticleTextScreen;
-        public Text zeroTextScreen;
+        [Header("Information Text Configuration")]
+        public Transform TextFrame;
+        public Text ReticleTextScreen;
+        public Text ZeroTextScreen;
 
-        public string reticleTestPrefix = "Reticle: ";
-        public string[] reticleText;
+        public string ReticleTestPrefix = "Reticle: ";
+        public string[] ReticleText;
 
-        public string zeroTextPrefix = "Zero Distance: ";
+        public string ZeroTextPrefix = "Zero Distance: ";
         [Tooltip("Index of the Array below, not the actual value")]
-        public int currentZeroDistance = 3;
+        public int CurrentZeroDistance = 3;
         [Tooltip("In meters. Miss me with that imperial shit!")]
-        public float[] zeroDistances = new float[7] { 2, 5, 10, 15, 25, 50, 100 };
-        //public float dotSizeAt100mDistance = 2;
+        public float[] ZeroDistances = new float[7] { 2, 5, 10, 15, 25, 50, 100 };
         [Header("Intergrated Sight configuration")]
-        [Tooltip("Check this box if integrated. (sorry, bad naming.)")]
-        public bool isStandalone = false;
-        public FVRFireArm fireArm;
+        [Tooltip("Check this box if integrated.")]
+        public bool IsIntegrated = false;
+        public FVRFireArm FireArm;
 
         [Header("Reticle Occlusion culling")]
-        [Tooltip("Use this for extra performant reticle occlusion culling")]
-        public Collider lensCollider;
-        public bool disableOcclusionCulling = false;
+        [Tooltip("Use this for reticle occlusion culling.")]
+        public Collider LensCollider;
 
-        private FVRViveHand hand;
-        private int currentMenu = 0;
+        private FVRViveHand _hand;
+        private int _currentMenu = 0;
 
-        private bool zeroOnlyMode = false;
-        private string nameOfTexture = "_RedDotTex";
-        private string nameOfDistanceVariable = "_RedDotDist";
-        private string nameOfXOffset = "_MuzzleOffsetX";
-        private string nameOfYOffset = "_MuzzleOffsetY";
-        private List<Collider> scopeColliders;
-        //private string nameOfDotSizeVariable = "_RedDotSize";
+        private bool _zeroOnlyMode = false;
+        private string _nameOfTexture = "_RedDotTex";
+        private string _nameOfDistanceVariable = "_RedDotDist";
+        private string _nameOfXOffset = "_MuzzleOffsetX";
+        private string _nameOfYOffset = "_MuzzleOffsetY";
 
-        private Transform muzzlePos;
+        private Transform _muzzlePos;
 
-        private bool attached = false;
+        private bool _attached = false;
 
-        private Vector3 leftEye;
-        private Vector3 rightEye;
+        private Vector3 _leftEye;
+        private Vector3 _rightEye;
+        private bool _disableOcclusionCulling = false;
         public void Start()
         {
-            if (currentTexture >= textures.Length) currentTexture = 0;
-            if (currentZeroDistance >= zeroDistances.Length) currentZeroDistance = 0;
-            if (textures.Length != 0) reticle.material.SetTexture(nameOfTexture, textures[currentTexture]);
-            reticle.material.SetFloat(nameOfDistanceVariable, zeroDistances[currentZeroDistance]);
-            //lens.material.SetFloat(nameOfDotSizeVariable, dotSizeAt100mDistance * (zeroDistances[currentZeroDistance] / 100) );
+            if (CurrentReticleTexture >= ReticleTextures.Length) CurrentReticleTexture = 0;
+            if (CurrentZeroDistance >= ZeroDistances.Length) CurrentZeroDistance = 0;
+            if (ReticleTextures.Length != 0) Reticle.material.SetTexture(_nameOfTexture, ReticleTextures[CurrentReticleTexture]);
+            Reticle.material.SetFloat(_nameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
 
-            if (buttonSwitch != null) buttonSwitch.localPosition = switchPositions[currentTexture];
+            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxis(SwitchAxis, SwitchPositions[CurrentReticleTexture]);
 
-            if (reflexSightInterface.IsSimpleInteract) Hook();
+            if (ReflexSightInterface.IsSimpleInteract) Hook();
 
-            if (textures.Length <= 1) 
+            if (ReticleTextures.Length <= 1) 
             { 
-                zeroOnlyMode = true;
-                currentMenu = 1;
+                _zeroOnlyMode = true;
+                _currentMenu = 1;
             }
 
-            scopeColliders = new List<Collider>(attachment.m_colliders);
-
-            if (isStandalone)
+            if (IsIntegrated)
             {
-                muzzlePos = fireArm.MuzzlePos;
-                Vector3 muzzleOffset = muzzlePos.InverseTransformPoint(reticle.transform.position);
+                _muzzlePos = FireArm.MuzzlePos;
+                Vector3 muzzleOffset = _muzzlePos.InverseTransformPoint(Reticle.transform.position);
 
-                reticle.material.SetFloat(nameOfXOffset, -muzzleOffset.x);
-                reticle.material.SetFloat(nameOfYOffset, -muzzleOffset.y);
+                Reticle.material.SetFloat(_nameOfXOffset, -muzzleOffset.x);
+                Reticle.material.SetFloat(_nameOfYOffset, -muzzleOffset.y);
             }
 
             StartScreen();
 
-            leftEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * -0.032f;
-            rightEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * +0.032f;
+            _leftEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * -0.032f;
+            _rightEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * +0.032f;
+
+            if (LensCollider == null) _disableOcclusionCulling = true;
         }
 #if !DEBUG
         public void OnDestroy()
@@ -105,96 +102,90 @@ namespace OpenScripts2
 
         public void Update()
         {
-            if (!reflexSightInterface.IsSimpleInteract)
+            if (!ReflexSightInterface.IsSimpleInteract)
             {
-                hand = reflexSightInterface.m_hand;
-                if (hand != null)
+                _hand = ReflexSightInterface.m_hand;
+                if (_hand != null)
                 {
-                    if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f && currentMenu == 0) UsePreviousTexture();
-                    else if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f && currentMenu == 0) UseNextTexture();
-                    if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f && currentMenu == 1) UsePreviousZeroDistance();
-                    else if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f && currentMenu == 1) UseNextZeroDistance();
-                    else if ((hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.up) < 45f) && !zeroOnlyMode) ShowNextMenu();
+                    if (_hand.Input.TouchpadDown && Vector2.Angle(_hand.Input.TouchpadAxes, Vector2.left) < 45f && _currentMenu == 0) UsePreviousTexture();
+                    else if (_hand.Input.TouchpadDown && Vector2.Angle(_hand.Input.TouchpadAxes, Vector2.right) < 45f && _currentMenu == 0) UseNextTexture();
+                    if (_hand.Input.TouchpadDown && Vector2.Angle(_hand.Input.TouchpadAxes, Vector2.left) < 45f && _currentMenu == 1) UsePreviousZeroDistance();
+                    else if (_hand.Input.TouchpadDown && Vector2.Angle(_hand.Input.TouchpadAxes, Vector2.right) < 45f && _currentMenu == 1) UseNextZeroDistance();
+                    else if ((_hand.Input.TouchpadDown && Vector2.Angle(_hand.Input.TouchpadAxes, Vector2.up) < 45f) && !_zeroOnlyMode) ShowNextMenu();
                 }
             }
-            if (!isStandalone && attachment.curMount != null && !attached)
+            if (!IsIntegrated && Attachment.curMount != null && !_attached)
             {
-                attached = true;
-                fireArm = attachment.curMount.GetRootMount().MyObject as FVRFireArm;
-                if (fireArm != null)
+                _attached = true;
+                FireArm = Attachment.curMount.GetRootMount().MyObject as FVRFireArm;
+                if (FireArm != null)
                 {
-                    muzzlePos = fireArm.CurrentMuzzle;
+                    _muzzlePos = FireArm.CurrentMuzzle;
 
-                    Vector3 muzzleOffset = muzzlePos.InverseTransformPoint(reticle.transform.position);
-                    /*
-                    Debug.Log(muzzleOffset.x);
-                    Debug.Log(muzzleOffset.y);
-                    Debug.Log(muzzleOffset.z);
-                    */
+                    Vector3 muzzleOffset = _muzzlePos.InverseTransformPoint(Reticle.transform.position);
 
-                    reticle.material.SetFloat(nameOfXOffset, -muzzleOffset.x);
-                    reticle.material.SetFloat(nameOfYOffset, -muzzleOffset.y);
+                    Reticle.material.SetFloat(_nameOfXOffset, -muzzleOffset.x);
+                    Reticle.material.SetFloat(_nameOfYOffset, -muzzleOffset.y);
                 }
             }
-            else if (!isStandalone && attachment.curMount == null && attached)
+            else if (!IsIntegrated && Attachment.curMount == null && _attached)
             {
-                attached = false;
-                reticle.material.SetFloat(nameOfXOffset, 0f);
-                reticle.material.SetFloat(nameOfYOffset, 0f);
-                fireArm = null;
-                muzzlePos = null;
+                _attached = false;
+                Reticle.material.SetFloat(_nameOfXOffset, 0f);
+                Reticle.material.SetFloat(_nameOfYOffset, 0f);
+                FireArm = null;
+                _muzzlePos = null;
             }
 
-            leftEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * -0.032f;
-            rightEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * +0.032f;
+            _leftEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * -0.032f;
+            _rightEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * +0.032f;
 
-            if (!disableOcclusionCulling && (isStandalone || attached)) CheckReticleVisibility();
+            if (!_disableOcclusionCulling && (IsIntegrated || _attached)) CheckReticleVisibility();
         }
 #endif
         public void UseNextTexture()
         {
-            currentTexture = (currentTexture + 1) % textures.Length;
+            CurrentReticleTexture = (CurrentReticleTexture + 1) % ReticleTextures.Length;
 
-            reticle.material.SetTexture(nameOfTexture, textures[currentTexture]);
-            if (buttonSwitch != null) buttonSwitch.localPosition = switchPositions[currentTexture];
+            Reticle.material.SetTexture(_nameOfTexture, ReticleTextures[CurrentReticleTexture]);
+            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxis(SwitchAxis, SwitchPositions[CurrentReticleTexture]);
             UpdateScreen();
         }
 
         public void UsePreviousTexture()
         {
-            currentTexture = (currentTexture + textures.Length - 1) % textures.Length;
+            CurrentReticleTexture = (CurrentReticleTexture + ReticleTextures.Length - 1) % ReticleTextures.Length;
 
-            reticle.material.SetTexture(nameOfTexture, textures[currentTexture]);
-            if (buttonSwitch != null) buttonSwitch.localPosition = switchPositions[currentTexture];
+            Reticle.material.SetTexture(_nameOfTexture, ReticleTextures[CurrentReticleTexture]);
+            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxis(SwitchAxis, SwitchPositions[CurrentReticleTexture]);
             UpdateScreen();
         }
 
         private void ShowNextMenu() 
         {
-            //currentMenu = (currentMenu + 1) % 2;
-            if (reticleTextScreen == null && zeroTextScreen == null) return;
-            currentMenu++;
+            if (ReticleTextScreen == null && ZeroTextScreen == null) return;
+            _currentMenu++;
 
-            if (currentMenu > 2) currentMenu = 0;
+            if (_currentMenu > 2) _currentMenu = 0;
 
-            switch (currentMenu)
+            switch (_currentMenu)
             {
                 case 0:
-                    if (reticleTextScreen == null)
+                    if (ReticleTextScreen == null)
                     {
                         ShowNextMenu();
                         return;
                     }
                     break;
                 case 1:
-                    if (zeroTextScreen == null)
+                    if (ZeroTextScreen == null)
                     {
                         ShowNextMenu();
                         return;
                     }
                     break;
                 default:
-                    currentMenu = 0;
+                    _currentMenu = 0;
                     break;
             }
             UpdateScreen();
@@ -202,153 +193,87 @@ namespace OpenScripts2
 
         private void UpdateScreen()
         {
-            if (reticleTextScreen != null && currentMenu == 0)
+            if (ReticleTextScreen != null && _currentMenu == 0)
             {
-                if (textFrame != null) textFrame.localPosition = reticleTextScreen.transform.localPosition;
-                reticleTextScreen.text = reticleTestPrefix + reticleText[currentTexture];
+                if (TextFrame != null) TextFrame.localPosition = ReticleTextScreen.transform.localPosition;
+                ReticleTextScreen.text = ReticleTestPrefix + ReticleText[CurrentReticleTexture];
             }
-            else if (reticleTextScreen == null)
+            else if (ReticleTextScreen == null)
             {
-                currentMenu = 1;
+                _currentMenu = 1;
             }
 
-            if (zeroTextScreen != null && currentMenu == 1)
+            if (ZeroTextScreen != null && _currentMenu == 1)
             {
-                if (textFrame != null) textFrame.localPosition = zeroTextScreen.transform.localPosition;
-                zeroTextScreen.text = zeroTextPrefix + zeroDistances[currentZeroDistance] + "m";
+                if (TextFrame != null) TextFrame.localPosition = ZeroTextScreen.transform.localPosition;
+                ZeroTextScreen.text = ZeroTextPrefix + ZeroDistances[CurrentZeroDistance] + "m";
             }
             
         }
 
         private void StartScreen()
         {
-            if (reticleTextScreen != null) reticleTextScreen.text = reticleTestPrefix + reticleText[currentTexture];
-            if (zeroTextScreen != null) zeroTextScreen.text = zeroTextPrefix + zeroDistances[currentZeroDistance] + "m";
+            if (ReticleTextScreen != null) ReticleTextScreen.text = ReticleTestPrefix + ReticleText[CurrentReticleTexture];
+            if (ZeroTextScreen != null) ZeroTextScreen.text = ZeroTextPrefix + ZeroDistances[CurrentZeroDistance] + "m";
         }
         public void UseNextZeroDistance()
         {
-            if (currentZeroDistance < zeroDistances.Length - 1) currentZeroDistance++;
-            reticle.material.SetFloat(nameOfDistanceVariable, zeroDistances[currentZeroDistance]);
-            //lens.material.SetFloat(nameOfDotSizeVariable, dotSizeAt100mDistance * (zeroDistances[currentZeroDistance] / 100));
+            if (CurrentZeroDistance < ZeroDistances.Length - 1) CurrentZeroDistance++;
+            Reticle.material.SetFloat(_nameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
             UpdateScreen();
         }
 
         public void UsePreviousZeroDistance()
         {
-            if (currentZeroDistance > 0) currentZeroDistance--;
-            reticle.material.SetFloat(nameOfDistanceVariable, zeroDistances[currentZeroDistance]);
-            //lens.material.SetFloat(nameOfDotSizeVariable, dotSizeAt100mDistance * (zeroDistances[currentZeroDistance] / 100));
+            if (CurrentZeroDistance > 0) CurrentZeroDistance--;
+            Reticle.material.SetFloat(_nameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
             UpdateScreen();
         }
 
         private void CheckReticleVisibility()
         {
             bool scopeHit = false;
-            /*
-            RaycastHit raycastHit;
-            if (Physics.Linecast(GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * 0.032f, muzzlePos.position + this.transform.forward * zeroDistances[currentZeroDistance] , out raycastHit, LayerMask.NameToLayer("Environment")))
-            {
-                if (scopeColliders.Contains(raycastHit.collider))
-                {
-                    reticle.gameObject.SetActive(true);
-                    scopeHit = true;
-                }
-            }
-            if (Physics.Linecast(GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * -0.032f, muzzlePos.position + this.transform.forward * zeroDistances[currentZeroDistance], out raycastHit, LayerMask.NameToLayer("Environment")))
-            {
-                if (scopeColliders.Contains(raycastHit.collider))
-                {
-                    reticle.gameObject.SetActive(true);
-                    scopeHit = true;
-                }
-            }
-            if (!scopeHit) reticle.gameObject.SetActive(false);
 
-            */
-            if (lensCollider == null && scopeColliders.Count > 0)
+            if (LensCollider != null)
             {
-                RaycastHit[] raycastHits;
+                // Right Eye Occlusion Test
                 float distance = Vector3.Distance(this.gameObject.transform.position, GM.CurrentPlayerBody.Head.position) + 0.2f;
-                Vector3 direction = muzzlePos.position + this.transform.forward * zeroDistances[currentZeroDistance] - rightEye;
-                bool angleGood = false;
-                angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, this.transform.forward) < 45f;
-                //float distance = 1f;
-
-                //Right Eye check
-                if (angleGood)
-                {
-                    raycastHits = Physics.RaycastAll(rightEye, direction, distance, LayerMask.NameToLayer("Environment"), QueryTriggerInteraction.Ignore);
-                    if (raycastHits.Length != 0)
-                        foreach (var hit in raycastHits)
-                        {
-                            if (scopeColliders.Contains(hit.collider))
-                            {
-                                reticle.gameObject.SetActive(true);
-                                scopeHit = true;
-                            }
-                        }
-                }
-                //Left Eye check
-                if (!scopeHit)
-                {
-                    angleGood = false;
-                    direction = muzzlePos.position + this.transform.forward * zeroDistances[currentZeroDistance] - leftEye;
-                    angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, this.transform.forward) < 45f;
-                    if (angleGood)
-                    {
-                        raycastHits = Physics.RaycastAll(leftEye, direction, distance, LayerMask.NameToLayer("Environment"), QueryTriggerInteraction.Ignore);
-                        if (raycastHits.Length != 0)
-                            foreach (var hit in raycastHits)
-                            {
-                                if (scopeColliders.Contains(hit.collider))
-                                {
-                                    reticle.gameObject.SetActive(true);
-                                    scopeHit = true;
-                                }
-                            }
-                    }
-                }
-
-                if (!scopeHit) reticle.gameObject.SetActive(false);
-            }
-            else if (lensCollider != null)
-            {
-                float distance = Vector3.Distance(this.gameObject.transform.position, GM.CurrentPlayerBody.Head.position) + 0.2f;
-                Vector3 direction = muzzlePos.position + this.transform.forward * zeroDistances[currentZeroDistance] - rightEye;
+                Vector3 direction = _muzzlePos.position + this.transform.forward * ZeroDistances[CurrentZeroDistance] - _rightEye;
                 bool angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, this.transform.forward) < 45f;
                 if (angleGood)
                 {
-                    Ray ray = new Ray(rightEye,direction);
+                    Ray ray = new Ray(_rightEye,direction);
                     RaycastHit hit;
-                    if (lensCollider.Raycast(ray, out hit, distance))
+                    if (LensCollider.Raycast(ray, out hit, distance))
                     {
-                        reticle.gameObject.SetActive(true);
+                        Reticle.gameObject.SetActive(true);
                         scopeHit = true;
                     }
                 }
 
                 if (!scopeHit)
                 {
-                    direction = muzzlePos.position + this.transform.forward * zeroDistances[currentZeroDistance] - leftEye;
+                    // Left Eye Occlusion Test
+                    direction = _muzzlePos.position + this.transform.forward * ZeroDistances[CurrentZeroDistance] - _leftEye;
                     angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, this.transform.forward) < 45f;
                     if (angleGood)
                     {
-                        Ray ray = new Ray(leftEye, direction);
+                        Ray ray = new Ray(_leftEye, direction);
                         RaycastHit hit;
-                        if (lensCollider.Raycast(ray, out hit, distance))
+                        if (LensCollider.Raycast(ray, out hit, distance))
                         {
-                            reticle.gameObject.SetActive(true);
+                            Reticle.gameObject.SetActive(true);
                             scopeHit = true;
                         }
                     }
                 }
 
-                if (!scopeHit) reticle.gameObject.SetActive(false);
+                if (!scopeHit) Reticle.gameObject.SetActive(false);
             }
             else
             {
-                Debug.LogWarning("No usable colliders for reticle occlusion found! If you are a modmaker, please add colliders or a lens collider, or disable occlusion culling with the checkbox!\n Disabling Occlusion culling now!");
-                disableOcclusionCulling = true;
+                OpenScripts2_BepInExPlugin.LogWarning(this, "No usable colliders for reticle occlusion found! If you are a modmaker, please add colliders or a lens collider, or disable occlusion culling with the checkbox!\n Disabling Occlusion culling now!");
+                _disableOcclusionCulling = true;
             }
         }
 
@@ -371,7 +296,7 @@ namespace OpenScripts2
         private void FVRInteractiveObject_SimpleInteraction(On.FistVR.FVRInteractiveObject.orig_SimpleInteraction orig, FVRInteractiveObject self, FVRViveHand hand)
         {
             orig(self, hand);
-            if (self == reflexSightInterface) UseNextTexture();
+            if (self == ReflexSightInterface) UseNextTexture();
         }
 #endif
     }

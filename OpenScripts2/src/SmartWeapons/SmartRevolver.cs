@@ -11,8 +11,8 @@ namespace OpenScripts2
     public class SmartRevolver : OpenScripts2_BasePlugin
 	{
         public Revolver revolver;
-		public MeshRenderer reticle;
-		public bool disableReticleWithoutTarget = true;
+		public MeshRenderer Reticle;
+		public bool DisableReticleWithoutTarget = true;
 		public float EngageRange = 15f;
 		[Range(1f,179f)]
 		public float EngageAngle = 45f;
@@ -21,10 +21,10 @@ namespace OpenScripts2
 		public LayerMask LatchingMask;
 		public LayerMask BlockingMask;
 
-		public bool doesRandomRotationWithoutTarget = true;
-		public float randomAngleMagnitude = 5f;
+		public bool DoesRandomRotationWithoutTarget = true;
+		public float RandomAngleMagnitude = 5f;
 		//constants
-		private string nameOfDistanceVariable = "_RedDotDist";
+		private string _nameOfDistanceVariable = "_RedDotDist";
 
 #if !DEBUG
 		public void Start()
@@ -63,19 +63,19 @@ namespace OpenScripts2
 					revolver.CurrentMuzzle.LookAt(target);
 					revolver.MuzzlePos.LookAt(target);
 
-                    if (reticle != null)
+                    if (Reticle != null)
                     {
-						reticle.material.SetFloat(nameOfDistanceVariable, (target - revolver.CurrentMuzzle.position).magnitude);
-						if (disableReticleWithoutTarget) reticle.gameObject.SetActive(true);
+						Reticle.material.SetFloat(_nameOfDistanceVariable, (target - revolver.CurrentMuzzle.position).magnitude);
+						if (DisableReticleWithoutTarget) Reticle.gameObject.SetActive(true);
 					}
                 }
 				else
                 {
-					if (doesRandomRotationWithoutTarget)
+					if (DoesRandomRotationWithoutTarget)
 					{
 						Vector3 randRot = new Vector3();
-						randRot.x = UnityEngine.Random.Range(-randomAngleMagnitude, randomAngleMagnitude);
-						randRot.y = UnityEngine.Random.Range(-randomAngleMagnitude, randomAngleMagnitude);
+						randRot.x = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
+						randRot.y = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
 
 						revolver.CurrentMuzzle.localEulerAngles = randRot;
 						revolver.MuzzlePos.localEulerAngles = randRot;
@@ -86,7 +86,7 @@ namespace OpenScripts2
 						revolver.MuzzlePos.localEulerAngles = new Vector3(0, 0, 0);
 					}
 
-					if (disableReticleWithoutTarget && reticle != null) reticle.gameObject.SetActive(false);
+					if (DisableReticleWithoutTarget && Reticle != null) Reticle.gameObject.SetActive(false);
 				}
             }
         }

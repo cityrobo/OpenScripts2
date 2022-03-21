@@ -17,7 +17,7 @@ namespace OpenScripts2
 		public  int BurstAmt = 1;
 		private int BurstSoFar;
 
-		private bool wasLoaded;
+		private bool _wasLoaded;
 
 
 		public void Start()
@@ -38,12 +38,12 @@ namespace OpenScripts2
 			}
 
 			//add to burst if chamber is shot
-			if(wasLoaded && !Receiver.Chamber.IsFull)
+			if(_wasLoaded && !Receiver.Chamber.IsFull)
 			{
 				BurstSoFar++;
 				// Debug.Log(BurstSoFar);
 			}
-			wasLoaded = Receiver.Chamber.IsFull;
+			_wasLoaded = Receiver.Chamber.IsFull;
 			//if burst amount hit
 			if (BurstSoFar >= BurstAmt)
 			{

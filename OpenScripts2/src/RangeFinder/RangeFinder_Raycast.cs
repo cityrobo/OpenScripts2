@@ -8,9 +8,9 @@ namespace OpenScripts2
 	public class RangeFinder_Raycast : OpenScripts2_BasePlugin
 	{
 
-		public Transform direction;
+		public Transform Direction;
 		public LayerMask layerMask;
-		public Text[] text_objects;
+		public Text[] TextObjects;
 
 		public enum ChosenScreen
 		{
@@ -24,7 +24,7 @@ namespace OpenScripts2
 		// Use this for initialization
 		void Start()
 		{
-			direction = this.gameObject.transform;
+			Direction = this.gameObject.transform;
 			//Debug.Log(layerMask);
 			chosenScreen = ChosenScreen.Up;
 		}
@@ -33,8 +33,8 @@ namespace OpenScripts2
 		{
 			for (int i = 0; i < 4; i++)
 			{
-				if (i == (int)chosenScreen) text_objects[i].gameObject.SetActive(true);
-				else text_objects[i].gameObject.SetActive(false);
+				if (i == (int)chosenScreen) TextObjects[i].gameObject.SetActive(true);
+				else TextObjects[i].gameObject.SetActive(false);
 
 			}
 		}
@@ -50,23 +50,23 @@ namespace OpenScripts2
 
 				if (distance < 10f)
 				{
-					text_objects[(int)chosenScreen].text = string.Format("{0:F3} {1}", distance, "m");
+					TextObjects[(int)chosenScreen].text = string.Format("{0:F3} {1}", distance, "m");
 				}
 				else if (distance < 100f)
 				{
-					text_objects[(int)chosenScreen].text = string.Format("{0:F2} {1}", distance, "m");
+					TextObjects[(int)chosenScreen].text = string.Format("{0:F2} {1}", distance, "m");
 				}
 				else if (distance < 1000f)
 				{
-					text_objects[(int)chosenScreen].text = string.Format("{0:F1} {1}", distance, "m");
+					TextObjects[(int)chosenScreen].text = string.Format("{0:F1} {1}", distance, "m");
 				}
-				else text_objects[(int)chosenScreen].text = string.Format("{0:F0} {1}", distance, "m");
+				else TextObjects[(int)chosenScreen].text = string.Format("{0:F0} {1}", distance, "m");
 
 			}
 			else
 			{
 				Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 1000, Color.white);
-				text_objects[(int)chosenScreen].text = "inf";
+				TextObjects[(int)chosenScreen].text = "inf";
 			}
 		}
 	}

@@ -8,7 +8,7 @@ namespace OpenScripts2
 {
     public class ManipulateBlendShape : OpenScripts2_BasePlugin
     {
-        public SkinnedMeshRenderer SkinnedMeshRenderer;
+        public SkinnedMeshRenderer skinnedMeshRenderer;
         public int BlendShapeIndex = 0;
 
 		public Transform ObservedObject;
@@ -26,7 +26,7 @@ namespace OpenScripts2
         {
             float lerp;
             lerp = Mathf.InverseLerp(ObservedObject_Start[(int)Direction], ObservedObject_End[(int)Direction], ObservedObject.localPosition[(int)Direction]);
-            if (!Mathf.Approximately(lerp, _lastLerp)) SkinnedMeshRenderer.SetBlendShapeWeight(BlendShapeIndex, lerp);
+            if (!Mathf.Approximately(lerp, _lastLerp)) skinnedMeshRenderer.SetBlendShapeWeight(BlendShapeIndex, lerp);
 
             _lastLerp = lerp;
         }

@@ -11,20 +11,19 @@ namespace OpenScripts2
 {
     public class MountedGunControls_ClosedBolt : OpenScripts2_BasePlugin
 	{
-        public wwGatlingControlHandle controlHandle;
-        public ClosedBoltWeapon closedBoltWeapon;
+        public wwGatlingControlHandle ControlHandle;
+        public ClosedBoltWeapon ClosedBoltWeapon;
 
-
-		private FVRPhysicalObject mount;
-        private bool hooked = false;
-		private FVRViveHand hand;
+		private FVRPhysicalObject _mount;
+        private bool _hooked = false;
+		private FVRViveHand _hand;
 
 
 		public void Start()
         {
 			Hook();
 
-			mount = controlHandle.BaseFrame.gameObject.GetComponent<FVRPhysicalObject>();
+			_mount = ControlHandle.BaseFrame.gameObject.GetComponent<FVRPhysicalObject>();
         }
 
 		public void OnDestroy()
@@ -33,24 +32,24 @@ namespace OpenScripts2
         }
         public void Update()
         {
-			if (hand != controlHandle.m_hand) hand = controlHandle.m_hand;
+			if (_hand != ControlHandle.m_hand) _hand = ControlHandle.m_hand;
 
-			if (hand != null && !hooked)
+			if (_hand != null && !_hooked)
             {
-				closedBoltWeapon.m_hand = hand;
-				closedBoltWeapon.m_hasTriggeredUpSinceBegin = true;
+				ClosedBoltWeapon.m_hand = _hand;
+				ClosedBoltWeapon.m_hasTriggeredUpSinceBegin = true;
 
-                hooked = true;
+                _hooked = true;
             }
-            else if (hand == null && hooked)
+            else if (_hand == null && _hooked)
             {
-				closedBoltWeapon.m_hand = hand;
-				closedBoltWeapon.m_hasTriggeredUpSinceBegin = false;
+				ClosedBoltWeapon.m_hand = _hand;
+				ClosedBoltWeapon.m_hasTriggeredUpSinceBegin = false;
 
-                hooked = false;
+                _hooked = false;
             }
 
-			if (hand != null) closedBoltWeapon.UpdateInputAndAnimate(hand);
+			if (_hand != null) ClosedBoltWeapon.UpdateInputAndAnimate(_hand);
 		}
 
         private void Hook()
@@ -72,14 +71,14 @@ namespace OpenScripts2
 
 		private void ClosedBoltWeapon_UpdateInputAndAnimate(On.FistVR.ClosedBoltWeapon.orig_UpdateInputAndAnimate orig, ClosedBoltWeapon self, FVRViveHand hand)
 		{
-			if (self == closedBoltWeapon)
+			if (self == ClosedBoltWeapon)
 			{
 				self.IsBoltReleaseButtonHeld = false;
 				self.IsBoltCatchButtonHeld = false;
 
 				if (hand != null)
 				{
-					self.m_triggerFloat = this.hand.Input.TriggerFloat;
+					self.m_triggerFloat = this._hand.Input.TriggerFloat;
 				}
 				else
 				{
@@ -96,9 +95,9 @@ namespace OpenScripts2
 					}
 					self.PlayAudioEvent(FirearmAudioEventType.TriggerReset, 1f);
 				}
-				if (this.hand.IsInStreamlinedMode)
+				if (this._hand.IsInStreamlinedMode)
 				{
-					if (this.hand.Input.BYButtonDown)
+					if (this._hand.Input.BYButtonDown)
 					{
 						if (self.Bolt.IsBoltLocked() && self.HasBoltReleaseButton)
 						{
@@ -113,17 +112,17 @@ namespace OpenScripts2
 							self.Detonate();
 						}
 					}
-					if (this.hand.Input.AXButtonDown && self.HasMagReleaseButton && (!self.EjectsMagazineOnEmpty || (self.Bolt.CurPos >= ClosedBolt.BoltPos.Locked && self.Bolt.IsHeld && !self.m_proxy.IsFull)))
+					if (this._hand.Input.AXButtonDown && self.HasMagReleaseButton && (!self.EjectsMagazineOnEmpty || (self.Bolt.CurPos >= ClosedBolt.BoltPos.Locked && self.Bolt.IsHeld && !self.m_proxy.IsFull)))
 					{
 						self.ReleaseMag();
 					}
 					if (self.UsesStickyDetonation)
 					{
-						if (this.hand.Input.BYButtonDown)
+						if (this._hand.Input.BYButtonDown)
 						{
 							self.SetAnimatedComponent(self.StickyTrigger, self.StickyRotRange.y, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
 						}
-						else if (this.hand.Input.BYButtonUp)
+						else if (this._hand.Input.BYButtonUp)
 						{
 							self.SetAnimatedComponent(self.StickyTrigger, self.StickyRotRange.x, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
 						}
@@ -131,8 +130,8 @@ namespace OpenScripts2
 				}
 				else
 				{
-					Vector2 touchpadAxes = this.hand.Input.TouchpadAxes;
-					if (this.hand.Input.TouchpadDown)
+					Vector2 touchpadAxes = this._hand.Input.TouchpadAxes;
+					if (this._hand.Input.TouchpadDown)
 					{
 						if (self.UsesStickyDetonation)
 						{
@@ -159,16 +158,16 @@ namespace OpenScripts2
 					}
 					if (self.UsesStickyDetonation)
 					{
-						if (this.hand.Input.TouchpadDown)
+						if (this._hand.Input.TouchpadDown)
 						{
 							self.SetAnimatedComponent(self.StickyTrigger, self.StickyRotRange.y, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
 						}
-						else if (this.hand.Input.TouchpadUp)
+						else if (this._hand.Input.TouchpadUp)
 						{
 							self.SetAnimatedComponent(self.StickyTrigger, self.StickyRotRange.x, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
 						}
 					}
-					if (this.hand.Input.TouchpadPressed && touchpadAxes.magnitude > 0.2f)
+					if (this._hand.Input.TouchpadPressed && touchpadAxes.magnitude > 0.2f)
 					{
 						if (Vector2.Angle(touchpadAxes, Vector2.up) <= 45f)
 						{
@@ -190,7 +189,7 @@ namespace OpenScripts2
 					{
 						if (self.Bolt.CurPos == ClosedBolt.BoltPos.Forward && self.Chamber.IsFull && !self.Chamber.IsSpent)
 						{
-							if (this.hand.Input.TriggerPressed && self.m_hasTriggerReset)
+							if (this._hand.Input.TriggerPressed && self.m_hasTriggerReset)
 							{
 								self.m_hasStickTriggerDown = true;
 								self.m_stickyChargeUp += Time.deltaTime * 0.25f * self.StickyChargeUpSpeed;
@@ -208,7 +207,7 @@ namespace OpenScripts2
 								}
 								self.m_stickyChargeUp = 0f;
 							}
-							if (self.m_hasStickTriggerDown && (this.hand.Input.TriggerUp || self.m_stickyChargeUp >= 1f))
+							if (self.m_hasStickTriggerDown && (this._hand.Input.TriggerUp || self.m_stickyChargeUp >= 1f))
 							{
 								self.m_hasStickTriggerDown = false;
 								self.DropHammer();
@@ -235,7 +234,7 @@ namespace OpenScripts2
 
 		private void FVRFireArmMagazine_Release(On.FistVR.FVRFireArmMagazine.orig_Release orig, FVRFireArmMagazine self, bool PhysicalRelease)
 		{
-			if (self.FireArm == closedBoltWeapon)
+			if (self.FireArm == ClosedBoltWeapon)
 			{
 				self.State = FVRFireArmMagazine.MagazineState.Free;
 				self.SetParentage(null);

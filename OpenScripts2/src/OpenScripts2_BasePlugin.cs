@@ -71,6 +71,11 @@ namespace OpenScripts2
                     return Vector3.zero;
             }
         }
+
+        public static Quaternion GetTargetQuaternion(float value, Axis axis)
+        {
+            return Quaternion.AngleAxis(value, GetDirVector(axis));
+        }
 #endif
     }
 }

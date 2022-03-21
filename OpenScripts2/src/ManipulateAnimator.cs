@@ -9,22 +9,15 @@ namespace OpenScripts2
     public class ManipulateAnimator : OpenScripts2_BasePlugin
     {
         public Animator animator;
-		public GameObject Observed_Object;
+		public GameObject ObservedObject;
 
-        public float wiggleroom = 0.05f;
+        public float EndstopWiggleroom = 0.05f;
 
-        public Vector3 start;
-        public Vector3 end;
+        public Vector3 Start;
+        public Vector3 End;
 
-        public enum dirtype
-        {
-            x = 0,
-            y = 1,
-            z = 2
-        }
-
-        public dirtype direction;
-        public bool isRotation;
+        public Axis Direction;
+        public bool IsRotation;
 
 
         public void Awake()
@@ -33,8 +26,8 @@ namespace OpenScripts2
         public void Update()
         {
             float pos;
-            if (!isRotation) pos = Mathf.InverseLerp(start[(int)direction], end[(int)direction], Observed_Object.transform.localPosition[(int)direction]);
-            else pos = Mathf.InverseLerp(start[(int)direction], end[(int)direction], Observed_Object.transform.localEulerAngles[(int)direction]);
+            if (!IsRotation) pos = Mathf.InverseLerp(Start[(int)Direction], End[(int)Direction], ObservedObject.transform.localPosition[(int)Direction]);
+            else pos = Mathf.InverseLerp(Start[(int)Direction], End[(int)Direction], ObservedObject.transform.localEulerAngles[(int)Direction]);
             animator.Play("animation", 0, pos);
         }
     }

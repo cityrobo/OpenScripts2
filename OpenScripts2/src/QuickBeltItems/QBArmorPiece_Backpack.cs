@@ -11,15 +11,16 @@ namespace OpenScripts2
     public class QBArmorPiece_Backpack : PlayerBackPack
     {
 		[Header("QBArmorPiece_Backpack Config")]
-		public string layerName = "Default";
-		public string attachmentLayerName = "Default";
+		public string MainItemLayerNameInsideQBSlot = "Default";
+		public string MainItemLayerNameOutsideQBSlot = "Default";
 
-		public string layerOutsideQBSlot = "Default";
+		public string SubAttachmentLayerNameInsideQBSlot = "Default";
+		public string SubAttachmentLayerNameOutsideQBSlot = "Default";
 
-		public GameObject disabledInQB;
-		public GameObject enabledInQB;
+		public GameObject IsEnabledInQB;
+		public GameObject IsDisabledInQB;
 
-		private int attachmentCountOnQBSlotEnter;
+		private int _attachmentCountOnQBSlotEnter;
 #if !(UNITY_EDITOR || UNITY_5)
 		public override void SetQuickBeltSlot(FVRQuickBeltSlot slot)
 		{
@@ -31,11 +32,11 @@ namespace OpenScripts2
 					{
 						if (this.AttachmentsList[i] != null)
 						{
-							this.AttachmentsList[i].SetAllCollidersToLayer(false, attachmentLayerName);
+							this.AttachmentsList[i].SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
 						}
 					}
 
-					attachmentCountOnQBSlotEnter = AttachmentsList.Count;
+					_attachmentCountOnQBSlotEnter = AttachmentsList.Count;
 				}
 			}
 			else if (this.AttachmentsList.Count > 0)
@@ -44,10 +45,10 @@ namespace OpenScripts2
 				{
 					if (this.AttachmentsList[j] != null)
 					{
-						this.AttachmentsList[j].SetAllCollidersToLayer(false, layerOutsideQBSlot);
+						this.AttachmentsList[j].SetAllCollidersToLayer(false, SubAttachmentLayerNameOutsideQBSlot);
 					}
 				}
-				attachmentCountOnQBSlotEnter = AttachmentsList.Count;
+				_attachmentCountOnQBSlotEnter = AttachmentsList.Count;
 			}
 			if (this.m_quickbeltSlot != null && slot != this.m_quickbeltSlot)
 			{
@@ -57,33 +58,33 @@ namespace OpenScripts2
 			}
 			if (slot != null && !base.IsHeld)
 			{
-				base.SetAllCollidersToLayer(false, layerName);
+				base.SetAllCollidersToLayer(false, MainItemLayerName);
 				slot.HeldObject = this;
 				slot.CurObject = this;
 				slot.IsKeepingTrackWithHead = this.DoesQuickbeltSlotFollowHead;
 
-				if (disabledInQB != null)
+				if (IsEnabledInQB != null)
 				{
-					disabledInQB.SetActive(false);
+					IsEnabledInQB.SetActive(false);
 				}
 
-				if (enabledInQB != null)
+				if (IsDisabledInQB != null)
 				{
-					enabledInQB.SetActive(true);
+					IsDisabledInQB.SetActive(true);
 				}
 			}
 			else
 			{
-				base.SetAllCollidersToLayer(false, layerOutsideQBSlot);
+				base.SetAllCollidersToLayer(false, MainItemLayerNameOutsideQBSlot);
 
-				if (disabledInQB != null)
+				if (IsEnabledInQB != null)
 				{
-					disabledInQB.SetActive(true);
+					IsEnabledInQB.SetActive(true);
 				}
 
-				if (enabledInQB != null)
+				if (IsDisabledInQB != null)
 				{
-					enabledInQB.SetActive(false);
+					IsDisabledInQB.SetActive(false);
 				}
 			}
 			this.m_quickbeltSlot = slot;
@@ -95,13 +96,13 @@ namespace OpenScripts2
 
             if (m_quickbeltSlot != null)
             {
-				if (this.AttachmentsList.Count > attachmentCountOnQBSlotEnter)
+				if (this.AttachmentsList.Count > _attachmentCountOnQBSlotEnter)
 				{
-					if (this.AttachmentsList[attachmentCountOnQBSlotEnter] != null)
+					if (this.AttachmentsList[_attachmentCountOnQBSlotEnter] != null)
 					{
-					this.AttachmentsList[attachmentCountOnQBSlotEnter].SetAllCollidersToLayer(false, attachmentLayerName);
+					this.AttachmentsList[_attachmentCountOnQBSlotEnter].SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
 					}
-					attachmentCountOnQBSlotEnter = this.AttachmentsList.Count;
+					_attachmentCountOnQBSlotEnter = this.AttachmentsList.Count;
 				}
 			}
         }

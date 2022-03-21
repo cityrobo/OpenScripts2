@@ -10,12 +10,12 @@ namespace OpenScripts2
 {
     class RangeFinder_Attachment : OpenScripts2_BasePlugin
     {
-        public FVRFireArmAttachmentInterface attachmentInterface;
-        public RangeFinder_Raycast raycast;
+        public FVRFireArmAttachmentInterface AttachmentInterface;
+        public RangeFinder_Raycast RangefinderRaycast;
 
         public void Update()
         {
-            FVRViveHand hand = attachmentInterface.m_hand;
+            FVRViveHand hand = AttachmentInterface.m_hand;
             if (hand != null)
             {
                 if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) RotateScreenLeft();
@@ -25,54 +25,54 @@ namespace OpenScripts2
 
         public void RotateScreenLeft()
         {
-            switch (raycast.chosenScreen)
+            switch (RangefinderRaycast.chosenScreen)
             {
                 case RangeFinder_Raycast.ChosenScreen.Up:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Left;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Left;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
                 case RangeFinder_Raycast.ChosenScreen.Left:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Down;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Down;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
                 case RangeFinder_Raycast.ChosenScreen.Down:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Right;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Right;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
                 case RangeFinder_Raycast.ChosenScreen.Right:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Up;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Up;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
                 default:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Up;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Up;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
             }
         }
 
         public void RotateScreenRight()
         {
-            switch (raycast.chosenScreen)
+            switch (RangefinderRaycast.chosenScreen)
             {
                 case RangeFinder_Raycast.ChosenScreen.Up:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Right;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Right;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
                 case RangeFinder_Raycast.ChosenScreen.Left:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Up;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Up;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
                 case RangeFinder_Raycast.ChosenScreen.Down:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Left;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Left;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
                 case RangeFinder_Raycast.ChosenScreen.Right:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Down;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Down;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
                 default:
-                    raycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Up;
-                    raycast.ChangeActiveScreen();
+                    RangefinderRaycast.chosenScreen = RangeFinder_Raycast.ChosenScreen.Up;
+                    RangefinderRaycast.ChangeActiveScreen();
                     break;
             }
         }

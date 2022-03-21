@@ -11,20 +11,20 @@ namespace OpenScripts2
 {
     public class MountedGunControls_OpenBolt : OpenScripts2_BasePlugin
 	{
-        public wwGatlingControlHandle controlHandle;
-        public OpenBoltReceiver openBoltWeapon;
+        public wwGatlingControlHandle ControlHandle;
+        public OpenBoltReceiver OpenBoltWeapon;
 
 
-		private FVRPhysicalObject mount;
-        private bool hooked = false;
-		private FVRViveHand hand = null;
+		private FVRPhysicalObject _mount;
+        private bool _hooked = false;
+		private FVRViveHand _hand = null;
 
 
 		public void Start()
         {
 			Hook();
 
-			mount = controlHandle.BaseFrame.gameObject.GetComponent<FVRPhysicalObject>();
+			_mount = ControlHandle.BaseFrame.gameObject.GetComponent<FVRPhysicalObject>();
         }
 
 		public void OnDestroy()
@@ -33,21 +33,21 @@ namespace OpenScripts2
         }
         public void Update()
         {
-			if(hand != controlHandle.m_hand) hand = controlHandle.m_hand;
+			if(_hand != ControlHandle.m_hand) _hand = ControlHandle.m_hand;
 
-			if (hand != null && !hooked)
+			if (_hand != null && !_hooked)
             {
-				openBoltWeapon.m_hand = hand;
-				openBoltWeapon.m_hasTriggeredUpSinceBegin = true;
+				OpenBoltWeapon.m_hand = _hand;
+				OpenBoltWeapon.m_hasTriggeredUpSinceBegin = true;
 
-                hooked = true;
+                _hooked = true;
             }
-            else if (hand == null && hooked)
+            else if (_hand == null && _hooked)
             {
-				openBoltWeapon.m_hand = hand;
-				openBoltWeapon.m_hasTriggeredUpSinceBegin = false;
+				OpenBoltWeapon.m_hand = _hand;
+				OpenBoltWeapon.m_hasTriggeredUpSinceBegin = false;
 
-                hooked = false;
+                _hooked = false;
             }
         }
 
@@ -69,13 +69,13 @@ namespace OpenScripts2
 #if !DEBUG
         private void OpenBoltReceiver_UpdateControls(On.FistVR.OpenBoltReceiver.orig_UpdateControls orig, OpenBoltReceiver self)
         {
-			if (self == openBoltWeapon)
+			if (self == OpenBoltWeapon)
 			{
-				if (controlHandle.IsHeld)
+				if (ControlHandle.IsHeld)
 				{
 					if (self.HasTriggerButton && self.m_hasTriggeredUpSinceBegin && !self.IsAltHeld && self.FireSelector_Modes[self.m_fireSelectorMode].ModeType != OpenBoltReceiver.FireSelectorModeType.Safe)
 					{
-						self.m_triggerFloat = controlHandle.m_hand.Input.TriggerFloat;
+						self.m_triggerFloat = ControlHandle.m_hand.Input.TriggerFloat;
 					}
 					else
 					{
@@ -105,24 +105,24 @@ namespace OpenScripts2
 					}
 					if (!self.IsAltHeld)
 					{
-						if (controlHandle.m_hand.IsInStreamlinedMode)
+						if (ControlHandle.m_hand.IsInStreamlinedMode)
 						{
-							if (controlHandle.m_hand.Input.BYButtonDown && self.HasFireSelectorButton)
+							if (ControlHandle.m_hand.Input.BYButtonDown && self.HasFireSelectorButton)
 							{
 								self.ToggleFireSelector();
 							}
-							if (controlHandle.m_hand.Input.AXButtonDown && self.HasMagReleaseButton)
+							if (ControlHandle.m_hand.Input.AXButtonDown && self.HasMagReleaseButton)
 							{
 								self.EjectMag();
 							}
 						}
-						else if (controlHandle.m_hand.Input.TouchpadDown && controlHandle.m_hand.Input.TouchpadAxes.magnitude > 0.1f)
+						else if (ControlHandle.m_hand.Input.TouchpadDown && ControlHandle.m_hand.Input.TouchpadAxes.magnitude > 0.1f)
 						{
-							if (self.HasFireSelectorButton && Vector2.Angle(controlHandle.m_hand.Input.TouchpadAxes, Vector2.left) <= 45f)
+							if (self.HasFireSelectorButton && Vector2.Angle(ControlHandle.m_hand.Input.TouchpadAxes, Vector2.left) <= 45f)
 							{
 								self.ToggleFireSelector();
 							}
-							else if (self.HasMagReleaseButton && Vector2.Angle(controlHandle.m_hand.Input.TouchpadAxes, Vector2.down) <= 45f)
+							else if (self.HasMagReleaseButton && Vector2.Angle(ControlHandle.m_hand.Input.TouchpadAxes, Vector2.down) <= 45f)
 							{
 								self.EjectMag();
 							}
@@ -141,7 +141,7 @@ namespace OpenScripts2
 
 		private void FVRFireArmMagazine_Release(On.FistVR.FVRFireArmMagazine.orig_Release orig, FVRFireArmMagazine self, bool PhysicalRelease)
 		{
-			if (self.FireArm == openBoltWeapon)
+			if (self.FireArm == OpenBoltWeapon)
 			{
 				self.State = FVRFireArmMagazine.MagazineState.Free;
 				self.SetParentage(null);
