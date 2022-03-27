@@ -7,9 +7,9 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Cityrobo
+namespace OpenScripts2
 {
-    public class ForcedBurst : MonoBehaviour
+    public class ForcedBurst : OpenScripts2_BasePlugin
     {
         public FVRFireArm FireArm;
         public float CooldownPeriod = 0.25f;
@@ -20,6 +20,7 @@ namespace Cityrobo
         private int _burstAmount = 0;
         private bool _isCoolingDown = false;
         private bool _shouldCoolDown = false;
+
 #if !DEBUG
         void Awake()
         {
@@ -35,7 +36,7 @@ namespace Cityrobo
                         _isHooked = true;
                         break;
                     default:
-                        Debug.LogWarning("ForcedBurst: Firearm type not supported!");
+                        this.LogWarning("Firearm type not supported!");
                         break;
                 }
         }
@@ -69,7 +70,6 @@ namespace Cityrobo
             On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
             On.FistVR.ClosedBoltWeapon.FVRUpdate += ClosedBoltWeapon_FVRUpdate;
         }
-
         private void ClosedBoltWeapon_FVRUpdate(On.FistVR.ClosedBoltWeapon.orig_FVRUpdate orig, ClosedBoltWeapon self)
         {
             orig(self);
@@ -115,7 +115,6 @@ namespace Cityrobo
                 }
             }
         }
-
         IEnumerator Cooldown()
         {
             _isCoolingDown = true;
@@ -135,7 +134,6 @@ namespace Cityrobo
             On.FistVR.Handgun.ReleaseSeer += Handgun_ReleaseSeer;
             On.FistVR.Handgun.FVRUpdate += Handgun_FVRUpdate;
         }
-
         private void Handgun_FVRUpdate(On.FistVR.Handgun.orig_FVRUpdate orig, Handgun self)
         {
             orig(self);

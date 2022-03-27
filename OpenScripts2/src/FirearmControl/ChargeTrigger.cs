@@ -7,9 +7,9 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Cityrobo
+namespace OpenScripts2
 {
-    public class ChargeTrigger : MonoBehaviour
+    public class ChargeTrigger : OpenScripts2_BasePlugin
     {
         public FVRFireArm FireArm;
         [Tooltip("Charge time in seconds")]
@@ -59,7 +59,7 @@ namespace Cityrobo
                         _isHooked = true;
                         break;
                     default:
-                        Debug.LogWarning("ChargeTrigger: Firearm type not supported!");
+                        this.LogWarning("Firearm type not supported!");
                         break;
                 }
         }

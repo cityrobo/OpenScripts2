@@ -7,9 +7,9 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Cityrobo
+namespace OpenScripts2
 {
-    public class AutomaticStripperClip : MonoBehaviour
+    public class AutomaticStripperClip : OpenScripts2_BasePlugin
     {
         public FVRFireArmClip Clip;
         [Tooltip("Delay in Seconds. If equal to 0, all rounds will be loaded at the same time.")]
