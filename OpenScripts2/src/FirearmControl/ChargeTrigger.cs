@@ -24,7 +24,7 @@ namespace Cityrobo
         private float _timeCharged = 0f;
         private bool _isCharging = false;
         private bool _isAutomaticFire = false;
-#if !(DEBUG || MEATKIT)
+#if !DEBUG
         void Awake()
         {
             if (!_isHooked)

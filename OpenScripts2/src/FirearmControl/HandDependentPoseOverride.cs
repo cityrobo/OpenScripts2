@@ -17,7 +17,7 @@ namespace OpenScripts2
 
         private bool _hasPoseOverride_Touch = false;
 
-#if !(UNITY_EDITOR || UNITY_5 || MEATKIT || DEBUG)
+#if !(UNITY_EDITOR || UNITY_5 || DEBUG || DEBUG)
 
         public void Start()
         {
@@ -60,7 +60,7 @@ namespace OpenScripts2
         }
 #endif
 
-#if MEATKIT && !DEBUG
+#if DEBUG && !DEBUG
         void Update()
         {
             FVRViveHand hand = physicalObject.m_hand;

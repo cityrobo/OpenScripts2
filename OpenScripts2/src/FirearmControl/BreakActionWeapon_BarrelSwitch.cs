@@ -158,7 +158,7 @@ namespace OpenScripts2
 
         public void Unhook()
         {
-#if !MEATKIT
+#if !DEBUG
             On.FistVR.BreakActionWeapon.DropHammer -= BreakActionWeapon_DropHammer;
             On.FistVR.BreakActionWeapon.UpdateInputAndAnimate -= BreakActionWeapon_UpdateInputAndAnimate;
 #endif
@@ -166,12 +166,12 @@ namespace OpenScripts2
 
         public void Hook()
         {
-#if !MEATKIT
+#if !DEBUG
             On.FistVR.BreakActionWeapon.DropHammer += BreakActionWeapon_DropHammer;
             On.FistVR.BreakActionWeapon.UpdateInputAndAnimate += BreakActionWeapon_UpdateInputAndAnimate;
 #endif
         }
-#if !MEATKIT
+#if !DEBUG
         private void BreakActionWeapon_UpdateInputAndAnimate(On.FistVR.BreakActionWeapon.orig_UpdateInputAndAnimate orig, BreakActionWeapon self, FVRViveHand hand)
         {
             orig(self, hand);

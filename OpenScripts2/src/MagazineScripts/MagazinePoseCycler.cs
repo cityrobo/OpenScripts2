@@ -21,7 +21,7 @@ namespace OpenScripts2
 
         private bool _offsetCalculated = false;
 
-#if!(DEBUG || MEATKIT)
+#if!DEBUG
         public void Awake()
         {
             AlternatePoseOverrides.Add(Transform.Instantiate(Magazine.PoseOverride));

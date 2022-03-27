@@ -279,20 +279,20 @@ namespace OpenScripts2
 
         private void Unhook()
         {
-#if !(DEBUG || MEATKIT)
+#if !DEBUG
             On.FistVR.FVRInteractiveObject.SimpleInteraction -= FVRInteractiveObject_SimpleInteraction;
 #endif
         }
 
         private void Hook()
         {
-#if !(DEBUG || MEATKIT)
+#if !DEBUG
             On.FistVR.FVRInteractiveObject.SimpleInteraction += FVRInteractiveObject_SimpleInteraction;
 #endif
         }
 
 
-#if !(DEBUG || MEATKIT)
+#if !DEBUG
         private void FVRInteractiveObject_SimpleInteraction(On.FistVR.FVRInteractiveObject.orig_SimpleInteraction orig, FVRInteractiveObject self, FVRViveHand hand)
         {
             orig(self, hand);

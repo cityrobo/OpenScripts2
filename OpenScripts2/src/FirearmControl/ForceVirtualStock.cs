@@ -11,7 +11,7 @@ namespace OpenScripts2
     {
 		public Transform StockPos;
 
-#if !MEATKIT
+#if !DEBUG
 		public void Awake()
         {
             On.FistVR.FVRPhysicalObject.HasStockPos += FVRPhysicalObject_HasStockPos;

@@ -52,7 +52,7 @@ namespace OpenScripts2
         private ActiveMagazine _activeMagazine = ActiveMagazine.primary;
         private AttachedMagazine _attachedMagazine = AttachedMagazine.none;
 
-#if !(DEBUG || MEATKIT)
+#if !DEBUG
         public void Start()
         {
             if (PrimaryMagazine.State == FVRFireArmMagazine.MagazineState.Locked)

@@ -87,7 +87,7 @@ namespace OpenScripts2
 
         private void Unhook()
         {
-#if !MEATKIT
+#if !DEBUG
             On.FistVR.SingleActionRevolver.Fire -= SingleActionRevolver_Fire;
             //On.FistVR.SingleActionRevolver.EjectPrevCylinder -= SingleActionRevolver_EjectPrevCylinder;
             On.FistVR.SingleActionRevolver.UpdateCylinderRot -= SingleActionRevolver_UpdateCylinderRot;
@@ -97,14 +97,14 @@ namespace OpenScripts2
 
         private void Hook()
         {
-#if !MEATKIT
+#if !DEBUG
             On.FistVR.SingleActionRevolver.Fire += SingleActionRevolver_Fire;
             //On.FistVR.SingleActionRevolver.EjectPrevCylinder += SingleActionRevolver_EjectPrevCylinder;
             On.FistVR.SingleActionRevolver.UpdateCylinderRot += SingleActionRevolver_UpdateCylinderRot;
             On.FistVR.SingleActionRevolver.AdvanceCylinder += SingleActionRevolver_AdvanceCylinder;
 #endif
         }
-#if !MEATKIT
+#if !DEBUG
         private void SingleActionRevolver_AdvanceCylinder(On.FistVR.SingleActionRevolver.orig_AdvanceCylinder orig, SingleActionRevolver self)
         {
             if (self == this)

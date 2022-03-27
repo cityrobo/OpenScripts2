@@ -20,7 +20,7 @@ namespace Cityrobo
         private int _burstAmount = 0;
         private bool _isCoolingDown = false;
         private bool _shouldCoolDown = false;
-#if !(DEBUG || MEATKIT)
+#if !DEBUG
         void Awake()
         {
             if (!_isHooked)

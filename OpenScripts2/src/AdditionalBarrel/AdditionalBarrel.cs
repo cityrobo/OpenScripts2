@@ -13,7 +13,7 @@ namespace OpenScripts2
         public Transform MuzzlePos;
 
         public bool UsesAdditionalRound;
-#if !MEATKIT
+#if !DEBUG
         public void Start()
         {
             Hook();

@@ -12,7 +12,7 @@ namespace OpenScripts2
     {
         public FVRFireArmAttachmentMount Mount;
 
-#if!MEATKIT
+#if!DEBUG
         public void Awake()
         {
             Mount.ParentToThis = true;

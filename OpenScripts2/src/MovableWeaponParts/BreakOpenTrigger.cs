@@ -196,7 +196,7 @@ namespace OpenScripts2
 
 		void Unhook()
 		{
-#if !MEATKIT
+#if !DEBUG
 			switch (PhysicalObject)
 			{
 				case ClosedBoltWeapon w:
@@ -218,7 +218,7 @@ namespace OpenScripts2
 		}
 		void Hook()
 		{
-#if !MEATKIT
+#if !DEBUG
 			switch (PhysicalObject)
             {
 				case ClosedBoltWeapon w:
@@ -238,7 +238,7 @@ namespace OpenScripts2
             }
 #endif
 		}
-#if !MEATKIT
+#if !DEBUG
 		private void TubeFedShotgun_ReleaseHammer(On.FistVR.TubeFedShotgun.orig_ReleaseHammer orig, TubeFedShotgun self)
         {
 			if (self == PhysicalObject)

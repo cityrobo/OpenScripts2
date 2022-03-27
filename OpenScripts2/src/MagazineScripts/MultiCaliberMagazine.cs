@@ -46,7 +46,7 @@ namespace OpenScripts2
 
         //private CaliberDefinition originalCaliberDefinition;
 
-        [Header("MeatKit required stuff. Use ContextMenu to populate.")]
+        [Header("DEBUG required stuff. Use ContextMenu to populate.")]
         [SearchableEnum]
         public FireArmRoundType[] RoundTypes;
         public int[] Capacities;
@@ -60,7 +60,7 @@ namespace OpenScripts2
         public FVRFirearmAudioSet[] ReplacementFiringSoundss;
         public FVRObject[] ObjectWrappers;
 
-        public bool IsMeatKit = false;
+        public bool IsDEBUG = false;
 
         private FVRFireArm _fireArm = null;
         private List<CaliberDefinition> _caliberDefinitionsList;
@@ -72,8 +72,8 @@ namespace OpenScripts2
 
         private bool _isDebug = true;
 
-        [ContextMenu("Populate MeatKit Lists")]
-        public void PopulateMeatKitLists()
+        [ContextMenu("Populate DEBUG Lists")]
+        public void PopulateDEBUGLists()
         {
             int definitionCount = CaliberDefinitions.Length;
 
@@ -114,7 +114,7 @@ namespace OpenScripts2
                 }
             }
 
-            IsMeatKit = true;
+            IsDEBUG = true;
         }
 
 #if!(UNITY_EDITOR || UNITY_5)
@@ -125,8 +125,8 @@ namespace OpenScripts2
 
         public void Start()
         {
-            if (!IsMeatKit) _caliberDefinitionsList = new List<CaliberDefinition>(CaliberDefinitions);
-            else _caliberDefinitionsList = CreateListFromMeatKitDefines();
+            if (!IsDEBUG) _caliberDefinitionsList = new List<CaliberDefinition>(CaliberDefinitions);
+            else _caliberDefinitionsList = CreateListFromDEBUGDefines();
 
             PrepareCaliberDefinitions();
             if (!AlwaysShowText && TextRoot != null) TextRoot.SetActive(false);
@@ -274,7 +274,7 @@ namespace OpenScripts2
 
         public void Unhook()
         {
-#if !(MEATKIT)
+#if !(DEBUG)
             On.FistVR.FVRFireArmRound.OnTriggerEnter -= FVRFireArmRound_OnTriggerEnter;
             //On.FistVR.FVRFireArmMagazine.ReloadMagWithList -= FVRFireArmMagazine_ReloadMagWithList;
 
@@ -287,7 +287,7 @@ namespace OpenScripts2
 
         public void Hook()
         {
-#if !(MEATKIT)
+#if !(DEBUG)
             On.FistVR.FVRFireArmRound.OnTriggerEnter += FVRFireArmRound_OnTriggerEnter;
             //On.FistVR.FVRFireArmMagazine.ReloadMagWithList += FVRFireArmMagazine_ReloadMagWithList;
 
@@ -310,7 +310,7 @@ namespace OpenScripts2
             orig(self, list);
         }
         */
-#if !(MEATKIT)
+#if !(DEBUG)
         private void FVRFireArmReloadTriggerMag_OnTriggerEnter(On.FistVR.FVRFireArmReloadTriggerMag.orig_OnTriggerEnter orig, FVRFireArmReloadTriggerMag self, Collider collider)
         {
             if (this.Magazine == self.Magazine)
@@ -408,7 +408,7 @@ namespace OpenScripts2
             }
         }
 
-        List<CaliberDefinition> CreateListFromMeatKitDefines()
+        List<CaliberDefinition> CreateListFromDEBUGDefines()
         {
             List<CaliberDefinition> caliberDefinitions = new List<CaliberDefinition>();
             for (int i = 0; i < RoundTypes.Length; i++)

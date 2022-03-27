@@ -1,4 +1,4 @@
-#if !(DEBUG || MEATKIT)
+#if !DEBUG
 using System;
 using System.Collections.Generic;
 using System.Linq;

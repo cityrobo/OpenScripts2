@@ -8,14 +8,11 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		MeatKit|Any CPU = MeatKit|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{DB04F669-7223-4552-9745-C06832A51DB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DB04F669-7223-4552-9745-C06832A51DB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DB04F669-7223-4552-9745-C06832A51DB2}.MeatKit|Any CPU.ActiveCfg = MeatKit|Any CPU
-		{DB04F669-7223-4552-9745-C06832A51DB2}.MeatKit|Any CPU.Build.0 = MeatKit|Any CPU
 		{DB04F669-7223-4552-9745-C06832A51DB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB04F669-7223-4552-9745-C06832A51DB2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
