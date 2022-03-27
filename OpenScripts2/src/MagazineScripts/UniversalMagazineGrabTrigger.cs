@@ -7,7 +7,6 @@ namespace OpenScripts2
 	{
 		public FVRFireArm FireArm;
 
-#if !DEBUG
 		public override bool IsInteractable()
 		{
 			return !(this.FireArm.Magazine == null);
@@ -39,5 +38,4 @@ namespace OpenScripts2
 			}
 		}
 	}
-#endif
 }

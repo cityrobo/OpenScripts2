@@ -17,7 +17,7 @@ namespace OpenScripts2
 
         private bool _hasPoseOverride_Touch = false;
 
-#if !(UNITY_EDITOR || UNITY_5 || DEBUG || DEBUG)
+#if !DEBUG
 
         public void Start()
         {
@@ -59,25 +59,22 @@ namespace OpenScripts2
             orig(self, hand);
         }
 #endif
-
-#if DEBUG && !DEBUG
-        void Update()
-        {
-            FVRViveHand hand = physicalObject.m_hand;
-            if (hand != null)
-            {
-                if (!hand.IsThisTheRightHand)
-                {
-                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && hasPoseOverride_Touch) physicalObject.PoseOverride = leftPoseOverride_Touch;
-                    else physicalObject.PoseOverride = leftPoseOverride;
-                }
-                else
-                {
-                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && hasPoseOverride_Touch) physicalObject.PoseOverride = rightPoseOverride_Touch;
-                    else physicalObject.PoseOverride = rightPoseOverride;
-                }
-            }
-        }
-#endif
+        //void Update()
+        //{
+        //    FVRViveHand hand = PhysicalObject.m_hand;
+        //    if (hand != null)
+        //    {
+        //        if (!hand.IsThisTheRightHand)
+        //        {
+        //            if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && _hasPoseOverride_Touch) PhysicalObject.PoseOverride = LeftPoseOverride_Touch;
+        //            else PhysicalObject.PoseOverride = LeftPoseOverride;
+        //        }
+        //        else
+        //        {
+        //            if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && _hasPoseOverride_Touch) PhysicalObject.PoseOverride = RightPoseOverride_Touch;
+        //            else PhysicalObject.PoseOverride = RightPoseOverride;
+        //        }
+        //    }
+        //}
     }
 }

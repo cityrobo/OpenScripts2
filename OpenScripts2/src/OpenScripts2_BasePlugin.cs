@@ -23,7 +23,6 @@ namespace OpenScripts2
             Rotation,
             Scale
         }
-#if !DEBUG
 
         public static float GetFloatFromAxis(Vector3 vector, Axis axis) { return vector[(int)axis]; }
 
@@ -104,6 +103,5 @@ namespace OpenScripts2
         {
             return Quaternion.AngleAxis(value, GetDirVector(axis));
         }
-#endif
     }
 }

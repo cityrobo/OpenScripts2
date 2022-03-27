@@ -184,8 +184,13 @@
   <ItemGroup>
     <Folder Include="bin\" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="MeatKitDLL\OpenScripts2.dll" />
+    <Content Include="OpenScripts2.dll" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName) == Release copy $(TargetPath) $(ProjectDir)$(TargetName).dll</PostBuildEvent>
+    <PostBuildEvent>if $(ConfigurationName) == Release copy $(TargetPath) $(ProjectDir)$(TargetName).dll
+if $(ConfigurationName) == Debug copy $(TargetPath) $(ProjectDir)MeatKitDLL\$(TargetName).dll</PostBuildEvent>
   </PropertyGroup>
 </Project>

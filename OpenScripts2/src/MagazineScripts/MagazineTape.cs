@@ -52,7 +52,7 @@ namespace OpenScripts2
         private ActiveMagazine _activeMagazine = ActiveMagazine.primary;
         private AttachedMagazine _attachedMagazine = AttachedMagazine.none;
 
-#if !DEBUG
+
         public void Start()
         {
             if (PrimaryMagazine.State == FVRFireArmMagazine.MagazineState.Locked)
@@ -218,17 +218,23 @@ namespace OpenScripts2
 
         void Unhook()
         {
+#if !DEBUG
             //On.FistVR.FVRFireArmMagazine.ReloadMagWithType -= FVRFireArmMagazine_ReloadMagWithType;
             On.FistVR.FVRFireArmMagazine.DuplicateFromSpawnLock -= FVRFireArmMagazine_DuplicateFromSpawnLock;
+            On.FistVR.FVRWristMenu.CleanUpScene_Empties -= FVRWristMenu_CleanUpScene_Empties;
+#endif
         }
 
         void Hook()
         {
+#if !DEBUG
             //On.FistVR.FVRFireArmMagazine.ReloadMagWithType += FVRFireArmMagazine_ReloadMagWithType;
             On.FistVR.FVRFireArmMagazine.DuplicateFromSpawnLock += FVRFireArmMagazine_DuplicateFromSpawnLock;
             On.FistVR.FVRWristMenu.CleanUpScene_Empties += FVRWristMenu_CleanUpScene_Empties;
+#endif
         }
 
+#if !DEBUG
         private void FVRWristMenu_CleanUpScene_Empties(On.FistVR.FVRWristMenu.orig_CleanUpScene_Empties orig, FVRWristMenu self)
         {
             self.Aud.PlayOneShot(self.AudClip_Engage, 1f);

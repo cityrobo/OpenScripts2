@@ -117,7 +117,6 @@ namespace OpenScripts2
             IsDEBUG = true;
         }
 
-#if!(UNITY_EDITOR || UNITY_5)
         public void Awake()
         {
             Hook();
@@ -274,7 +273,7 @@ namespace OpenScripts2
 
         public void Unhook()
         {
-#if !(DEBUG)
+#if !DEBUG
             On.FistVR.FVRFireArmRound.OnTriggerEnter -= FVRFireArmRound_OnTriggerEnter;
             //On.FistVR.FVRFireArmMagazine.ReloadMagWithList -= FVRFireArmMagazine_ReloadMagWithList;
 
@@ -287,7 +286,7 @@ namespace OpenScripts2
 
         public void Hook()
         {
-#if !(DEBUG)
+#if !DEBUG
             On.FistVR.FVRFireArmRound.OnTriggerEnter += FVRFireArmRound_OnTriggerEnter;
             //On.FistVR.FVRFireArmMagazine.ReloadMagWithList += FVRFireArmMagazine_ReloadMagWithList;
 
@@ -310,7 +309,7 @@ namespace OpenScripts2
             orig(self, list);
         }
         */
-#if !(DEBUG)
+#if !DEBUG
         private void FVRFireArmReloadTriggerMag_OnTriggerEnter(On.FistVR.FVRFireArmReloadTriggerMag.orig_OnTriggerEnter orig, FVRFireArmReloadTriggerMag self, Collider collider)
         {
             if (this.Magazine == self.Magazine)
@@ -428,6 +427,5 @@ namespace OpenScripts2
 
             return caliberDefinitions;
         }
-#endif
     }
 }
