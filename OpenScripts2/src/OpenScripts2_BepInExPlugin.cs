@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace OpenScripts2
 {
-    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2: Main Plugin", "1.0.0")]
+    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "1.0.0")]
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {
         public BepInEx.Logging.ManualLogSource Logging
@@ -19,8 +19,8 @@ namespace OpenScripts2
         public static OpenScripts2_BepInExPlugin Instance;
         public OpenScripts2_BepInExPlugin()
         {
-            Logger.LogInfo("OpenScripts2 loaded!");
             Instance = this;
+            Logger.LogInfo("OpenScripts2 loaded!");
         }
 
         public static void Log(MonoBehaviour plugin, string message)

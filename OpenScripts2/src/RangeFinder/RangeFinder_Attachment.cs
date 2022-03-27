@@ -10,8 +10,8 @@ namespace OpenScripts2
 {
     class RangeFinder_Attachment : OpenScripts2_BasePlugin
     {
-        public FVRFireArmAttachmentInterface AttachmentInterface;
-        public RangeFinder_Raycast RangefinderRaycast;
+        public FVRFireArmAttachmentInterface AttachmentInterface = null;
+        public RangeFinder_Raycast RangefinderRaycast = null;
 
         public void Update()
         {

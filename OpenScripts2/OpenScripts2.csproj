@@ -103,9 +103,12 @@
     <Compile Include="src\AttachmentScripts\ItemLauncherAttachment.cs" />
     <Compile Include="src\AttachmentScripts\ItemLauncherQBSlot.cs" />
     <Compile Include="src\AttachmentScripts\RifleGrenadeAdapter.cs" />
+    <Compile Include="src\FirearmControl\ChargeTrigger.cs" />
     <Compile Include="src\FirearmControl\ForceVirtualStock.cs" />
     <Compile Include="src\CustomQuickBeltSlots\QuickBeltArea.cs" />
     <Compile Include="src\CustomQuickBeltSlots\QuickBeltAreaCollisionDetector.cs" />
+    <Compile Include="src\FirearmControl\ForcedBurst.cs" />
+    <Compile Include="src\MagazineScripts\AutomaticStripperClip.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_ClosedBolt.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_OpenBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_ClosedBolt.cs" />

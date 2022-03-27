@@ -11,8 +11,8 @@ namespace OpenScripts2
     class RangeFinder_HandHeld : OpenScripts2_BasePlugin
     {
         public FVRFireArmAttachment Attachment;
-        public GameObject LaserSystem;
-        public AudioEvent Sounds;
+        public GameObject LaserSystem = null;
+        public AudioEvent Sounds = null;
 
         private bool _isOn = false;
         private bool _lockControls = false;
