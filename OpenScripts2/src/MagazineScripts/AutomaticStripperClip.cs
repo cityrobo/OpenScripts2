@@ -17,7 +17,6 @@ namespace OpenScripts2
 
         private bool _loadingRounds = false;
 
-#if!(UNITY_EDITOR || UNITY_5)
         public void Update()
         {
             if (!_loadingRounds && Clip.FireArm != null)
@@ -54,6 +53,5 @@ namespace OpenScripts2
                 Clip.FireArm.Magazine.AddRound(rClass, false, true);
             }
         }
-#endif
     }
 }

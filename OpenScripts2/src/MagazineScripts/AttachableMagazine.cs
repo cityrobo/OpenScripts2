@@ -71,6 +71,11 @@ namespace OpenScripts2
 
 			_ReloadTriggerMag = Magazine.GetComponentInChildren<FVRFireArmReloadTriggerMag>();
 		}
+
+		void OnDestroy()
+        {
+			Unhook();
+        }
 		
         public void Update()
         {
@@ -162,11 +167,14 @@ namespace OpenScripts2
 			Magazine.SetParentage(Attachment.transform);
 		}
 
+		private void Unhook()
+        {
+			On.FistVR.FVRFireArmAttachmentSensor.OnTriggerEnter -= FVRFireArmAttachmentSensor_OnTriggerEnter;
+		}
+
 		private void Hook()
         {
-
 			On.FistVR.FVRFireArmAttachmentSensor.OnTriggerEnter += FVRFireArmAttachmentSensor_OnTriggerEnter;
-
 		}
 
 		private void FVRFireArmAttachmentSensor_OnTriggerEnter(On.FistVR.FVRFireArmAttachmentSensor.orig_OnTriggerEnter orig, FVRFireArmAttachmentSensor self, Collider collider)

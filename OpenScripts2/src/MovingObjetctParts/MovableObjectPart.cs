@@ -8,13 +8,13 @@ using UnityEngine;
 
 namespace OpenScripts2
 {
-    public class MovableWeaponPart : FVRInteractiveObject
+    public class MovableObjectPart : FVRInteractiveObject
     {
         public enum Mode
         {
             Translation,
             Rotation,
-            Tilt
+            Folding
         }
 		public Mode MovementMode;
 
@@ -83,8 +83,8 @@ namespace OpenScripts2
                 case Mode.Rotation:
 					RotationMode(hand);
                     break;
-                case Mode.Tilt:
-                    TiltMode(hand);
+                case Mode.Folding:
+                    FoldingMode(hand);
                     break;
                 default:
                     break;
@@ -160,7 +160,7 @@ namespace OpenScripts2
 
 		}
 
-		private void TiltMode(FVRViveHand hand)
+		private void FoldingMode(FVRViveHand hand)
 		{
 			Vector3 vector = base.m_handPos - this.Root.position;
 			Vector3 lhs = new Vector3();
@@ -209,13 +209,13 @@ namespace OpenScripts2
 				switch (axis)
 				{
 					case OpenScripts2_BasePlugin.Axis.X:
-						this.ObjectToMove.localEulerAngles = new Vector3(_posFloat, 0f, 0f);
+						ObjectToMove.localEulerAngles = new Vector3(_posFloat, 0f, 0f);
 						break;
 					case OpenScripts2_BasePlugin.Axis.Y:
-						this.ObjectToMove.localEulerAngles = new Vector3(0f, _posFloat, 0f);
+						ObjectToMove.localEulerAngles = new Vector3(0f, _posFloat, 0f);
 						break;
 					case OpenScripts2_BasePlugin.Axis.Z:
-						this.ObjectToMove.localEulerAngles = new Vector3(0f, 0f, _posFloat);
+						ObjectToMove.localEulerAngles = new Vector3(0f, 0f, _posFloat);
 						break;
 					default:
 						break;

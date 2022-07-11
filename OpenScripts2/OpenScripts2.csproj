@@ -23,7 +23,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -31,16 +32,6 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'MeatKit|AnyCPU'">
-    <OutputPath>bin\MeatKit\</OutputPath>
-    <DefineConstants>TRACE;MEATKIT</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -55,8 +46,9 @@
     <Reference Include="BepInEx, Version=5.4.17.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\BepInEx.BaseLib.5.4.17\lib\net35\BepInEx.dll</HintPath>
     </Reference>
-    <Reference Include="MMHOOK_Assembly-CSharp">
-      <HintPath>..\..\..\libs\MMHOOK_Assembly-CSharp.dll</HintPath>
+    <Reference Include="MMHOOK_Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\H3VR\profiles\Creating Mods Stratum\BepInEx\plugins\MMHOOK\MMHOOK_Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil, Version=0.10.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.dll</HintPath>
@@ -108,12 +100,15 @@
     <Compile Include="src\CustomQuickBeltSlots\QuickBeltArea.cs" />
     <Compile Include="src\CustomQuickBeltSlots\QuickBeltAreaCollisionDetector.cs" />
     <Compile Include="src\FirearmControl\ForcedBurst.cs" />
+    <Compile Include="src\FirearmControl\HandGunSpin.cs" />
+    <Compile Include="src\FirearmControl\RevolverFireNChambersBack.cs" />
     <Compile Include="src\MagazineScripts\AutomaticStripperClip.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_ClosedBolt.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_OpenBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_ClosedBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_OpenBolt.cs" />
-    <Compile Include="src\MovableWeaponParts\RigidbodyJiggleBones.cs" />
+    <Compile Include="src\MovingObjetctParts\PrecisionTranslatingPart.cs" />
+    <Compile Include="src\MovingObjetctParts\RigidbodyJiggleBones.cs" />
     <Compile Include="src\OpenScripts2_Extras.cs" />
     <Compile Include="src\OpenScripts2_BasePlugin.cs" />
     <Compile Include="src\OpenScripts2_BepInExPlugin.cs" />
@@ -123,7 +118,7 @@
     <Compile Include="src\AttachmentScripts\AttachmentStock.cs" />
     <Compile Include="src\MeatyPages\Booklet.cs" />
     <Compile Include="src\FirearmControl\BreakActionWeapon_BarrelSwitch.cs" />
-    <Compile Include="src\MovableWeaponParts\BreakOpenTrigger.cs" />
+    <Compile Include="src\MovingObjetctParts\BreakOpenTrigger.cs" />
     <Compile Include="src\CustomObjectTypes\CapAndBallRevolver.cs" />
     <Compile Include="src\CustomObjectTypes\CapAndBallRevolverCylinder.cs" />
     <Compile Include="src\CustomQuickBeltSlots\CustomQBSlotSounds.cs" />
@@ -131,10 +126,18 @@
     <Compile Include="src\AttachmentScripts\FireModeAttachment.cs" />
     <Compile Include="src\MagazineScripts\ForceMagazineMountingToMagMountPos.cs" />
     <Compile Include="src\FirearmControl\HandDependentPoseOverride.cs" />
-    <Compile Include="src\MovableWeaponParts\HingeForegrip.cs" />
-    <Compile Include="src\LongRecoilSystem\LongRecoilSystem_ClosedBolt.cs" />
-    <Compile Include="src\LongRecoilSystem\LongRecoilSystem_OpenBolt.cs" />
-    <Compile Include="src\LongRecoilSystem\LongRecoilSystem_TubeFedShotgun.cs" />
+    <Compile Include="src\MovingObjetctParts\HingeForegrip.cs" />
+    <Compile Include="src\SmartWeapons\LaserGuidanceSystem.cs" />
+    <Compile Include="src\SmartWeapons\LaserGuidedProjectile.cs" />
+    <Compile Include="src\SmartWeapons\SmartAttachment.cs" />
+    <Compile Include="src\SmartWeapons\SmartProjectile.cs" />
+    <Compile Include="src\SmartWeapons\SmartWeapon.cs" />
+    <Compile Include="src\SmartWeapons\TopAttackProjectile.cs" />
+    <Compile Include="src\SmartWeapons\TopAttackSystem.cs" />
+    <Compile Include="src\VisualModification\FirearmHeatingEffect.cs" />
+    <Compile Include="src\VisualModification\LongRecoilSystem_ClosedBolt.cs" />
+    <Compile Include="src\VisualModification\LongRecoilSystem_OpenBolt.cs" />
+    <Compile Include="src\VisualModification\LongRecoilSystem_TubeFedShotgun.cs" />
     <Compile Include="src\MagazineScripts\MagazineCutoff.cs" />
     <Compile Include="src\MagazineScripts\MagazineTape.cs" />
     <Compile Include="src\MagazineScripts\MagazinePoseCycler.cs" />
@@ -144,7 +147,7 @@
     <Compile Include="src\FirearmControl\ManipulateBlendShape.cs" />
     <Compile Include="src\CustomObjectTypes\MeatBeatScanner.cs" />
     <Compile Include="src\AttachmentScripts\ModifyWeaponCartrideAndMagazineAttachment.cs" />
-    <Compile Include="src\MovableWeaponParts\MovableWeaponPart.cs" />
+    <Compile Include="src\MovingObjetctParts\MovableObjectPart.cs" />
     <Compile Include="src\MagazineScripts\MultiCaliberMagazine.cs" />
     <Compile Include="src\AttachmentScripts\MultipleHideOnAttach.cs" />
     <Compile Include="src\AttachmentScripts\MultipleHideOnAttachForAttachments.cs" />
@@ -167,9 +170,6 @@
     <Compile Include="src\MagazineScripts\RSC_MagazineFollower_TubeFedShotgun.cs" />
     <Compile Include="src\OpticScripts\ScopeShaderLinearZoom.cs" />
     <Compile Include="src\OpticScripts\ScopeShaderZoom.cs" />
-    <Compile Include="src\SmartWeapons\SmartPistol.cs" />
-    <Compile Include="src\SmartWeapons\SmartRevolver.cs" />
-    <Compile Include="src\SmartWeapons\SmartRifle.cs" />
     <Compile Include="src\CustomQuickBeltSlots\StandaloneQBSlot.cs" />
     <Compile Include="src\CustomObjectTypes\SwitchBlade.cs" />
     <Compile Include="src\AttachmentScripts\WeaponEnhancementAttachment.cs" />
@@ -191,6 +191,9 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if $(ConfigurationName) == Release copy $(TargetPath) $(ProjectDir)$(TargetName).dll
+if $(ConfigurationName) == Release copy $(TargetDir)OpenScripts2.pdb $(ProjectDir)OpenScripts2.pdb
+if $(ConfigurationName) == Release $(ProjectDir)pdb2mdb.exe $(ProjectDir)OpenScripts2.dll
+
 if $(ConfigurationName) == Debug copy $(TargetPath) $(ProjectDir)MeatKitDLL\$(TargetName).dll</PostBuildEvent>
   </PropertyGroup>
 </Project>

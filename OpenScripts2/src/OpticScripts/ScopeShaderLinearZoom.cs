@@ -29,12 +29,16 @@ namespace OpenScripts2
         public Text ZeroTextField;
         public Text ElevationTextField;
         public Text WindageTextField;
+        [Tooltip("The existence of this text enables the reticle change functionality.")]
+        public Text ReticleText;
+
         public GameObject TextFrame;
 
         public string ZoomPrefix = "Zoom: ";
         public string ZeroPrefix = "Zero Distance: ";
         public string ElevationPrefix = "Elevation: ";
         public string WindagePrefix = "Windage: ";
+        public string ReticlePrefix = "Reticle: ";
 
         [Header("Zeroing System Settings")]
         public int ZeroDistanceIndex = 0;
@@ -59,15 +63,13 @@ namespace OpenScripts2
         public float WindageIncreasePerClick = 0.25f;
 
         [Header("Reticle Change System Settings")]
-        [Tooltip("The existence of this text enables the reticle change functionality.")]
-        public Text ReticleText;
-        public string ReticlePrefix = "Reticle: ";
-        [Tooltip("Additional reticles. Default reticle is first entry.")]
+        [Tooltip("All reticle textures. Default reticle is first entry.")]
         public List<Texture2D> Reticles;
-        [Tooltip("Names of additional reticles. Default reticle name is first entry.")]
-        public string[] ReticleNames;
-        [Tooltip("Additional reticle colors")]
+        [Tooltip("Colors of all reticles. Default reticle name is first entry.")]
+        [ColorUsage(true, true, float.MaxValue, float.MaxValue, 0f, 0f)]
         public List<Color> ReticleColors;
+        [Tooltip("Names of all reticles. Default reticle name is first entry.")]
+        public string[] ReticleNames;
 
         public int CurrentReticle = 0;
 

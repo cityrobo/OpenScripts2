@@ -21,7 +21,10 @@ namespace Cityrobo
 
 		public AudioEvent GrenadeShot;
 
-        private Vector3 _origMuzzlePos;
+		[Tooltip("Normally, only caseless rounds will be removed from the chamber when fired. Enabling this will also remove fired cased rounds from the chamber automatically.")]
+		public bool DoesClearCasedRounds = false;
+
+		private Vector3 _origMuzzlePos;
 		private Quaternion _origMuzzleRot;
         private FVRFireArm _fireArm;
 		private FVRFireArmRecoilProfile _origRecoilProfile;
@@ -64,7 +67,7 @@ namespace Cityrobo
 					_recoilProfileSet = true;
                 }
 
-				if (GrenadeChamber.IsSpent && GrenadeChamber.GetRound().IsCaseless) GrenadeChamber.Unload();
+				if (GrenadeChamber.IsSpent && (GrenadeChamber.GetRound().IsCaseless || DoesClearCasedRounds)) GrenadeChamber.Unload();
             }
             else
             {

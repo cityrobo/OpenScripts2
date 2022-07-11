@@ -23,6 +23,7 @@ namespace OpenScripts2
         public Text WindageTextField;
         [Tooltip("The existence of this text enables the reticle change functionality")]
         public Text ReticleTextField;
+
         public GameObject TextFrame;
 
         public string ZoomPrefix = "Zoom: ";
@@ -68,19 +69,20 @@ namespace OpenScripts2
         public bool IsIntegrated = false;
         public FVRFireArm FireArm = null;
         [Header("Reticle Change Settings")]
-        [Tooltip("Additional reticles. Default reticle is first entry.")]
-        public List<Texture2D> ReticleTextures;
-        [Tooltip("Names of additional reticles. Default reticle name is first entry.")]
-        public string[] ReticleNames;
-        [Tooltip("Additional reticle colors. Default reticle color is first entry.")]
+        [Tooltip("All reticle textures. Default reticle is first entry.")]
+        public List<Texture2D> Reticles;
+        [Tooltip("Colors of all reticles. Default reticle name is first entry.")]
+        [ColorUsage(true, true, float.MaxValue, float.MaxValue, 0f, 0f)]
         public List<Color> ReticleColors;
+        [Tooltip("Names of all reticles. Default reticle name is first entry.")]
+        public string[] ReticleNames;
 
         public int CurrentSelectedReticleIndex = 0;
 
         [Tooltip("This enables the very specialized reticle change system.")]
         public bool DoesEachZoomFactorHaveOwnReticle = false;
         [Tooltip("Starts with default reticle, than all default reticle variants for the following zoom levels. Next entries are additional reticles and their according zoom levels, all ordered by zoom level and grouped by reticle type.")]
-        public List<Texture2D> AdditionalReticlesPerZoomLevel;
+        public List<Texture2D> ReticlesPerZoomLevel;
 
         private List<float> _correspondingCameraFOV;
 
@@ -492,7 +494,7 @@ namespace OpenScripts2
             else
             {
                 ScopeLens.material.SetColor("_ReticleColor", ReticleColors[CurrentSelectedReticleIndex]);
-                ScopeLens.material.SetTexture("_ReticleTex", AdditionalReticlesPerZoomLevel[CurrentZoomIndex + CurrentSelectedReticleIndex * ZoomFactor.Count]);
+                ScopeLens.material.SetTexture("_ReticleTex", ReticlesPerZoomLevel[CurrentZoomIndex + CurrentSelectedReticleIndex * ZoomFactor.Count]);
             }
         }
     }

@@ -46,7 +46,7 @@ namespace OpenScripts2
 
         //private CaliberDefinition originalCaliberDefinition;
 
-        [Header("DEBUG required stuff. Use ContextMenu to populate.")]
+        [Header("MeatKit required stuff. Use ContextMenu to populate.")]
         [SearchableEnum]
         public FireArmRoundType[] RoundTypes;
         public int[] Capacities;
@@ -65,15 +65,20 @@ namespace OpenScripts2
         private FVRFireArm _fireArm = null;
         private List<CaliberDefinition> _caliberDefinitionsList;
 
+        
         private FVRFireArmMechanicalAccuracyClass _origAccuracyClass;
+
         private FVRFireArmRecoilProfile _origRecoilProfile;
         private FVRFireArmRecoilProfile _origRecoilProfileStocked;
-        private FVRFirearmAudioSet _origAudioSet;
+
+        private AudioEvent _origFiringSounds;
+        private AudioEvent _origSuppressedSounds;
+        private AudioEvent _origLowPressureSounds;
 
         private bool _isDebug = true;
 
-        [ContextMenu("Populate DEBUG Lists")]
-        public void PopulateDEBUGLists()
+        [ContextMenu("Populate MeatKit Lists")]
+        public void PopulateMeatKitLists()
         {
             int definitionCount = CaliberDefinitions.Length;
 
@@ -158,10 +163,15 @@ namespace OpenScripts2
             if (Magazine.State == FVRFireArmMagazine.MagazineState.Locked && _fireArm == null)
             {
                 _fireArm = Magazine.FireArm;
+
                 _origAccuracyClass = _fireArm.AccuracyClass;
+
                 _origRecoilProfile = _fireArm.RecoilProfile;
                 _origRecoilProfileStocked = _fireArm.RecoilProfileStocked;
-                _origAudioSet = _fireArm.AudioClipSet;
+
+                _origFiringSounds = _fireArm.AudioClipSet.Shots_Main;
+                _origSuppressedSounds = _fireArm.AudioClipSet.Shots_Suppressed;
+                _origLowPressureSounds = _fireArm.AudioClipSet.Shots_LowPressure;
 
                 if (_caliberDefinitionsList[CurrentCaliberDefinition].AccuracyClass != FVRFireArmMechanicalAccuracyClass.None)
                     _fireArm.AccuracyClass = _caliberDefinitionsList[CurrentCaliberDefinition].AccuracyClass;
@@ -176,9 +186,13 @@ namespace OpenScripts2
             else if (Magazine.State == FVRFireArmMagazine.MagazineState.Free && _fireArm != null)
             {
                 _fireArm.AccuracyClass = _origAccuracyClass;
+
                 _fireArm.RecoilProfile = _origRecoilProfile;
                 _fireArm.RecoilProfileStocked = _origRecoilProfileStocked;
-                _fireArm.AudioClipSet = _origAudioSet;
+
+                _fireArm.AudioClipSet.Shots_Main = _origFiringSounds;
+                _fireArm.AudioClipSet.Shots_Suppressed = _origSuppressedSounds;
+                _fireArm.AudioClipSet.Shots_LowPressure = _origLowPressureSounds;
 
                 _fireArm = null;
             }

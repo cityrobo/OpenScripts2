@@ -24,40 +24,41 @@ namespace OpenScripts2
 
         public static void Log(MonoBehaviour plugin, string message)
         {
-            Instance.Logging.LogMessage(string.Format("{0}: {1}", nameof(plugin), message));
+            Instance.Logging.LogMessage($"{nameof(plugin)}: {message}");
         }
         public static void LogWarning(MonoBehaviour plugin, string message)
         {
-            Instance.Logging.LogWarning(string.Format("{0}: {1}", nameof(plugin), message));
+            Instance.Logging.LogWarning($"{nameof(plugin)}: {message}");
         }
         public static void LogError(MonoBehaviour plugin, string message)
         {
-            Instance.Logging.LogError(string.Format("{0}: {1}", nameof(plugin), message));
+            Instance.Logging.LogError($"{nameof(plugin)}: {message}");
         }
         public static void LogException(MonoBehaviour plugin, Exception e)
         {
-            Instance.Logging.LogError(string.Format("{0}: {1}", nameof(plugin), e.Message));
+            Instance.Logging.LogError($"{nameof(plugin)}: {e.Message}");
         }
     }
-
+    /*
     public static class OpenScripts2_Extensions
     {
         public static void Log(this OpenScripts2_BasePlugin plugin, string message)
         {
-            OpenScripts2_BepInExPlugin.Instance.Logging.LogMessage(string.Format("{0}: {1}", nameof(plugin), message));
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogMessage($"{nameof(plugin)}: {message}");
         }
         public static void LogWarning(this OpenScripts2_BasePlugin plugin, string message)
         {
-            OpenScripts2_BepInExPlugin.Instance.Logging.LogWarning(string.Format("{0}: {1}", nameof(plugin), message));
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogWarning($"{nameof(plugin)}: {message}");
         }
         public static void LogError(this OpenScripts2_BasePlugin plugin, string message)
         {
-            OpenScripts2_BepInExPlugin.Instance.Logging.LogError(string.Format("{0}: {1}", nameof(plugin), message));
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{nameof(plugin)}: {message}");
         }
 
         public static void LogException(this OpenScripts2_BasePlugin plugin, Exception e)
         {
-            OpenScripts2_BepInExPlugin.Instance.Logging.LogError(string.Format("{0}: {1}", nameof(plugin), e.Message));
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{nameof(plugin)}: {e.Message}");
         }
     }
+    */
 }

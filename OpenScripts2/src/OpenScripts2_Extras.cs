@@ -253,9 +253,32 @@ namespace UnityEngine
             }
         }
 
+        public static Vector3 Clamp(this Vector3 vector, Vector3 vA, Vector3 vB)
+        {
+            vector.x = Mathf.Clamp(vector.x, vA.x, vB.x);
+            vector.y = Mathf.Clamp(vector.y, vA.y, vB.y);
+            vector.z = Mathf.Clamp(vector.z, vA.z, vB.z);
+            return vector;
+        }
+
         public static Vector3 ProjectOnPlaneThroughPoint(this Vector3 vector, Vector3 point, Vector3 planeNormal)
         {
             return Vector3.ProjectOnPlane(vector, planeNormal) + Vector3.Dot(point, planeNormal) * planeNormal;
+        }
+
+        public static Vector3 GetLocalDirAxis(this Transform transform, OpenScripts2_BasePlugin.Axis axis)
+        {
+            switch (axis)
+            {
+                case OpenScripts2_BasePlugin.Axis.X:
+                    return transform.right;
+                case OpenScripts2_BasePlugin.Axis.Y:
+                    return transform.up;
+                case OpenScripts2_BasePlugin.Axis.Z:
+                    return transform.forward;
+                default:
+                    return Vector3.zero;
+            }
         }
 
         public static void ModifyAxis(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, float value)

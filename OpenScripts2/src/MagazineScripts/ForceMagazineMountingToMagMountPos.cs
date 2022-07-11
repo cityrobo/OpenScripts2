@@ -8,7 +8,7 @@ namespace OpenScripts2
         public FVRFireArm FireArm;
 
         private bool _posChanged;
-#if!DEBUG
+
         public void Update()
         {
             if (_posChanged && FireArm.Magazine == null)
@@ -21,6 +21,5 @@ namespace OpenScripts2
                 _posChanged = true;
             }
         }
-#endif
     }
 }

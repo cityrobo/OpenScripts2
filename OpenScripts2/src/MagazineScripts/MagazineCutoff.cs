@@ -34,7 +34,6 @@ namespace OpenScripts2
         private bool _isMoving = false;
         private bool _isActive = false;
 
-        private OpenScripts2_BepInExPlugin plugin = OpenScripts2_BepInExPlugin.Instance;
         public override void Start()
         {
             base.Start();

@@ -103,5 +103,22 @@ namespace OpenScripts2
         {
             return Quaternion.AngleAxis(value, GetDirVector(axis));
         }
+
+        public void Log(string message)
+        {
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogMessage($"{gameObject.name} {GetType()}: {message}");
+        }
+        public void LogWarning(string message)
+        {
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogWarning($"{gameObject.name} {GetType()}: {message}");
+        }
+        public void LogError(string message)
+        {
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{gameObject.name} {GetType()}: {message}");
+        }
+        public void LogException(Exception e)
+        {
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{gameObject.name} {GetType()}: {e.Message}");
+        }
     }
 }
