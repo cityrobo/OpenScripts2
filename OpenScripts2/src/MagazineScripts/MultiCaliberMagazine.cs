@@ -13,7 +13,7 @@ namespace OpenScripts2
     {
         public FVRFireArmMagazine Magazine;
 
-        public CaliberDefinition[] CaliberDefinitions;
+        public List<CaliberDefinition> CaliberDefinitions;
 
         [Header("Text field that shows current selected caliber on switching calibers manually.")]
         public GameObject TextRoot;
@@ -42,7 +42,6 @@ namespace OpenScripts2
         public bool ChecksFirearmCompatibility;
 
         private FVRFireArm _fireArm = null;
-        private List<CaliberDefinition> _caliberDefinitionsList;
         
         private FVRFireArmMechanicalAccuracyClass _origAccuracyClass;
 
@@ -101,14 +100,14 @@ namespace OpenScripts2
                 _origSuppressedSounds = _fireArm.AudioClipSet.Shots_Suppressed;
                 _origLowPressureSounds = _fireArm.AudioClipSet.Shots_LowPressure;
 
-                if (_caliberDefinitionsList[CurrentCaliberDefinition].AccuracyClass != FVRFireArmMechanicalAccuracyClass.None)
-                    _fireArm.AccuracyClass = _caliberDefinitionsList[CurrentCaliberDefinition].AccuracyClass;
-                if (_caliberDefinitionsList[CurrentCaliberDefinition].RecoilProfile != null)
-                    _fireArm.RecoilProfile = _caliberDefinitionsList[CurrentCaliberDefinition].RecoilProfile;
-                if (_caliberDefinitionsList[CurrentCaliberDefinition].RecoilProfileStocked != null)
-                    _fireArm.RecoilProfileStocked = _caliberDefinitionsList[CurrentCaliberDefinition].RecoilProfileStocked;
+                if (CaliberDefinitions[CurrentCaliberDefinition].AccuracyClass != FVRFireArmMechanicalAccuracyClass.None)
+                    _fireArm.AccuracyClass = CaliberDefinitions[CurrentCaliberDefinition].AccuracyClass;
+                if (CaliberDefinitions[CurrentCaliberDefinition].RecoilProfile != null)
+                    _fireArm.RecoilProfile = CaliberDefinitions[CurrentCaliberDefinition].RecoilProfile;
+                if (CaliberDefinitions[CurrentCaliberDefinition].RecoilProfileStocked != null)
+                    _fireArm.RecoilProfileStocked = CaliberDefinitions[CurrentCaliberDefinition].RecoilProfileStocked;
 
-                if (_caliberDefinitionsList[CurrentCaliberDefinition].ReplacementFiringSounds != null) ReplaceFiringSounds(_caliberDefinitionsList[CurrentCaliberDefinition].ReplacementFiringSounds);
+                if (CaliberDefinitions[CurrentCaliberDefinition].ReplacementFiringSounds != null) ReplaceFiringSounds(CaliberDefinitions[CurrentCaliberDefinition].ReplacementFiringSounds);
 
             }
             else if (Magazine.State == FVRFireArmMagazine.MagazineState.Free && _fireArm != null)
@@ -124,7 +123,7 @@ namespace OpenScripts2
 
                 _fireArm = null;
             }
-            else if (Magazine.State == FVRFireArmMagazine.MagazineState.Locked && _fireArm != null && _fireArm.RoundType != _caliberDefinitionsList[CurrentCaliberDefinition].RoundType)
+            else if (Magazine.State == FVRFireArmMagazine.MagazineState.Locked && _fireArm != null && _fireArm.RoundType != CaliberDefinitions[CurrentCaliberDefinition].RoundType)
             {
                 if (!SetCartridge(_fireArm.RoundType) && Magazine.m_numRounds == 0 && ChecksFirearmCompatibility)
                 {
@@ -134,7 +133,7 @@ namespace OpenScripts2
 
             if (AlwaysShowText && TextField != null)
             {
-                FireArmRoundType roundType = _caliberDefinitionsList[CurrentCaliberDefinition].RoundType;
+                FireArmRoundType roundType = CaliberDefinitions[CurrentCaliberDefinition].RoundType;
                 if (AM.SRoundDisplayDataDic.ContainsKey(roundType))
                 {
                     string name = AM.SRoundDisplayDataDic[roundType].DisplayName;
@@ -147,7 +146,7 @@ namespace OpenScripts2
         public void NextCartridge()
         {
             CurrentCaliberDefinition++;
-            if (CurrentCaliberDefinition >= _caliberDefinitionsList.Count)
+            if (CurrentCaliberDefinition >= CaliberDefinitions.Count)
             {
                 CurrentCaliberDefinition = 0;
             }
@@ -160,7 +159,7 @@ namespace OpenScripts2
             if (Magazine.m_numRounds != 0) return false;
             
             int chosenDefinition = 0;
-            foreach (var caliberDefinition in _caliberDefinitionsList)
+            foreach (var caliberDefinition in CaliberDefinitions)
             {
                 if (caliberDefinition.RoundType != fireArmRoundType)
                 {
@@ -169,7 +168,7 @@ namespace OpenScripts2
                 else break;
             }
 
-            if (chosenDefinition == _caliberDefinitionsList.Count)
+            if (chosenDefinition == CaliberDefinitions.Count)
             {
                 return false;
             }
@@ -183,29 +182,29 @@ namespace OpenScripts2
 
         public void ConfigureMagazine(int CaliberDefinitionIndex)
         {
-            Magazine.RoundType = _caliberDefinitionsList[CaliberDefinitionIndex].RoundType;
-            if (_caliberDefinitionsList[CaliberDefinitionIndex].Capacity > 0)
+            Magazine.RoundType = CaliberDefinitions[CaliberDefinitionIndex].RoundType;
+            if (CaliberDefinitions[CaliberDefinitionIndex].Capacity > 0)
             {
-                Magazine.m_capacity = _caliberDefinitionsList[CaliberDefinitionIndex].Capacity;
+                Magazine.m_capacity = CaliberDefinitions[CaliberDefinitionIndex].Capacity;
             }
-            if (_caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets.Length > 0)
+            if (CaliberDefinitions[CaliberDefinitionIndex].DisplayBullets.Length > 0)
             {
-                Magazine.m_roundInsertionTarget.localPosition = _caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets[0].transform.localPosition;
-                Magazine.m_roundInsertionTarget.localRotation = _caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets[0].transform.localRotation;
-                Magazine.DisplayBullets = _caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets;
-                Magazine.DisplayMeshFilters = _caliberDefinitionsList[CaliberDefinitionIndex].DisplayMeshFilters;
-                Magazine.DisplayRenderers = _caliberDefinitionsList[CaliberDefinitionIndex].DisplayRenderers;
+                Magazine.m_roundInsertionTarget.localPosition = CaliberDefinitions[CaliberDefinitionIndex].DisplayBullets[0].transform.localPosition;
+                Magazine.m_roundInsertionTarget.localRotation = CaliberDefinitions[CaliberDefinitionIndex].DisplayBullets[0].transform.localRotation;
+                Magazine.DisplayBullets = CaliberDefinitions[CaliberDefinitionIndex].DisplayBullets;
+                Magazine.DisplayMeshFilters = CaliberDefinitions[CaliberDefinitionIndex].DisplayMeshFilters;
+                Magazine.DisplayRenderers = CaliberDefinitions[CaliberDefinitionIndex].DisplayRenderers;
 
-                Magazine.m_DisplayStartPositions = new Vector3[_caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets.Length];
-                for (int i = 0; i < _caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets.Length; i++)
+                Magazine.m_DisplayStartPositions = new Vector3[CaliberDefinitions[CaliberDefinitionIndex].DisplayBullets.Length];
+                for (int i = 0; i < CaliberDefinitions[CaliberDefinitionIndex].DisplayBullets.Length; i++)
                 {
-                    if (_caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets[i] != null)
+                    if (CaliberDefinitions[CaliberDefinitionIndex].DisplayBullets[i] != null)
                     {
-                        Magazine.m_DisplayStartPositions[i] = _caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets[i].transform.localPosition;
+                        Magazine.m_DisplayStartPositions[i] = CaliberDefinitions[CaliberDefinitionIndex].DisplayBullets[i].transform.localPosition;
                     }
                 }
             }
-            Magazine.ObjectWrapper = _caliberDefinitionsList[CaliberDefinitionIndex].ObjectWrapper;
+            Magazine.ObjectWrapper = CaliberDefinitions[CaliberDefinitionIndex].ObjectWrapper;
         }
 
         public void ReplaceFiringSounds(FVRFirearmAudioSet set)
@@ -308,7 +307,7 @@ namespace OpenScripts2
 #endif
         private IEnumerator ShowCaliberText()
         {
-            FireArmRoundType roundType = _caliberDefinitionsList[CurrentCaliberDefinition].RoundType;
+            FireArmRoundType roundType = CaliberDefinitions[CurrentCaliberDefinition].RoundType;
             if (AM.SRoundDisplayDataDic.ContainsKey(roundType))
             {
                 string name = AM.SRoundDisplayDataDic[roundType].DisplayName;

@@ -39,8 +39,6 @@ namespace OpenScripts2
 
         private bool _soundPlayed = false;
 
-        private string _lastMessage;
-
         public void Start()
         {
             _currentZ = OriginalBolt.transform.localPosition.z;
