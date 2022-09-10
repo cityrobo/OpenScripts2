@@ -51,10 +51,8 @@ namespace OpenScripts2
             public Quaternion localRot;
         }
 
-        public override void Start()
+        public void Start()
         {
-            base.Start();
-
             _quickBeltSlots = new Dictionary<GameObject, StandaloneQBSlot>();
             SubQBSlotPrefab.SetActive(false);
 
@@ -192,5 +190,10 @@ namespace OpenScripts2
             ItemDidCollide = false;
             CreateNewQBSlotPos(physicalObject);
         }
+    }
+
+    public class StandaloneQBSlot : FVRQuickBeltSlot
+    {
+        
     }
 }
