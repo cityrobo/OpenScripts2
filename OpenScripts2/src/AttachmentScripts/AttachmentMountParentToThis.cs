@@ -12,20 +12,28 @@ namespace OpenScripts2
     {
         public FVRFireArmAttachmentMount Mount;
 
+        private static Dictionary<FVRFireArmAttachmentMount, AttachmentMountParentToThis> _exisingAttachmentMountParentToThis = new();
+
 #if!DEBUG
+        static AttachmentMountParentToThis()
+        {
+            On.FistVR.FVRFireArmAttachmentMount.GetRootMount += FVRFireArmAttachmentMount_GetRootMount;
+        }
+
         public void Awake()
         {
+            _exisingAttachmentMountParentToThis.Add(Mount,this);
+
             Mount.ParentToThis = true;
-            On.FistVR.FVRFireArmAttachmentMount.GetRootMount += FVRFireArmAttachmentMount_GetRootMount;
         }
 
         public void OnDestoy()
         {
-            On.FistVR.FVRFireArmAttachmentMount.GetRootMount -= FVRFireArmAttachmentMount_GetRootMount;
+            _exisingAttachmentMountParentToThis.Remove(Mount);
         }
-        private FVRFireArmAttachmentMount FVRFireArmAttachmentMount_GetRootMount(On.FistVR.FVRFireArmAttachmentMount.orig_GetRootMount orig, FVRFireArmAttachmentMount self)
+        private static FVRFireArmAttachmentMount FVRFireArmAttachmentMount_GetRootMount(On.FistVR.FVRFireArmAttachmentMount.orig_GetRootMount orig, FVRFireArmAttachmentMount self)
         {
-            if (self == Mount)
+            if (_exisingAttachmentMountParentToThis.ContainsKey(self))
             {
                 return self;
             }

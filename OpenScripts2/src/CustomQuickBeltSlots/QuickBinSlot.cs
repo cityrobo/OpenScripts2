@@ -21,106 +21,79 @@ namespace OpenScripts2
         {
             FVRQuickBeltSlot QBS = GetComponent<FVRQuickBeltSlot>();
 
-            this.QuickbeltRoot = QBS.QuickbeltRoot;
-            this.PoseOverride = QBS.PoseOverride;
-            this.SizeLimit = QBS.SizeLimit;
-            this.Shape = QBS.Shape;
-            this.Type = QBS.Type;
-            this.HoverGeo = QBS.HoverGeo;
-            this.RectBounds = QBS.RectBounds;
-            this.CurObject = QBS.CurObject;
-            this.IsSelectable = QBS.IsSelectable;
-            this.IsPlayer = QBS.IsPlayer;
-            this.UseStraightAxisAlignment = QBS.UseStraightAxisAlignment;
-            this.HeldObject = QBS.HeldObject;
+            this.CopyComponent(QBS);
         }
 
-        SM.AudioSourcePool audioSource;
-        public void Start()
-        {
-            audioSource = new SM.AudioSourcePool(3,3,FVRPooledAudioType.Generic);
-
-            Hook();
-        }
-
-        public void OnDestroy()
-        {
-            Unhook();
-        }
-
-        void Unhook()
-        {
-            On.FistVR.FVRQuickBeltSlot.Update -= FVRQuickBeltSlot_Update;
-        }
-
-        void Hook()
+#if !DEBUG
+        static QuickBinSlot()
         {
             On.FistVR.FVRQuickBeltSlot.Update += FVRQuickBeltSlot_Update;
         }
 
-        private void FVRQuickBeltSlot_Update(On.FistVR.FVRQuickBeltSlot.orig_Update orig, FVRQuickBeltSlot self)
+        private static void FVRQuickBeltSlot_Update(On.FistVR.FVRQuickBeltSlot.orig_Update orig, FVRQuickBeltSlot self)
         {
-            if (this == self)
+            if (self is QuickBinSlot quickBinSlot)
             {
-                if (!GM.CurrentSceneSettings.IsSpawnLockingEnabled && this.HeldObject != null && (this.HeldObject as FVRPhysicalObject).m_isSpawnLock)
+                if (!GM.CurrentSceneSettings.IsSpawnLockingEnabled && quickBinSlot.HeldObject != null && (quickBinSlot.HeldObject as FVRPhysicalObject).m_isSpawnLock)
                 {
-                    (this.HeldObject as FVRPhysicalObject).m_isSpawnLock = false;
+                    (quickBinSlot.HeldObject as FVRPhysicalObject).m_isSpawnLock = false;
                 }
-                if (this.HeldObject != null)
+                if (quickBinSlot.HeldObject != null)
                 {
-                    if ((this.HeldObject as FVRPhysicalObject).m_isSpawnLock)
+                    if ((quickBinSlot.HeldObject as FVRPhysicalObject).m_isSpawnLock)
                     {
-                        if (!this.HoverGeo.activeSelf)
+                        if (!quickBinSlot.HoverGeo.activeSelf)
                         {
-                            this.HoverGeo.SetActive(true);
+                            quickBinSlot.HoverGeo.SetActive(true);
                         }
-                        this.m_hoverGeoRend.material.SetColor("_RimColor", new Color(0.3f, 0.3f, 1f, 1f));
+                        quickBinSlot.m_hoverGeoRend.material.SetColor("_RimColor", new Color(0.3f, 0.3f, 1f, 1f));
                     }
-                    else if ((this.HeldObject as FVRPhysicalObject).m_isHardnessed)
+                    else if ((quickBinSlot.HeldObject as FVRPhysicalObject).m_isHardnessed)
                     {
-                        if (!this.HoverGeo.activeSelf)
+                        if (!quickBinSlot.HoverGeo.activeSelf)
                         {
-                            this.HoverGeo.SetActive(true);
+                            quickBinSlot.HoverGeo.SetActive(true);
                         }
-                        this.m_hoverGeoRend.material.SetColor("_RimColor", new Color(0.3f, 1f, 0.3f, 1f));
+                        quickBinSlot.m_hoverGeoRend.material.SetColor("_RimColor", new Color(0.3f, 1f, 0.3f, 1f));
                     }
                     else
                     {
-                        if (this.HoverGeo.activeSelf != this.IsHovered)
+                        if (quickBinSlot.HoverGeo.activeSelf != quickBinSlot.IsHovered)
                         {
-                            this.HoverGeo.SetActive(this.IsHovered);
+                            quickBinSlot.HoverGeo.SetActive(quickBinSlot.IsHovered);
                         }
-                        this.m_hoverGeoRend.material.SetColor("_RimColor", HoverColor);
+                        quickBinSlot.m_hoverGeoRend.material.SetColor("_RimColor", quickBinSlot.HoverColor);
                     }
                 }
                 else
                 {
-                    if (this.HoverGeo.activeSelf != this.IsHovered)
+                    if (quickBinSlot.HoverGeo.activeSelf != quickBinSlot.IsHovered)
                     {
-                        this.HoverGeo.SetActive(this.IsHovered);
+                        quickBinSlot.HoverGeo.SetActive(quickBinSlot.IsHovered);
                     }
-                    this.m_hoverGeoRend.material.SetColor("_RimColor", HoverColor);
+                    quickBinSlot.m_hoverGeoRend.material.SetColor("_RimColor", quickBinSlot.HoverColor);
                 }
 
-                if (CurObject != null && CurObject is FVRFireArmMagazine)
+                if (quickBinSlot.CurObject != null && quickBinSlot.CurObject is FVRFireArmMagazine)
                 {
-                    Destroy(CurObject.gameObject);
-                    CurObject = null;
-                    HeldObject = null;
-                    IsHovered = false;
-                    audioSource.PlayClip(DeleteSounds, this.transform.position);
+                    Destroy(quickBinSlot.CurObject.gameObject);
+                    quickBinSlot.CurObject = null;
+                    quickBinSlot.HeldObject = null;
+                    quickBinSlot.IsHovered = false;
+                    SM.PlayGenericSound(quickBinSlot.DeleteSounds, quickBinSlot.transform.position);
                 }
 
-                if (CurObject != null && !(CurObject is FVRFireArmMagazine))
+                if (quickBinSlot.CurObject != null && !(quickBinSlot.CurObject is FVRFireArmMagazine))
                 {
-                    CurObject.SetQuickBeltSlot(null);
-                    CurObject = null;
-                    HeldObject = null;
-                    IsHovered = false;
-                    audioSource.PlayClip(DeleteFailureSounds, this.transform.position);
+                    quickBinSlot.CurObject.SetQuickBeltSlot(null);
+                    quickBinSlot.CurObject = null;
+                    quickBinSlot.HeldObject = null;
+                    quickBinSlot.IsHovered = false;
+                    SM.PlayGenericSound(quickBinSlot.DeleteFailureSounds, quickBinSlot.transform.position);
                 }
             }
             else orig(self);
         }
+#endif
     }
 }

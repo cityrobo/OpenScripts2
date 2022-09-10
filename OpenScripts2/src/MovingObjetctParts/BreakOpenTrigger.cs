@@ -42,9 +42,17 @@ namespace OpenScripts2
 		private bool _latchHeldOpen;
 		private bool _hasEjectedMag = false;
 
+		private static Dictionary<FVRPhysicalObject, BreakOpenTrigger> _exisitingBreakOpenTriggers = new();
+
+		static BreakOpenTrigger()
+        {
+			Hook();
+        }
 
 		public void Awake()
         {
+			_exisitingBreakOpenTriggers.Add(PhysicalObject,this);
+
 			_foreStartPos = Hinge.transform.localPosition;
             if (CenterOfMassOverride != null)
             {
@@ -55,14 +63,9 @@ namespace OpenScripts2
 			SetBreakObjectsState(false);
 		}
 
-		public void Start()
-		{
-			Hook();
-		}
-
 		public void OnDestroy()
         {
-			Unhook();
+			_exisitingBreakOpenTriggers.Remove(PhysicalObject);
         }
 
 		public void FixedUpdate()
@@ -77,72 +80,72 @@ namespace OpenScripts2
 			else this._latchHeldOpen = false;
 		}
 
-		void UpdateInputAndAnimate(FVRViveHand hand)
+		private void UpdateInputAndAnimate(FVRViveHand hand)
 		{
-			this._latchHeldOpen = false;
+			_latchHeldOpen = false;
 			if (hand.IsInStreamlinedMode)
 			{
 				if (hand.Input.BYButtonPressed)
 				{
-					this._latchHeldOpen = true;
-					this._latchRot = 1f * this.MaxLatchRot;
+					_latchHeldOpen = true;
+					_latchRot = 1f * this.MaxLatchRot;
 				}
 				else
 				{
-					this._latchRot = Mathf.MoveTowards(this._latchRot, 0f, Time.deltaTime * this.MaxLatchRot * 3f);
+					_latchRot = Mathf.MoveTowards(this._latchRot, 0f, Time.deltaTime * this.MaxLatchRot * 3f);
 				}
 			}
 			else
 			{
 				if (hand.Input.TouchpadPressed && hand.Input.TouchpadAxes.y > 0.1f)
 				{
-					this._latchHeldOpen = true;
-					this._latchRot = hand.Input.TouchpadAxes.y * this.MaxLatchRot;
+					_latchHeldOpen = true;
+					_latchRot = hand.Input.TouchpadAxes.y * MaxLatchRot;
 				}
 				else
 				{
-					this._latchRot = Mathf.MoveTowards(this._latchRot, 0f, Time.deltaTime * this.MaxLatchRot * 3f);
+					_latchRot = Mathf.MoveTowards(_latchRot, 0f, Time.deltaTime * MaxLatchRot * 3f);
 				}
 			}
 
-			if (this.HasLatchObject)
+			if (HasLatchObject)
 			{
-				this.Latch.localEulerAngles = new Vector3(0f, this._latchRot, 0f);
+				Latch.localEulerAngles = new Vector3(0f, _latchRot, 0f);
 			}
 		}
 
-		void UpdateBreakFore()
+		private void UpdateBreakFore()
 		{
-			if (this._isLatched && Mathf.Abs(this._latchRot) > 5f)
+			if (_isLatched && Mathf.Abs(_latchRot) > 5f)
 			{
-				this._isLatched = false;
+				_isLatched = false;
 				SM.PlayGenericSound(BreakOpenAudio, PhysicalObject.transform.position);
-				JointLimits limits = this.Hinge.limits;
-				limits.max = this.HingeLimit;
-				this.Hinge.limits = limits;
+				JointLimits limits = Hinge.limits;
+				limits.max = HingeLimit;
+				Hinge.limits = limits;
 				SetBreakObjectsState(true);
 			}
-			if (!this._isLatched)
+			if (!_isLatched)
 			{
-				if (!this._latchHeldOpen && this.Hinge.transform.localEulerAngles.x <= 1f && Mathf.Abs(this._latchRot) < LatchLatchingRot)
+				if (!_latchHeldOpen && Hinge.transform.localEulerAngles.x <= 1f && Mathf.Abs(_latchRot) < LatchLatchingRot)
 				{
-					this._isLatched = true;
+					_isLatched = true;
 					SM.PlayGenericSound(BreakCloseAudio, PhysicalObject.transform.position);
-					JointLimits limits = this.Hinge.limits;
+					JointLimits limits = Hinge.limits;
 					limits.max = 0f;
-					this.Hinge.limits = limits;
+					Hinge.limits = limits;
 					SetBreakObjectsState(false);
-					this.Hinge.transform.localPosition = this._foreStartPos;
+					Hinge.transform.localPosition = _foreStartPos;
 					_hasEjectedMag = false;
 				}
-				if (DoesEjectMag && Mathf.Abs(this.Hinge.transform.localEulerAngles.x) >= this.HingeEjectThreshhold && Mathf.Abs(this.Hinge.transform.localEulerAngles.x) <= HingeLimit)
+				if (DoesEjectMag && Mathf.Abs(Hinge.transform.localEulerAngles.x) >= HingeEjectThreshhold && Mathf.Abs(Hinge.transform.localEulerAngles.x) <= HingeLimit)
 				{
 					TryEjectMag();
 				}
 			}
 		}
 
-		void TryEjectMag()
+		private void TryEjectMag()
 		{
 			if (!_hasEjectedMag)
 			{
@@ -182,7 +185,7 @@ namespace OpenScripts2
 			}
 		}
 
-		void SetBreakObjectsState(bool active)
+		private void SetBreakObjectsState(bool active)
 		{
             foreach (var TurnOnObjectOnOpen in TurnOnObjectsOnOpen)
             {
@@ -194,83 +197,55 @@ namespace OpenScripts2
 			}
 		}
 
-		void Unhook()
-		{
+
+
+		private static void Hook()
+        {
 #if !DEBUG
-			switch (PhysicalObject)
-			{
-				case ClosedBoltWeapon w:
-					On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
-					break;
-				case OpenBoltReceiver w:
-					On.FistVR.OpenBoltReceiver.ReleaseSeer += OpenBoltReceiver_ReleaseSeer;
-					break;
-				case Handgun w:
-					On.FistVR.Handgun.ReleaseSeer += Handgun_ReleaseSeer;
-					break;
-				case TubeFedShotgun w:
-					On.FistVR.TubeFedShotgun.ReleaseHammer -= TubeFedShotgun_ReleaseHammer;
-					break;
-				default:
-					break;
-			}
+			On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
+            On.FistVR.OpenBoltReceiver.ReleaseSeer += OpenBoltReceiver_ReleaseSeer;
+			On.FistVR.Handgun.ReleaseSeer += Handgun_ReleaseSeer;
+			On.FistVR.TubeFedShotgun.ReleaseHammer += TubeFedShotgun_ReleaseHammer;
 #endif
 		}
-		void Hook()
-		{
+
 #if !DEBUG
-			switch (PhysicalObject)
-            {
-				case ClosedBoltWeapon w:
-                    On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
-					break;
-				case OpenBoltReceiver w:
-                    On.FistVR.OpenBoltReceiver.ReleaseSeer += OpenBoltReceiver_ReleaseSeer;
-					break;
-				case Handgun w:
-                    On.FistVR.Handgun.ReleaseSeer += Handgun_ReleaseSeer;
-					break;
-				case TubeFedShotgun w:
-                    On.FistVR.TubeFedShotgun.ReleaseHammer += TubeFedShotgun_ReleaseHammer;
-					break;
-                default:
-                    break;
-            }
-#endif
-		}
-#if !DEBUG
-		private void TubeFedShotgun_ReleaseHammer(On.FistVR.TubeFedShotgun.orig_ReleaseHammer orig, TubeFedShotgun self)
+		private static void TubeFedShotgun_ReleaseHammer(On.FistVR.TubeFedShotgun.orig_ReleaseHammer orig, TubeFedShotgun self)
         {
-			if (self == PhysicalObject)
+			BreakOpenTrigger breakOpenTrigger;
+			if (_exisitingBreakOpenTriggers.TryGetValue(self, out breakOpenTrigger))
 			{
-				if (!_isLatched || _latchHeldOpen) return;
+				if (!breakOpenTrigger._isLatched || breakOpenTrigger._latchHeldOpen) return;
 			}
 			orig(self);
 		}
 
-        private void Handgun_ReleaseSeer(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
+        private static void Handgun_ReleaseSeer(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
         {
-			if (self == PhysicalObject)
+			BreakOpenTrigger breakOpenTrigger;
+			if (_exisitingBreakOpenTriggers.TryGetValue(self, out breakOpenTrigger))
 			{
-				if (!_isLatched || _latchHeldOpen) return;
+				if (!breakOpenTrigger._isLatched || breakOpenTrigger._latchHeldOpen) return;
 			}
 			orig(self);
 		}
 
-        private void OpenBoltReceiver_ReleaseSeer(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
+        private static void OpenBoltReceiver_ReleaseSeer(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
         {
-			if (self == PhysicalObject)
+			BreakOpenTrigger breakOpenTrigger;
+			if (_exisitingBreakOpenTriggers.TryGetValue(self, out breakOpenTrigger))
 			{
-				if (!_isLatched || _latchHeldOpen) return;
+				if (!breakOpenTrigger._isLatched || breakOpenTrigger._latchHeldOpen) return;
 			}
 			orig(self);
 		}
 
-        private void ClosedBoltWeapon_DropHammer(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
+        private static void ClosedBoltWeapon_DropHammer(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
-            if (self == PhysicalObject)
-            {
-				if (!_isLatched || _latchHeldOpen) return;
+			BreakOpenTrigger breakOpenTrigger;
+			if (_exisitingBreakOpenTriggers.TryGetValue(self, out breakOpenTrigger))
+			{
+				if (!breakOpenTrigger._isLatched || breakOpenTrigger._latchHeldOpen) return;
             }
 			orig(self);
         }

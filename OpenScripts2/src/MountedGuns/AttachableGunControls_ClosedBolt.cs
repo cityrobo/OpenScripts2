@@ -15,7 +15,6 @@ namespace OpenScripts2
         public ClosedBoltWeapon closedBoltWeapon;
 		public FVRFireArmAttachment Attachment;
 
-
 		private FVRViveHand _hand = null;
 		private FVRAlternateGrip _alternateGrip = null;
 
@@ -28,6 +27,7 @@ namespace OpenScripts2
         {
 			Unhook();
         }
+
         public void Update()
         {
             if (_hand != null) closedBoltWeapon.UpdateInputAndAnimate(_hand);

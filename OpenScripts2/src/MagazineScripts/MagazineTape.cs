@@ -52,7 +52,6 @@ namespace OpenScripts2
         private ActiveMagazine _activeMagazine = ActiveMagazine.primary;
         private AttachedMagazine _attachedMagazine = AttachedMagazine.none;
 
-
         public void Start()
         {
             if (PrimaryMagazine.State == FVRFireArmMagazine.MagazineState.Locked)
@@ -128,12 +127,12 @@ namespace OpenScripts2
                 if (PrimaryMagazine == null || SecondaryMagazine == null)
                 {
                     Destroy(Tape);
-                    Destroy(this.GetComponent<MagazineTape>());
+                    Destroy(GetComponent<MagazineTape>());
                 }
                 else
                 {
-                    this.LogError("Error in MagazineTapeMK2 Script!");
-                    this.LogException(e);
+                    LogError("Error in MagazineTapeMK2 Script!");
+                    LogException(e);
                 }
                 
             }
@@ -245,36 +244,36 @@ namespace OpenScripts2
                 return;
             }
             self.ResetConfirm();
-            FVRFireArmMagazine[] array = UnityEngine.Object.FindObjectsOfType<FVRFireArmMagazine>();
+            FVRFireArmMagazine[] array = FindObjectsOfType<FVRFireArmMagazine>();
             for (int i = array.Length - 1; i >= 0; i--)
             {
                 if (!array[i].IsHeld && array[i].QuickbeltSlot == null && array[i].FireArm == null && array[i].m_numRounds == 0 && array[i].GetComponentInChildren<MagazineTape>() == null)
                 {
-                    UnityEngine.Object.Destroy(array[i].gameObject);
+                    Destroy(array[i].gameObject);
                 }
             }
-            FVRFireArmRound[] array2 = UnityEngine.Object.FindObjectsOfType<FVRFireArmRound>();
+            FVRFireArmRound[] array2 = FindObjectsOfType<FVRFireArmRound>();
             for (int j = array2.Length - 1; j >= 0; j--)
             {
                 if (!array2[j].IsHeld && array2[j].QuickbeltSlot == null && array2[j].RootRigidbody != null)
                 {
-                    UnityEngine.Object.Destroy(array2[j].gameObject);
+                    Destroy(array2[j].gameObject);
                 }
             }
-            FVRFireArmClip[] array3 = UnityEngine.Object.FindObjectsOfType<FVRFireArmClip>();
+            FVRFireArmClip[] array3 = FindObjectsOfType<FVRFireArmClip>();
             for (int k = array3.Length - 1; k >= 0; k--)
             {
                 if (!array3[k].IsHeld && array3[k].QuickbeltSlot == null && array3[k].FireArm == null && array3[k].m_numRounds == 0)
                 {
-                    UnityEngine.Object.Destroy(array3[k].gameObject);
+                    Destroy(array3[k].gameObject);
                 }
             }
-            Speedloader[] array4 = UnityEngine.Object.FindObjectsOfType<Speedloader>();
+            Speedloader[] array4 = FindObjectsOfType<Speedloader>();
             for (int l = array4.Length - 1; l >= 0; l--)
             {
                 if (!array4[l].IsHeld && array4[l].QuickbeltSlot == null)
                 {
-                    UnityEngine.Object.Destroy(array4[l].gameObject);
+                    Destroy(array4[l].gameObject);
                 }
             }
         }
@@ -290,15 +289,15 @@ namespace OpenScripts2
                 FVRFireArmMagazine component = tape.SecondaryMagazine;
                 for (int i = 0; i < Mathf.Min(this.SecondaryMagazine.LoadedRounds.Length, component.LoadedRounds.Length); i++)
                 {
-                    if (this.SecondaryMagazine.LoadedRounds[i] != null && this.SecondaryMagazine.LoadedRounds[i].LR_Mesh != null)
+                    if (SecondaryMagazine.LoadedRounds[i] != null && SecondaryMagazine.LoadedRounds[i].LR_Mesh != null)
                     {
-                        component.LoadedRounds[i].LR_Class = this.SecondaryMagazine.LoadedRounds[i].LR_Class;
-                        component.LoadedRounds[i].LR_Mesh = this.SecondaryMagazine.LoadedRounds[i].LR_Mesh;
-                        component.LoadedRounds[i].LR_Material = this.SecondaryMagazine.LoadedRounds[i].LR_Material;
-                        component.LoadedRounds[i].LR_ObjectWrapper = this.SecondaryMagazine.LoadedRounds[i].LR_ObjectWrapper;
+                        component.LoadedRounds[i].LR_Class = SecondaryMagazine.LoadedRounds[i].LR_Class;
+                        component.LoadedRounds[i].LR_Mesh = SecondaryMagazine.LoadedRounds[i].LR_Mesh;
+                        component.LoadedRounds[i].LR_Material = SecondaryMagazine.LoadedRounds[i].LR_Material;
+                        component.LoadedRounds[i].LR_ObjectWrapper = SecondaryMagazine.LoadedRounds[i].LR_ObjectWrapper;
                     }
                 }
-                component.m_numRounds = this.SecondaryMagazine.m_numRounds;
+                component.m_numRounds = SecondaryMagazine.m_numRounds;
                 component.UpdateBulletDisplay();
                 return gameObject;
             }
@@ -307,17 +306,17 @@ namespace OpenScripts2
                 MagazineTape tape = gameObject.GetComponentInChildren<MagazineTape>();
 
                 FVRFireArmMagazine component = tape.PrimaryMagazine;
-                for (int i = 0; i < Mathf.Min(this.PrimaryMagazine.LoadedRounds.Length, component.LoadedRounds.Length); i++)
+                for (int i = 0; i < Mathf.Min(PrimaryMagazine.LoadedRounds.Length, component.LoadedRounds.Length); i++)
                 {
-                    if (this.PrimaryMagazine.LoadedRounds[i] != null && this.PrimaryMagazine.LoadedRounds[i].LR_Mesh != null)
+                    if (PrimaryMagazine.LoadedRounds[i] != null && PrimaryMagazine.LoadedRounds[i].LR_Mesh != null)
                     {
-                        component.LoadedRounds[i].LR_Class = this.PrimaryMagazine.LoadedRounds[i].LR_Class;
-                        component.LoadedRounds[i].LR_Mesh = this.PrimaryMagazine.LoadedRounds[i].LR_Mesh;
-                        component.LoadedRounds[i].LR_Material = this.PrimaryMagazine.LoadedRounds[i].LR_Material;
-                        component.LoadedRounds[i].LR_ObjectWrapper = this.PrimaryMagazine.LoadedRounds[i].LR_ObjectWrapper;
+                        component.LoadedRounds[i].LR_Class = PrimaryMagazine.LoadedRounds[i].LR_Class;
+                        component.LoadedRounds[i].LR_Mesh = PrimaryMagazine.LoadedRounds[i].LR_Mesh;
+                        component.LoadedRounds[i].LR_Material = PrimaryMagazine.LoadedRounds[i].LR_Material;
+                        component.LoadedRounds[i].LR_ObjectWrapper = PrimaryMagazine.LoadedRounds[i].LR_ObjectWrapper;
                     }
                 }
-                component.m_numRounds = this.PrimaryMagazine.m_numRounds;
+                component.m_numRounds = PrimaryMagazine.m_numRounds;
                 component.UpdateBulletDisplay();
                 return gameObject;
             }
@@ -347,9 +346,9 @@ namespace OpenScripts2
 #endif
     }
 }
-
+/*
 namespace System.Runtime.CompilerServices
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal class IsExternalInit { }
-}
+}*/

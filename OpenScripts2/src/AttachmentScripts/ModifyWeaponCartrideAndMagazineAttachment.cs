@@ -115,7 +115,7 @@ namespace OpenScripts2
                             w.Chamber.RoundType = RoundType;
                             break;
                         default:
-                            this.LogWarning("ModifyWeaponCartrideAndMagazineAttachment: FireArm type not supported!");
+                            LogWarning($"ModifyWeaponCartrideAndMagazineAttachment: FireArm type \"{_fireArm.GetType()}\" not supported!");
                             break;
                     }
                 }
@@ -173,7 +173,7 @@ namespace OpenScripts2
                             w.Chamber.RoundType = _origRoundType;
                             break;
                         default:
-                            this.LogWarning("ModifyWeaponCartrideAndMagazineAttachment: FireArm type not supported!");
+                            LogWarning($"ModifyWeaponCartrideAndMagazineAttachment: FireArm type \"{_fireArm.GetType()}\" not supported!");
                             break;
                     }
                 }
@@ -192,13 +192,15 @@ namespace OpenScripts2
         }
 
         [ContextMenu("Calculate relative magazine transforms")]
-        public void CaluculateRelativeMagPos()
+        public void CalculateRelativeMagPos()
         {
             RelativeMagPos = TemporaryFirearm.transform.InverseTransformPoint(MagMountPos.position);
-            RelativeMagRot = Quaternion.Inverse(TemporaryFirearm.transform.rotation) * MagMountPos.rotation;
+            //RelativeMagRot = Quaternion.Inverse(TemporaryFirearm.transform.rotation) * MagMountPos.rotation;
+            RelativeMagRot = TemporaryFirearm.transform.InverseTransformRotation(MagMountPos.rotation);
 
             RelativeMagEjectPos = TemporaryFirearm.transform.InverseTransformPoint(MagEjectPos.position);
-            RelativeMagEjectRot = Quaternion.Inverse(TemporaryFirearm.transform.rotation) * MagEjectPos.rotation;
+            //RelativeMagEjectRot = Quaternion.Inverse(TemporaryFirearm.transform.rotation) * MagEjectPos.rotation;
+            RelativeMagEjectRot = TemporaryFirearm.transform.InverseTransformRotation(MagEjectPos.rotation);
         }
     }
 }

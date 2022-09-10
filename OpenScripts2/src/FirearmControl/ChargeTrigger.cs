@@ -25,7 +25,7 @@ namespace OpenScripts2
         private bool _isCharging = false;
         private bool _isAutomaticFire = false;
 #if !DEBUG
-        void Awake()
+        public void Awake()
         {
             if (!_isHooked)
                 switch (FireArm)
@@ -59,12 +59,12 @@ namespace OpenScripts2
                         _isHooked = true;
                         break;
                     default:
-                        this.LogWarning("Firearm type not supported!");
+                        LogWarning($"Firearm type \"{FireArm.GetType()}\" not supported!");
                         break;
                 }
         }
 
-        void OnDestroy()
+        public void OnDestroy()
         {
             if (_isHooked)
                 switch (FireArm)
@@ -103,12 +103,12 @@ namespace OpenScripts2
         }
 
         // ClosedBoltWeapon Hooks and Coroutine
-        void UnhookClosedBolt()
+        private void UnhookClosedBolt()
         {
             On.FistVR.ClosedBoltWeapon.DropHammer -= ClosedBoltWeapon_DropHammer;
             On.FistVR.ClosedBoltWeapon.FVRUpdate -= ClosedBoltWeapon_FVRUpdate;
         }
-        void HookClosedBolt()
+        private void HookClosedBolt()
         {
             On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
             On.FistVR.ClosedBoltWeapon.FVRUpdate += ClosedBoltWeapon_FVRUpdate;
@@ -125,7 +125,7 @@ namespace OpenScripts2
             if (!_isCharging && !_isAutomaticFire && self == FireArm) StartCoroutine(HammerDropClosedBolt(orig, self));
             else if (_isAutomaticFire || self != FireArm) orig(self);
         }
-        IEnumerator HammerDropClosedBolt(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
+        private IEnumerator HammerDropClosedBolt(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
             _isCharging = true;
             _timeCharged = 0f;
@@ -144,12 +144,12 @@ namespace OpenScripts2
         }
 
         // OpenBoltReceiver Hooks and Coroutine
-        void UnhookOpenBolt()
+        private void UnhookOpenBolt()
         {
             On.FistVR.OpenBoltReceiver.ReleaseSeer -= OpenBoltReceiver_ReleaseSeer;
             On.FistVR.OpenBoltReceiver.FVRUpdate -= OpenBoltReceiver_FVRUpdate;
         }
-        void HookOpenBolt()
+        private void HookOpenBolt()
         {
             On.FistVR.OpenBoltReceiver.ReleaseSeer += OpenBoltReceiver_ReleaseSeer;
             On.FistVR.OpenBoltReceiver.FVRUpdate += OpenBoltReceiver_FVRUpdate;
@@ -166,7 +166,7 @@ namespace OpenScripts2
             if (!_isCharging && !_isAutomaticFire && self == FireArm) StartCoroutine(SeerReleaseOpenBolt(orig, self));
             else if (self != FireArm) orig(self);
         }
-        IEnumerator SeerReleaseOpenBolt(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
+        private IEnumerator SeerReleaseOpenBolt(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
         {
             _isCharging = true;
             _timeCharged = 0f;
@@ -185,12 +185,12 @@ namespace OpenScripts2
         }
 
         // Handgun Hooks and Coroutine
-        void UnhookHandgun()
+        private void UnhookHandgun()
         {
             On.FistVR.Handgun.ReleaseSeer -= Handgun_ReleaseSeer;
             On.FistVR.Handgun.FVRUpdate -= Handgun_FVRUpdate;
         }
-        void HookHandgun()
+        private void HookHandgun()
         {
             On.FistVR.Handgun.ReleaseSeer += Handgun_ReleaseSeer;
             On.FistVR.Handgun.FVRUpdate += Handgun_FVRUpdate;
@@ -207,7 +207,7 @@ namespace OpenScripts2
             if (!_isCharging && !_isAutomaticFire && self == FireArm) StartCoroutine(SeerReleaseHandgun(orig, self));
             else if (self != FireArm) orig(self);
         }
-        IEnumerator SeerReleaseHandgun(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
+        private IEnumerator SeerReleaseHandgun(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
         {
             _isCharging = true;
             _timeCharged = 0f;
@@ -226,12 +226,12 @@ namespace OpenScripts2
         }
 
         // BoltActionRifle Hooks and Coroutine
-        void UnhookBoltActionRifle()
+        private void UnhookBoltActionRifle()
         {
             On.FistVR.BoltActionRifle.DropHammer -= BoltActionRifle_DropHammer;
         }
 
-        void HookBoltActionRifle()
+        private void HookBoltActionRifle()
         {
             On.FistVR.BoltActionRifle.DropHammer += BoltActionRifle_DropHammer;
         }
@@ -242,7 +242,7 @@ namespace OpenScripts2
             else if (self != FireArm) orig(self);
         }
 
-        IEnumerator DropHammerBoltAction(On.FistVR.BoltActionRifle.orig_DropHammer orig, BoltActionRifle self)
+        private IEnumerator DropHammerBoltAction(On.FistVR.BoltActionRifle.orig_DropHammer orig, BoltActionRifle self)
         {
             _isCharging = true;
             _timeCharged = 0f;
@@ -259,12 +259,12 @@ namespace OpenScripts2
         }
 
         // TubeFedShotgun Hooks and Coroutine
-        void UnhookTubeFedShotgun()
+        private void UnhookTubeFedShotgun()
         {
             On.FistVR.TubeFedShotgun.ReleaseHammer -= TubeFedShotgun_ReleaseHammer;
         }
 
-        void HookTubeFedShotgun()
+        private void HookTubeFedShotgun()
         {
             On.FistVR.TubeFedShotgun.ReleaseHammer += TubeFedShotgun_ReleaseHammer;
         }
@@ -275,7 +275,7 @@ namespace OpenScripts2
             else if (self != FireArm) orig(self);
         }
 
-        IEnumerator ReleaseHammerTubeFed(On.FistVR.TubeFedShotgun.orig_ReleaseHammer orig, TubeFedShotgun self)
+        private IEnumerator ReleaseHammerTubeFed(On.FistVR.TubeFedShotgun.orig_ReleaseHammer orig, TubeFedShotgun self)
         {
             _isCharging = true;
             _timeCharged = 0f;
@@ -292,11 +292,11 @@ namespace OpenScripts2
         }
 
         // LeverActionFirearm Hooks and Coroutine
-        void UnhookLeverActionRifle()
+        private void UnhookLeverActionRifle()
         {
             On.FistVR.LeverActionFirearm.Fire -= LeverActionFirearm_Fire;
         }
-        void HookLeverActionFirearm()
+        private void HookLeverActionFirearm()
         {
             On.FistVR.LeverActionFirearm.Fire += LeverActionFirearm_Fire;
         }
@@ -307,7 +307,7 @@ namespace OpenScripts2
             else if (self != FireArm) orig(self);
         }
 
-        IEnumerator FireLeverAction(On.FistVR.LeverActionFirearm.orig_Fire orig, LeverActionFirearm self)
+        private IEnumerator FireLeverAction(On.FistVR.LeverActionFirearm.orig_Fire orig, LeverActionFirearm self)
         {
             _isCharging = true;
             _timeCharged = 0f;
@@ -324,11 +324,11 @@ namespace OpenScripts2
         }
 
         // BreakOpenShotgun Hooks and Coroutine
-        void UnhookBreakActionWeapon()
+        private void UnhookBreakActionWeapon()
         {
             On.FistVR.BreakActionWeapon.DropHammer -= BreakActionWeapon_DropHammer;
         }
-        void HookBreakActionWeapon()
+        private void HookBreakActionWeapon()
         {
             On.FistVR.BreakActionWeapon.DropHammer += BreakActionWeapon_DropHammer;
         }
@@ -338,7 +338,7 @@ namespace OpenScripts2
             if (!_isCharging && self == FireArm) StartCoroutine(DropHammerBreakAction(orig, self));
             else if (self != FireArm) orig(self);
         }
-        IEnumerator DropHammerBreakAction(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
+        private IEnumerator DropHammerBreakAction(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
         {
             _isCharging = true;
             _timeCharged = 0f;

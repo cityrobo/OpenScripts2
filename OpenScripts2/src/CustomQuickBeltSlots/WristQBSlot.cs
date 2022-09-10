@@ -14,32 +14,19 @@ namespace OpenScripts2
 		public Vector3 WristOffsetPosition;
         public Vector3 WristOffsetRotation;
 
-        public enum Wrist
+        public enum EWrist
         {
 			leftWrist,
 			rightWrist
         }
 
 		[SearchableEnum]
-		public Wrist wrist;
+		public EWrist Wrist;
 
         [ContextMenu("CopyQBSlot")]
         public void CopyQBSlot()
         {
-            FVRQuickBeltSlot QBS = GetComponent<FVRQuickBeltSlot>();
-
-            this.QuickbeltRoot = QBS.QuickbeltRoot;
-            this.PoseOverride = QBS.PoseOverride;
-            this.SizeLimit = QBS.SizeLimit;
-            this.Shape = QBS.Shape;
-            this.Type = QBS.Type;
-            this.HoverGeo = QBS.HoverGeo;
-            this.RectBounds = QBS.RectBounds;
-            this.CurObject = QBS.CurObject;
-            this.IsSelectable = QBS.IsSelectable;
-            this.IsPlayer = QBS.IsPlayer;
-            this.UseStraightAxisAlignment = QBS.UseStraightAxisAlignment;
-            this.HeldObject = QBS.HeldObject;
+            this.CopyComponent(GetComponent<FVRQuickBeltSlot>());
         }
 
         public FVRViveHand Hand
@@ -56,23 +43,23 @@ namespace OpenScripts2
         {
             if (GM.CurrentPlayerBody != null && GM.CurrentPlayerBody.LeftHand != null && GM.CurrentPlayerBody.RightHand != null)
             {
-                switch (wrist)
+                switch (Wrist)
                 {
-                    case Wrist.leftWrist:
-                        this.transform.SetParent(GM.CurrentPlayerBody.LeftHand);
-                        m_hand = GameObject.Find("Controller (left)").GetComponent<FVRViveHand>();
+                    case EWrist.leftWrist:
+                        transform.SetParent(GM.CurrentPlayerBody.LeftHand);
+                        m_hand = !GM.CurrentMovementManager.Hands[0].IsThisTheRightHand ? GM.CurrentMovementManager.Hands[0] : GM.CurrentMovementManager.Hands[1];
                         break;
-                    case Wrist.rightWrist:
-                        this.transform.SetParent(GM.CurrentPlayerBody.RightHand);
-                        m_hand = GameObject.Find("Controller (right)").GetComponent<FVRViveHand>();
+                    case EWrist.rightWrist:
+                        transform.SetParent(GM.CurrentPlayerBody.RightHand);
+                        m_hand = GM.CurrentMovementManager.Hands[0].IsThisTheRightHand ? GM.CurrentMovementManager.Hands[0] : GM.CurrentMovementManager.Hands[1];
                         break;
                     default:
                         break;
                 }
             }
 
-            this.transform.localPosition = WristOffsetPosition;
-            this.transform.localRotation = Quaternion.Euler(WristOffsetRotation);
+            transform.localPosition = WristOffsetPosition;
+            transform.localRotation = Quaternion.Euler(WristOffsetRotation);
         }
 
 		public void OnDestroy()

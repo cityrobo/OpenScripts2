@@ -37,34 +37,12 @@ namespace OpenScripts2
             public FVRFirearmAudioSet ReplacementFiringSounds;
             public FVRObject ObjectWrapper;
         }
-        /*
-        [SearchableEnum]
-        public FireArmRoundClass defaultRoundClass;
-        */
+
         [Tooltip("Only allows insertion of mag into firearm if the caliber of the mag and the gun are equal")]
         public bool ChecksFirearmCompatibility;
 
-        //private CaliberDefinition originalCaliberDefinition;
-
-        [Header("MeatKit required stuff. Use ContextMenu to populate.")]
-        [SearchableEnum]
-        public FireArmRoundType[] RoundTypes;
-        public int[] Capacities;
-        public GameObject[][] DisplayBulletss;
-        public MeshFilter[][] DisplayMeshFilterss;
-        public Renderer[][] DisplayRendererss;
-        [SearchableEnum]
-        public FVRFireArmMechanicalAccuracyClass[] AccuracyClasses;
-        public FVRFireArmRecoilProfile[] RecoilProfiles;
-        public FVRFireArmRecoilProfile[] RecoilProfilesStocked;
-        public FVRFirearmAudioSet[] ReplacementFiringSoundss;
-        public FVRObject[] ObjectWrappers;
-
-        public bool IsDEBUG = false;
-
         private FVRFireArm _fireArm = null;
         private List<CaliberDefinition> _caliberDefinitionsList;
-
         
         private FVRFireArmMechanicalAccuracyClass _origAccuracyClass;
 
@@ -75,53 +53,6 @@ namespace OpenScripts2
         private AudioEvent _origSuppressedSounds;
         private AudioEvent _origLowPressureSounds;
 
-        private bool _isDebug = true;
-
-        [ContextMenu("Populate MeatKit Lists")]
-        public void PopulateMeatKitLists()
-        {
-            int definitionCount = CaliberDefinitions.Length;
-
-            RoundTypes = new FireArmRoundType[definitionCount];
-            Capacities = new int[definitionCount];
-            DisplayBulletss = new GameObject[definitionCount][];
-            DisplayMeshFilterss = new MeshFilter[definitionCount][];
-            DisplayRendererss = new Renderer[definitionCount][];
-            AccuracyClasses = new FVRFireArmMechanicalAccuracyClass[definitionCount];
-            RecoilProfiles = new FVRFireArmRecoilProfile[definitionCount];
-            RecoilProfilesStocked = new FVRFireArmRecoilProfile[definitionCount];
-            ReplacementFiringSoundss = new FVRFirearmAudioSet[definitionCount];
-            ObjectWrappers = new FVRObject[definitionCount];
-
-            for (int i = 0; i < definitionCount; i++)
-            {
-                RoundTypes[i] = CaliberDefinitions[i].RoundType;
-                Capacities[i] = CaliberDefinitions[i].Capacity;
-                DisplayBulletss[i] = CaliberDefinitions[i].DisplayBullets;
-                DisplayMeshFilterss[i] = CaliberDefinitions[i].DisplayMeshFilters;
-                DisplayRendererss[i] = CaliberDefinitions[i].DisplayRenderers;
-                AccuracyClasses[i] = CaliberDefinitions[i].AccuracyClass;
-                RecoilProfiles[i] = CaliberDefinitions[i].RecoilProfile;
-                RecoilProfilesStocked[i] = CaliberDefinitions[i].RecoilProfileStocked;
-                ReplacementFiringSoundss[i] = CaliberDefinitions[i].ReplacementFiringSounds;
-
-                ObjectWrappers[i] = CaliberDefinitions[i].ObjectWrapper;
-            }
-
-            if (_isDebug)
-            {
-                foreach (var DisplayBullets in DisplayBulletss)
-                {
-                    foreach (var DisplayBullet in DisplayBullets)
-                    {
-                        this.Log("DisplayBullets: " + DisplayBullet.name);
-                    }
-                }
-            }
-
-            IsDEBUG = true;
-        }
-
         public void Awake()
         {
             Hook();
@@ -129,9 +60,6 @@ namespace OpenScripts2
 
         public void Start()
         {
-            if (!IsDEBUG) _caliberDefinitionsList = new List<CaliberDefinition>(CaliberDefinitions);
-            else _caliberDefinitionsList = CreateListFromDEBUGDefines();
-
             PrepareCaliberDefinitions();
             if (!AlwaysShowText && TextRoot != null) TextRoot.SetActive(false);
         }
@@ -257,7 +185,9 @@ namespace OpenScripts2
         {
             Magazine.RoundType = _caliberDefinitionsList[CaliberDefinitionIndex].RoundType;
             if (_caliberDefinitionsList[CaliberDefinitionIndex].Capacity > 0)
+            {
                 Magazine.m_capacity = _caliberDefinitionsList[CaliberDefinitionIndex].Capacity;
+            }
             if (_caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets.Length > 0)
             {
                 Magazine.m_roundInsertionTarget.localPosition = _caliberDefinitionsList[CaliberDefinitionIndex].DisplayBullets[0].transform.localPosition;
@@ -289,7 +219,6 @@ namespace OpenScripts2
         {
 #if !DEBUG
             On.FistVR.FVRFireArmRound.OnTriggerEnter -= FVRFireArmRound_OnTriggerEnter;
-            //On.FistVR.FVRFireArmMagazine.ReloadMagWithList -= FVRFireArmMagazine_ReloadMagWithList;
 
             if (ChecksFirearmCompatibility)
             {
@@ -302,7 +231,6 @@ namespace OpenScripts2
         {
 #if !DEBUG
             On.FistVR.FVRFireArmRound.OnTriggerEnter += FVRFireArmRound_OnTriggerEnter;
-            //On.FistVR.FVRFireArmMagazine.ReloadMagWithList += FVRFireArmMagazine_ReloadMagWithList;
 
             if (ChecksFirearmCompatibility)
             {
@@ -310,40 +238,22 @@ namespace OpenScripts2
             }
 #endif
         }
-        /*
-        private void FVRFireArmMagazine_ReloadMagWithList(On.FistVR.FVRFireArmMagazine.orig_ReloadMagWithList orig, FVRFireArmMagazine self, List<FireArmRoundClass> list)
-        {
-            if (magazine == self)
-            {
-                for (int i = 0; i < list.Count; i++)
-                {
-                    list[i] = defaultRoundClass;
-                }
-            }
-            orig(self, list);
-        }
-        */
+
 #if !DEBUG
         private void FVRFireArmReloadTriggerMag_OnTriggerEnter(On.FistVR.FVRFireArmReloadTriggerMag.orig_OnTriggerEnter orig, FVRFireArmReloadTriggerMag self, Collider collider)
         {
-            if (this.Magazine == self.Magazine)
+            if (Magazine == self.Magazine)
             {
-                if (!(self.Magazine != null) || !(self.Magazine.FireArm == null) || !(self.Magazine.QuickbeltSlot == null) || !(collider.gameObject.tag == "FVRFireArmReloadTriggerWell"))
-                    return;
-                FVRFireArmReloadTriggerWell component = collider.gameObject.GetComponent<FVRFireArmReloadTriggerWell>();
-                bool flag = false;
-                if (component != null && !self.Magazine.IsBeltBox && component.FireArm.HasBelt)
-                    flag = true;
-                if (!(component != null) || component.IsBeltBox != self.Magazine.IsBeltBox || !(component.FireArm != null) || !(component.FireArm.Magazine == null) || flag)
-                    return;
-                FireArmMagazineType fireArmMagazineType = component.FireArm.MagazineType;
-                if (component.UsesTypeOverride)
-                    fireArmMagazineType = component.TypeOverride;
-                if (fireArmMagazineType != self.Magazine.MagazineType || (double)component.FireArm.EjectDelay > 0.0 && !(self.Magazine != component.FireArm.LastEjectedMag) || !(component.FireArm.Magazine == null))
-                    return;
-                if (ChecksFirearmCompatibility && Magazine.RoundType != component.FireArm.RoundType)
-                    return;
-                self.Magazine.Load(component.FireArm);
+                if (self.Magazine == null || self.Magazine.FireArm != null || self.Magazine.QuickbeltSlot != null || collider.gameObject.CompareTag(nameof(FVRFireArmReloadTriggerWell))) return;
+                FVRFireArmReloadTriggerWell reloadTriggerWell = collider.gameObject.GetComponent<FVRFireArmReloadTriggerWell>();
+                bool beltCheck = false;
+                if (reloadTriggerWell != null && !self.Magazine.IsBeltBox && reloadTriggerWell.FireArm.HasBelt) beltCheck = true;
+                if (reloadTriggerWell == null || reloadTriggerWell.IsBeltBox != self.Magazine.IsBeltBox || reloadTriggerWell.FireArm == null || reloadTriggerWell.FireArm.Magazine != null || beltCheck) return;
+                FireArmMagazineType fireArmMagazineType = reloadTriggerWell.FireArm.MagazineType;
+                if (reloadTriggerWell.UsesTypeOverride) fireArmMagazineType = reloadTriggerWell.TypeOverride;
+                if (fireArmMagazineType != self.Magazine.MagazineType || reloadTriggerWell.FireArm.EjectDelay > 0.0f && self.Magazine == reloadTriggerWell.FireArm.LastEjectedMag || reloadTriggerWell.FireArm.Magazine != null) return;
+                if (ChecksFirearmCompatibility && Magazine.RoundType != reloadTriggerWell.FireArm.RoundType) return;
+                self.Magazine.Load(reloadTriggerWell.FireArm);
             }
             else orig(self, collider);
         }
@@ -352,28 +262,36 @@ namespace OpenScripts2
         {
             if (self.IsSpent)
                 return;
-            if (self.isManuallyChamberable && !self.IsSpent && (UnityEngine.Object)self.HoveredOverChamber == (UnityEngine.Object)null && (UnityEngine.Object)self.m_hoverOverReloadTrigger == (UnityEngine.Object)null && !self.IsSpent && collider.gameObject.CompareTag("FVRFireArmChamber"))
+            if (self.isManuallyChamberable && !self.IsSpent && self.HoveredOverChamber == null && self.m_hoverOverReloadTrigger == null && !self.IsSpent && collider.gameObject.CompareTag(nameof(FVRFireArmChamber)))
             {
                 FVRFireArmChamber component = collider.gameObject.GetComponent<FVRFireArmChamber>();
                 if (component.RoundType == self.RoundType && component.IsManuallyChamberable && component.IsAccessible && !component.IsFull)
+                {
                     self.HoveredOverChamber = component;
+                }
             }
-            if (self.isMagazineLoadable && (UnityEngine.Object)self.HoveredOverChamber == (UnityEngine.Object)null && !self.IsSpent && collider.gameObject.CompareTag("FVRFireArmMagazineReloadTrigger"))
+            if (self.isMagazineLoadable && self.HoveredOverChamber == null && !self.IsSpent && collider.gameObject.CompareTag(nameof(FVRFireArmMagazineReloadTrigger)))
             {
                 FVRFireArmMagazineReloadTrigger component = collider.gameObject.GetComponent<FVRFireArmMagazineReloadTrigger>();
                 if (component.IsClipTrigger)
                 {
-                    if ((UnityEngine.Object)component != (UnityEngine.Object)null && (UnityEngine.Object)component.Clip != (UnityEngine.Object)null && component.Clip.RoundType == self.RoundType && !component.Clip.IsFull() && ((UnityEngine.Object)component.Clip.FireArm == (UnityEngine.Object)null || component.Clip.IsDropInLoadable))
+                    if (component != null && component.Clip != null && component.Clip.RoundType == self.RoundType && !component.Clip.IsFull() && (component.Clip.FireArm == null || component.Clip.IsDropInLoadable))
+                    {
                         self.m_hoverOverReloadTrigger = component;
+                    }
                 }
                 else if (component.IsSpeedloaderTrigger)
                 {
                     if (!component.SpeedloaderChamber.IsLoaded)
+                    {
                         self.m_hoverOverReloadTrigger = component;
+                    }
                 }
-                else if ((UnityEngine.Object)component != (UnityEngine.Object)null && (UnityEngine.Object)component.Magazine != (UnityEngine.Object)null && component.Magazine.RoundType == self.RoundType && !component.Magazine.IsFull() && ((UnityEngine.Object)component.Magazine.FireArm == (UnityEngine.Object)null || component.Magazine.IsDropInLoadable))
+                else if (component != null && component.Magazine != null && component.Magazine.RoundType == self.RoundType && !component.Magazine.IsFull() && (component.Magazine.FireArm == null || component.Magazine.IsDropInLoadable))
+                {
                     self.m_hoverOverReloadTrigger = component;
-                else if ((UnityEngine.Object)component != (UnityEngine.Object)null && component.Magazine == Magazine && !component.Magazine.IsFull() && ((UnityEngine.Object)component.Magazine.FireArm == (UnityEngine.Object)null || component.Magazine.IsDropInLoadable))
+                }
+                else if (component != null && component.Magazine == Magazine && !component.Magazine.IsFull() && (component.Magazine.FireArm == null || component.Magazine.IsDropInLoadable))
                 {
                     MultiCaliberMagazine multiCaliberMagazine = component.Magazine.GetComponent<MultiCaliberMagazine>();
                     if (multiCaliberMagazine.SetCartridge(self.RoundType))
@@ -382,15 +300,13 @@ namespace OpenScripts2
                     }
                 }
             }
-            if (!self.isPalmable || self.ProxyRounds.Count >= self.MaxPalmedAmount || self.IsSpent || !collider.gameObject.CompareTag(nameof(FVRFireArmRound)))
-                return;
+            if (!self.isPalmable || self.ProxyRounds.Count >= self.MaxPalmedAmount || self.IsSpent || !collider.gameObject.CompareTag(nameof(FVRFireArmRound))) return;
             FVRFireArmRound component1 = collider.gameObject.GetComponent<FVRFireArmRound>();
-            if (component1.RoundType != self.RoundType || component1.IsSpent || !((UnityEngine.Object)component1.QuickbeltSlot == (UnityEngine.Object)null))
-                return;
+            if (component1.RoundType != self.RoundType || component1.IsSpent || component1.QuickbeltSlot != null) return;
             self.HoveredOverRound = component1;
         }
 #endif
-        public IEnumerator ShowCaliberText()
+        private IEnumerator ShowCaliberText()
         {
             FireArmRoundType roundType = _caliberDefinitionsList[CurrentCaliberDefinition].RoundType;
             if (AM.SRoundDisplayDataDic.ContainsKey(roundType))
@@ -406,7 +322,7 @@ namespace OpenScripts2
             yield return null;
         }
 
-        void PrepareCaliberDefinitions()
+        private void PrepareCaliberDefinitions()
         {
             foreach (var caliberDefinition in CaliberDefinitions)
             {
@@ -419,27 +335,6 @@ namespace OpenScripts2
                     caliberDefinition.DisplayRenderers[i].material = null;
                 }
             }
-        }
-
-        List<CaliberDefinition> CreateListFromDEBUGDefines()
-        {
-            List<CaliberDefinition> caliberDefinitions = new List<CaliberDefinition>();
-            for (int i = 0; i < RoundTypes.Length; i++)
-            {
-                CaliberDefinition caliberDefinition = new CaliberDefinition();
-                caliberDefinition.RoundType = RoundTypes[i];
-                caliberDefinition.Capacity = Capacities[i];
-                caliberDefinition.DisplayBullets = DisplayBulletss[i];
-                caliberDefinition.DisplayMeshFilters = DisplayMeshFilterss[i];
-                caliberDefinition.DisplayRenderers = DisplayRendererss[i];
-                caliberDefinition.AccuracyClass = AccuracyClasses[i];
-                caliberDefinition.RecoilProfile = RecoilProfiles[i];
-                caliberDefinition.RecoilProfileStocked = RecoilProfilesStocked[i];
-                caliberDefinition.ReplacementFiringSounds = ReplacementFiringSoundss[i];
-                caliberDefinition.ObjectWrapper = ObjectWrappers[i];
-            }
-
-            return caliberDefinitions;
         }
     }
 }

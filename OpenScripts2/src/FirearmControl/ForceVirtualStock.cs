@@ -9,29 +9,39 @@ namespace OpenScripts2
 {
     public class ForceVirtualStock : OpenScripts2_BasePlugin
     {
-		public Transform StockPos;
+        public FVRPhysicalObject PhysicalObject = null;
+		public Transform StockPos = null;
 
+        private static Dictionary<FVRPhysicalObject,ForceVirtualStock> _existingForceVirtualStock = new();
 #if !DEBUG
-		public void Awake()
+
+        static ForceVirtualStock()
         {
             On.FistVR.FVRPhysicalObject.HasStockPos += FVRPhysicalObject_HasStockPos;
             On.FistVR.FVRPhysicalObject.GetStockPos += FVRPhysicalObject_GetStockPos;
         }
-        
-        public void OnDestroy()
+
+        public void Awake()
         {
-            On.FistVR.FVRPhysicalObject.HasStockPos -= FVRPhysicalObject_HasStockPos;
-            On.FistVR.FVRPhysicalObject.GetStockPos -= FVRPhysicalObject_GetStockPos;
+            _existingForceVirtualStock.Add(PhysicalObject,this);
         }
 
-        private Transform FVRPhysicalObject_GetStockPos(On.FistVR.FVRPhysicalObject.orig_GetStockPos orig, FVRPhysicalObject self)
+        public void OnDestroy()
         {
-			return this.StockPos;
+            _existingForceVirtualStock.Remove(PhysicalObject);
+        }
+
+        private static Transform FVRPhysicalObject_GetStockPos(On.FistVR.FVRPhysicalObject.orig_GetStockPos orig, FVRPhysicalObject self)
+        {
+            ForceVirtualStock forceVirtualStock;
+            if (_existingForceVirtualStock.TryGetValue(self, out forceVirtualStock)) return forceVirtualStock.StockPos;
+            else return orig(self);
 		}
 
-        private bool FVRPhysicalObject_HasStockPos(On.FistVR.FVRPhysicalObject.orig_HasStockPos orig, FVRPhysicalObject self)
+        private static bool FVRPhysicalObject_HasStockPos(On.FistVR.FVRPhysicalObject.orig_HasStockPos orig, FVRPhysicalObject self)
         {
-			return true;
+            if (_existingForceVirtualStock.ContainsKey(self)) return true;
+            else return orig(self);
 		}
 #endif
 	}

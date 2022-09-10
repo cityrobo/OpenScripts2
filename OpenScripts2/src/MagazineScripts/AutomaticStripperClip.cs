@@ -26,7 +26,7 @@ namespace OpenScripts2
             }
         }
 
-        IEnumerator LoadRoundsOneByOne()
+        private IEnumerator LoadRoundsOneByOne()
         {
             _loadingRounds = true;
             while (Clip.HasARound() && Clip.FireArm != null && Clip.FireArm.Magazine != null && !Clip.FireArm.Magazine.IsFull())
@@ -37,13 +37,10 @@ namespace OpenScripts2
             _loadingRounds = false;
         }
 
-        void LoadAllRounds()
+        private void LoadAllRounds()
         {
-            if (Clip.FireArm == null || Clip.FireArm.Magazine == null || Clip.FireArm.Magazine.IsFull() || !Clip.HasARound())
-            {
-                return;
-            }
-            SM.PlayGenericSound(Clip.LoadFromClipToMag, base.transform.position);
+            if (Clip.FireArm == null || Clip.FireArm.Magazine == null || Clip.FireArm.Magazine.IsFull() || !Clip.HasARound()) return;
+            SM.PlayGenericSound(Clip.LoadFromClipToMag, transform.position);
 
             for (int i = 0; i < Clip.m_numRounds; i++)
             {

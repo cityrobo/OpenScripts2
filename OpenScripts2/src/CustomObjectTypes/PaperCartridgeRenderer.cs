@@ -11,7 +11,7 @@ namespace OpenScripts2
         public Mesh CartridgeMesh;
         public Material CartridgeMaterial;
 
-        void LateUpdate()
+        public void LateUpdate()
         {
             if (Chamber.m_round != null && !Chamber.m_round.IsSpent && Chamber.ProxyMesh.mesh != CartridgeMesh)
             {

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace OpenScripts2
 {
-    public class BreakActionWeapon_BarrelSwitch : OpenScripts2_BasePlugin
+    public class BreakActionWeaponBarrelSwitch : OpenScripts2_BasePlugin
     {
         public BreakActionWeapon BreakActionWeapon;
         public int[] PrimaryBarrelGroupIndex;
@@ -44,8 +44,17 @@ namespace OpenScripts2
 
         private SelectedBarrelGroup _selectedBarrelGroup = SelectedBarrelGroup.Primary;
 
-        public void Start()
+        private static Dictionary<BreakActionWeapon, BreakActionWeaponBarrelSwitch> _existingBreakActionWeaponBarrelSwitches = new();
+
+        static BreakActionWeaponBarrelSwitch()
         {
+            Hook();
+        }
+
+        public void Awake()
+        {
+            _existingBreakActionWeaponBarrelSwitches.Add(BreakActionWeapon, this);
+
             foreach (int index in PrimaryBarrelGroupIndex)
             {
                 _primaryBarrelGroup.IndexList.Add(index);
@@ -57,15 +66,12 @@ namespace OpenScripts2
                 _secondaryBarrelGroup.IndexList.Add(index);
                 _secondaryBarrelGroup.Barrels.Add(BreakActionWeapon.Barrels[index]);
             }
-
-            Hook();
-
             if (HasFireSelector) UpdateFireSelector();
         }
 
         public void OnDestroy()
         {
-            Unhook();
+            _existingBreakActionWeaponBarrelSwitches.Remove(BreakActionWeapon);
         }
 
         public void NextBarrelGroup()
@@ -156,15 +162,7 @@ namespace OpenScripts2
             }
         }
 
-        public void Unhook()
-        {
-#if !DEBUG
-            On.FistVR.BreakActionWeapon.DropHammer -= BreakActionWeapon_DropHammer;
-            On.FistVR.BreakActionWeapon.UpdateInputAndAnimate -= BreakActionWeapon_UpdateInputAndAnimate;
-#endif
-        }
-
-        public void Hook()
+        public static void Hook()
         {
 #if !DEBUG
             On.FistVR.BreakActionWeapon.DropHammer += BreakActionWeapon_DropHammer;
@@ -172,22 +170,26 @@ namespace OpenScripts2
 #endif
         }
 #if !DEBUG
-        private void BreakActionWeapon_UpdateInputAndAnimate(On.FistVR.BreakActionWeapon.orig_UpdateInputAndAnimate orig, BreakActionWeapon self, FVRViveHand hand)
+        private static void BreakActionWeapon_UpdateInputAndAnimate(On.FistVR.BreakActionWeapon.orig_UpdateInputAndAnimate orig, BreakActionWeapon self, FVRViveHand hand)
         {
             orig(self, hand);
-            if (self == BreakActionWeapon)
+
+            BreakActionWeaponBarrelSwitch breakActionWeaponBarrelSwitch;
+            if (_existingBreakActionWeaponBarrelSwitches.TryGetValue(self,out breakActionWeaponBarrelSwitch))
             {
-                if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.down) < 45f)
+                
+                if (TouchpadDirPressed(hand, Vector2.down))
                 {
-                    NextBarrelGroup();
+                    breakActionWeaponBarrelSwitch.NextBarrelGroup();
                     self.PlayAudioEvent(FirearmAudioEventType.FireSelector);
                 }
             }
         }
 
-        private void BreakActionWeapon_DropHammer(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
+        private static void BreakActionWeapon_DropHammer(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
         {
-            if (self == BreakActionWeapon)
+            BreakActionWeaponBarrelSwitch breakActionWeaponBarrelSwitch;
+            if (_existingBreakActionWeaponBarrelSwitches.TryGetValue(self, out breakActionWeaponBarrelSwitch))
             {
                 if (!self.m_isLatched)
                 {
@@ -195,17 +197,17 @@ namespace OpenScripts2
                 }
                 self.firedOneShot = false;
 
-                switch (_selectedBarrelGroup)
+                switch (breakActionWeaponBarrelSwitch._selectedBarrelGroup)
                 {
                     case SelectedBarrelGroup.Primary:
-                        for (int i = 0; i < _primaryBarrelGroup.Barrels.Count; i++)
+                        for (int i = 0; i < breakActionWeaponBarrelSwitch._primaryBarrelGroup.Barrels.Count; i++)
                         {
-                            if (_primaryBarrelGroup.Barrels[i].m_isHammerCocked)
+                            if (breakActionWeaponBarrelSwitch._primaryBarrelGroup.Barrels[i].m_isHammerCocked)
                             {
                                 self.PlayAudioEvent(FirearmAudioEventType.HammerHit, 1f);
-                                _primaryBarrelGroup.Barrels[i].m_isHammerCocked = false;
+                                breakActionWeaponBarrelSwitch._primaryBarrelGroup.Barrels[i].m_isHammerCocked = false;
                                 self.UpdateVisualHammers();
-                                self.Fire(_primaryBarrelGroup.IndexList[i], self.FireAllBarrels, _primaryBarrelGroup.IndexList[i]);
+                                self.Fire(breakActionWeaponBarrelSwitch._primaryBarrelGroup.IndexList[i], self.FireAllBarrels, breakActionWeaponBarrelSwitch._primaryBarrelGroup.IndexList[i]);
                                 if (!self.FireAllBarrels)
                                 {
                                     break;
@@ -214,22 +216,20 @@ namespace OpenScripts2
                         }
                         break;
                     case SelectedBarrelGroup.Secondary:
-                        for (int i = 0; i < _secondaryBarrelGroup.Barrels.Count; i++)
+                        for (int i = 0; i < breakActionWeaponBarrelSwitch._secondaryBarrelGroup.Barrels.Count; i++)
                         {
-                            if (_secondaryBarrelGroup.Barrels[i].m_isHammerCocked)
+                            if (breakActionWeaponBarrelSwitch._secondaryBarrelGroup.Barrels[i].m_isHammerCocked)
                             {
                                 self.PlayAudioEvent(FirearmAudioEventType.HammerHit, 1f);
-                                _secondaryBarrelGroup.Barrels[i].m_isHammerCocked = false;
+                                breakActionWeaponBarrelSwitch._secondaryBarrelGroup.Barrels[i].m_isHammerCocked = false;
                                 self.UpdateVisualHammers();
-                                self.Fire(_secondaryBarrelGroup.IndexList[i], self.FireAllBarrels, _secondaryBarrelGroup.IndexList[i]);
+                                self.Fire(breakActionWeaponBarrelSwitch._secondaryBarrelGroup.IndexList[i], self.FireAllBarrels, breakActionWeaponBarrelSwitch._secondaryBarrelGroup.IndexList[i]);
                                 if (!self.FireAllBarrels)
                                 {
                                     break;
                                 }
                             }
                         }
-                        break;
-                    default:
                         break;
                 }
             }

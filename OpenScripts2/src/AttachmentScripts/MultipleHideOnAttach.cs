@@ -28,7 +28,6 @@ namespace OpenScripts2
         }
         public void Update()
         {
-
             if (attachmentMount.DisableOnHover.activeInHierarchy == false)
             {
                 foreach (GameObject gameObject in ObjectToHideOrShow)

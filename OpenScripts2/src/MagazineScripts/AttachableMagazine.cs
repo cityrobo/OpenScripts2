@@ -8,24 +8,34 @@ namespace OpenScripts2
 	public class AttachableMagazine : OpenScripts2_BasePlugin
 	{
 		public FVRFireArmMagazine Magazine;
-		
 		public FVRFireArmAttachment Attachment;
 
+		[Tooltip("Attachment will attach instantly, like as if it was a magazine inserting into a gun")]
 		public bool AttachInstantly;
+		[Tooltip("Attachment will detatch instantly when grabbed, like as if it was a magazine being extracted from a gun")]
+		public bool RemoveInstantly;
 
-		private bool _AttachmentLocked = false;
-		private FVRFireArmReloadTriggerMag _ReloadTriggerMag;
-
+		private bool _attachmentLocked = false;
+		private FVRFireArmReloadTriggerMag _reloadTriggerMag;
 
 		private Vector3 _base_attachmentPos;
 		private Vector3 _base_attachmentEuler;
 
 		private Vector3 _secondary_attachmentPos;
 		private Vector3 _secondary_attachmentEuler;
+
+		private static Dictionary<FVRFireArmAttachmentSensor, AttachableMagazine> _existingAttachableMagazines = new();
 #if !DEBUG
 
-		public void Start()
+		static AttachableMagazine()
         {
+			Hook();
+		}
+
+		public void Awake()
+        {
+			_existingAttachableMagazines.Add(Attachment.Sensor,this);
+
 			Hook();
 
 			if (Attachment.transform.parent == Magazine.transform)
@@ -48,13 +58,13 @@ namespace OpenScripts2
 				SetBaseTransform();
 				UseSecondaryParenting(attachmentParent);
 				UseSecondaryTransform();
-				_AttachmentLocked = true;
+				_attachmentLocked = true;
 				Attachment.Sensor.CurHoveredMount = Attachment.curMount;
 				//Debug.Log("Attachment based Setup complete!");
 			}
             else
             {
-				this.LogError("Attachable Mag Setup failed!");
+				LogError("Attachable Mag Setup failed!");
             }
 
 
@@ -69,17 +79,17 @@ namespace OpenScripts2
 				Attachment.gameObject.layer = LayerMask.NameToLayer("NoCol");
 			}
 
-			_ReloadTriggerMag = Magazine.GetComponentInChildren<FVRFireArmReloadTriggerMag>();
+			_reloadTriggerMag = Magazine.GetComponentInChildren<FVRFireArmReloadTriggerMag>();
 		}
 
-		void OnDestroy()
+		public void OnDestroy()
         {
-			Unhook();
+			_existingAttachableMagazines.Remove(Attachment.Sensor);
         }
 		
         public void Update()
         {
-			if (Attachment.Sensor.CurHoveredMount != null && !_AttachmentLocked)
+			if (Attachment.Sensor.CurHoveredMount != null && !_attachmentLocked)
             {
 				//StartHoverMode();
 				/*attachmentLocked = true;
@@ -94,9 +104,9 @@ namespace OpenScripts2
 
 				Magazine.gameObject.layer = LayerMask.NameToLayer("NoCol");*/
 			}
-			else if (Attachment.Sensor.CurHoveredMount == null && _AttachmentLocked)
+			else if (Attachment.Sensor.CurHoveredMount == null && _attachmentLocked)
             {
-				_AttachmentLocked = false;
+				_attachmentLocked = false;
 				Attachment.gameObject.layer = LayerMask.NameToLayer("NoCol");
 				Magazine.SetParentage(null);
 				Magazine.RecoverRigidbody();
@@ -111,7 +121,7 @@ namespace OpenScripts2
 				}
 				Magazine.gameObject.layer = LayerMask.NameToLayer("Interactable");
 			}
-			if (_AttachmentLocked) UseSecondaryTransform();
+			if (_attachmentLocked) UseSecondaryTransform();
 			else
 			{
 				UseBaseTransform();
@@ -123,13 +133,18 @@ namespace OpenScripts2
 			}
 			else if (Attachment.IsHovered)
             {
-				_ReloadTriggerMag.gameObject.layer = LayerMask.NameToLayer("NoCol");
+				_reloadTriggerMag.gameObject.layer = LayerMask.NameToLayer("NoCol");
 			}
             else
             {
 				Attachment.Sensor.gameObject.layer = LayerMask.NameToLayer("Interactable");
-				_ReloadTriggerMag.gameObject.layer = LayerMask.NameToLayer("Interactable");
+				_reloadTriggerMag.gameObject.layer = LayerMask.NameToLayer("Interactable");
 			}
+
+			if (RemoveInstantly)
+            {
+				if (Attachment.AttachmentInterface.IsHeld) Attachment.AttachmentInterface.DetachRoutine(Attachment.AttachmentInterface.m_hand);
+            }
 		}
 
 		private void SetBaseTransform()
@@ -167,35 +182,31 @@ namespace OpenScripts2
 			Magazine.SetParentage(Attachment.transform);
 		}
 
-		private void Unhook()
-        {
-			On.FistVR.FVRFireArmAttachmentSensor.OnTriggerEnter -= FVRFireArmAttachmentSensor_OnTriggerEnter;
-		}
-
-		private void Hook()
+		private static void Hook()
         {
 			On.FistVR.FVRFireArmAttachmentSensor.OnTriggerEnter += FVRFireArmAttachmentSensor_OnTriggerEnter;
 		}
 
-		private void FVRFireArmAttachmentSensor_OnTriggerEnter(On.FistVR.FVRFireArmAttachmentSensor.orig_OnTriggerEnter orig, FVRFireArmAttachmentSensor self, Collider collider)
+		private static void FVRFireArmAttachmentSensor_OnTriggerEnter(On.FistVR.FVRFireArmAttachmentSensor.orig_OnTriggerEnter orig, FVRFireArmAttachmentSensor self, Collider collider)
         {
-			if (self == Attachment.Sensor)
+			AttachableMagazine attachableMagazine;
+			if (_existingAttachableMagazines.TryGetValue(self,out attachableMagazine))
             {
 				if (self.CurHoveredMount == null && self.Attachment.CanAttach() && collider.gameObject.tag == "FVRFireArmAttachmentMount")
 				{
 					FVRFireArmAttachmentMount component = collider.gameObject.GetComponent<FVRFireArmAttachmentMount>();
 					if (component.Type == self.Attachment.Type && component.isMountableOn(self.Attachment))
 					{
-						if (!AttachInstantly)
+						if (!attachableMagazine.AttachInstantly)
 						{
-							if (!_AttachmentLocked) StartHoverMode();
+							if (!attachableMagazine._attachmentLocked) attachableMagazine.StartHoverMode();
 							self.SetHoveredMount(component);
 							component.BeginHover();
 						}
                         else
                         {
 							self.SetHoveredMount(component);
-							if (!_AttachmentLocked) InstantlyAttachToMount(component);
+							if (!attachableMagazine._attachmentLocked) attachableMagazine.InstantlyAttachToMount(component);
 						}
 					}
 				}
@@ -207,7 +218,7 @@ namespace OpenScripts2
 
 		private void StartHoverMode()
         {
-			_AttachmentLocked = true;
+			_attachmentLocked = true;
 			Attachment.RecoverRigidbody();
 			Attachment.AttachmentInterface.gameObject.layer = LayerMask.NameToLayer("Interactable");
 			FVRViveHand hand = Magazine.m_hand;
@@ -221,7 +232,7 @@ namespace OpenScripts2
 
 		private void InstantlyAttachToMount(FVRFireArmAttachmentMount mount)
         {
-			_AttachmentLocked = true;
+			_attachmentLocked = true;
 			Magazine.ForceBreakInteraction();
 			Magazine.StoreAndDestroyRigidbody();
 			Attachment.RecoverRigidbody();

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
+using OpenScripts2;
 
 namespace Cityrobo
 {
@@ -31,8 +32,8 @@ namespace Cityrobo
         {
             base.Awake();
 
-            _origMuzzlePos = this.Muzzle.localPosition;
-            _origMuzzleRot = this.Muzzle.localRotation;
+            _origMuzzlePos = Muzzle.localPosition;
+            _origMuzzleRot = Muzzle.localRotation;
         }
 
         public override void FVRUpdate()
@@ -41,8 +42,8 @@ namespace Cityrobo
 
             if (ItemHolder.HeldObject != null)
             {
-                this.Muzzle.position = Vector3.down * 3 + this.transform.TransformPoint(_origMuzzlePos);
-                this.Muzzle.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
+                Muzzle.position = Vector3.down * 3 + this.transform.TransformPoint(_origMuzzlePos);
+                Muzzle.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
 
                 if (!_recoilProfileSet && _fireArm != null && OverrideRecoilProfile != null)
                 {
@@ -75,8 +76,8 @@ namespace Cityrobo
                     _recoilProfileSet = false;
                 }
 
-                this.Muzzle.localPosition = _origMuzzlePos;
-                this.Muzzle.localRotation = _origMuzzleRot;
+                Muzzle.localPosition = _origMuzzlePos;
+                Muzzle.localRotation = _origMuzzleRot;
             }
         }
 
@@ -94,7 +95,7 @@ namespace Cityrobo
             if (ItemHolder.HeldObject != null) FireItem();
         }
 
-        void FireItem()
+        private void FireItem()
         {
             float speed = CalculateLaunchSpeed();
 
@@ -102,9 +103,9 @@ namespace Cityrobo
             if (launched) SM.PlayCoreSound(FVRPooledAudioType.GunShot, GrenadeShot, ItemHolder.transform.position);
         }
 
-        float CalculateLaunchSpeed()
+        private float CalculateLaunchSpeed()
         {
-            FVRFireArmChamber chamber = GetCurentChamber();
+            FVRFireArmChamber chamber = OpenScripts2_BasePlugin.GetCurrentChamber(_fireArm);
             if (chamber == null) return 5f;
             GameObject roundPrefab = chamber.GetRound().BallisticProjectilePrefab;
             BallisticProjectile ballisticProjectile = roundPrefab.GetComponent<BallisticProjectile>();
@@ -114,36 +115,6 @@ namespace Cityrobo
             float ItemMass = ItemHolder.CurObject.RootRigidbody.mass;
 
             return Mathf.Sqrt(kinecticEnergy / (0.5f * ItemMass));
-        }
-
-        FVRFireArmChamber GetCurentChamber()
-        {
-            switch (_fireArm)
-            {
-                case Handgun w:
-                    return w.Chamber;
-                case ClosedBoltWeapon w:
-                    return w.Chamber;
-                case OpenBoltReceiver w:
-                    return w.Chamber;
-                case TubeFedShotgun w:
-                    return w.Chamber;
-                case BoltActionRifle w:
-                    return w.Chamber;
-                case BreakActionWeapon w:
-                    return w.Barrels[w.m_curBarrel].Chamber;
-                case Revolver w:
-                    return w.Chambers[w.CurChamber];
-                case SingleActionRevolver w:
-                    return w.Cylinder.Chambers[w.CurChamber];
-                case RevolvingShotgun w:
-                    return w.Chambers[w.CurChamber];
-                case Flaregun w:
-                    return w.Chamber;
-                default:
-                    if (_fireArm.FChambers.Count > 0) return _fireArm.FChambers[0];
-                    else return null;
-            }
         }
     }
 }

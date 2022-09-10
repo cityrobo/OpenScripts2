@@ -7,11 +7,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using FistVR;
 
-namespace Cityrobo
+namespace OpenScripts2
 {
-    public class HandGunSpin : MonoBehaviour
+    public class HandgunSpin : OpenScripts2_BasePlugin
     {
-        public Handgun handgun;
+        public Handgun Handgun;
 		public Transform PoseSpinHolder;
 
 		private float xSpinVel;
@@ -19,27 +19,25 @@ namespace Cityrobo
 
 		private bool m_isSpinning;
 
+		private static Dictionary<FVRFireArm, HandgunSpin> _existingHandGunSpins = new();
+
 #if !(DEBUG || MEATKIT)
+		static HandgunSpin()
+        {
+			Hook();
+		}
 
 		public void Awake()
         {
-			Hook();
-
+			_existingHandGunSpins.Add(Handgun, this);
 		}
 		public void OnDestroy()
         {
-			Unhook();
+			_existingHandGunSpins.Remove(Handgun);
         }
 
-		void Unhook()
-        {
-			On.FistVR.Handgun.UpdateInputAndAnimate -= Handgun_UpdateInputAndAnimate;
-			On.FistVR.FVRFireArm.FVRFixedUpdate -= FVRFireArm_FVRFixedUpdate;
-			On.FistVR.FVRFireArm.EndInteraction -= FVRFireArm_EndInteraction;
-			On.FistVR.FVRFireArm.EndInteractionIntoInventorySlot -= FVRFireArm_EndInteractionIntoInventorySlot;
-		}
 
-		void Hook()
+		private static void Hook()
         {
             On.FistVR.Handgun.UpdateInputAndAnimate += Handgun_UpdateInputAndAnimate;
             On.FistVR.FVRFireArm.FVRFixedUpdate += FVRFireArm_FVRFixedUpdate;
@@ -47,75 +45,79 @@ namespace Cityrobo
             On.FistVR.FVRFireArm.EndInteractionIntoInventorySlot += FVRFireArm_EndInteractionIntoInventorySlot;
         }
 
-        private void FVRFireArm_EndInteractionIntoInventorySlot(On.FistVR.FVRFireArm.orig_EndInteractionIntoInventorySlot orig, FVRFireArm self, FVRViveHand hand, FVRQuickBeltSlot slot)
+        private static void FVRFireArm_EndInteractionIntoInventorySlot(On.FistVR.FVRFireArm.orig_EndInteractionIntoInventorySlot orig, FVRFireArm self, FVRViveHand hand, FVRQuickBeltSlot slot)
         {
-			if (self == handgun)
+			HandgunSpin handgunSpin;
+			if (_existingHandGunSpins.TryGetValue(self, out handgunSpin))
 			{
-				m_isSpinning = false;
+				handgunSpin.m_isSpinning = false;
 			}
 			orig(self, hand, slot);
 		}
 
-        private void FVRFireArm_EndInteraction(On.FistVR.FVRFireArm.orig_EndInteraction orig, FVRFireArm self, FVRViveHand hand)
+        private static void FVRFireArm_EndInteraction(On.FistVR.FVRFireArm.orig_EndInteraction orig, FVRFireArm self, FVRViveHand hand)
         {
-			if (self == handgun)
+			HandgunSpin handgunSpin;
+			if (_existingHandGunSpins.TryGetValue(self, out handgunSpin))
 			{
-				m_isSpinning = false;
+				handgunSpin.m_isSpinning = false;
 			}
 			orig(self,hand);
 		}
 
-        private void FVRFireArm_FVRFixedUpdate(On.FistVR.FVRFireArm.orig_FVRFixedUpdate orig, FVRFireArm self)
+        private static void FVRFireArm_FVRFixedUpdate(On.FistVR.FVRFireArm.orig_FVRFixedUpdate orig, FVRFireArm self)
         {
 			orig(self);
 
-			if (self == handgun)
+			HandgunSpin handgunSpin;
+			if (_existingHandGunSpins.TryGetValue(self, out handgunSpin))
 			{
-				UpdateSpinning();
+				handgunSpin.UpdateSpinning();
 			}
 		}
 
-        private void Handgun_UpdateInputAndAnimate(On.FistVR.Handgun.orig_UpdateInputAndAnimate orig, Handgun self, FVRViveHand hand)
+        private static void Handgun_UpdateInputAndAnimate(On.FistVR.Handgun.orig_UpdateInputAndAnimate orig, Handgun self, FVRViveHand hand)
         {
 			orig(self,hand);
 
-			if (self == handgun)
+			HandgunSpin handgunSpin;
+			if (_existingHandGunSpins.TryGetValue(self, out handgunSpin))
 			{
-				if (hand.Input.TouchpadPressed && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) m_isSpinning = true;
-				else m_isSpinning = false;
+				if (TouchpadDirPressed(hand, Vector2.right)) handgunSpin.m_isSpinning = true;
+				else handgunSpin.m_isSpinning = false;
 			}
         }
 
         private void UpdateSpinning()
 		{
-			if (!handgun.IsHeld || handgun.IsAltHeld || handgun.AltGrip != null)
+			if (!Handgun.IsHeld || Handgun.IsAltHeld || Handgun.AltGrip != null)
 			{
 				m_isSpinning = false;
 			}
 			if (m_isSpinning)
 			{
 				Vector3 vector = Vector3.zero;
-				if (handgun.m_hand != null)
+				if (Handgun.m_hand != null)
 				{
-					vector = handgun.m_hand.Input.VelLinearWorld;
+					vector = Handgun.m_hand.Input.VelLinearWorld;
 				}
-				float num = Vector3.Dot(vector.normalized, handgun.transform.up);
+				float num = Vector3.Dot(vector.normalized, Handgun.transform.up);
 				num = Mathf.Clamp(num, -vector.magnitude, vector.magnitude);
 				if (Mathf.Abs(xSpinVel) < 90f)
 				{
-					this.xSpinVel += num * Time.deltaTime * 600f;
+					xSpinVel += num * Time.deltaTime * 600f;
 				}
 				else if (Mathf.Sign(num) == Mathf.Sign(xSpinVel))
 				{
-					this.xSpinVel += num * Time.deltaTime * 600f;
+					xSpinVel += num * Time.deltaTime * 600f;
 				}
 				if (Mathf.Abs(xSpinVel) < 90f)
 				{
-					if (Vector3.Dot(handgun.transform.up, Vector3.down) >= 0f && Mathf.Sign(xSpinVel) == 1f)
+					if (Vector3.Dot(Handgun.transform.up, Vector3.down) >= 0f && Mathf.Sign(xSpinVel) == 1f)
 					{
 						xSpinVel += Time.deltaTime * 50f;
 					}
-					if (Vector3.Dot(handgun.transform.up, Vector3.down) < 0f && Mathf.Sign(xSpinVel) == -1f)
+					if (Vector3.Dot(Handgun.transform.up, Vector3.down) < 0f && Mathf.Sign(xSpinVel) == -1f)
 					{
 						xSpinVel -= Time.deltaTime * 50f;
 					}

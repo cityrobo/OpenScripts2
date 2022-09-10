@@ -6,18 +6,19 @@ namespace OpenScripts2
 {
 	public class SwitchBlade : FVRMeleeWeapon
 	{
-		public Transform Blade;
-		public Vector2 BladeRotRange = new Vector2(-90f, 90f);
+		[Header("Switchblade Config")]
+		public Transform Blade = null!;
+		public OpenScripts2_BasePlugin.Axis BladeRotAxis = OpenScripts2_BasePlugin.Axis.X;
+		public float BladeOpenRot = 0f;
+		public float BladeClosedRot = 180f;
 		public float BladeOpeningTime;
 		public float BladeClosingTime;
-		public AudioEvent OpenSounds;
-		public AudioEvent CloseSounds;
+		public AudioEvent OpeningSounds;
+		public AudioEvent ClosingSounds;
 		public enum SwitchBladeState
 		{
-			Closing,
 			Closed,
-			Opening,
-			Open,
+			Open
 		}
 
 		private SwitchBladeState _switchbladeState = SwitchBladeState.Closed;
@@ -26,41 +27,32 @@ namespace OpenScripts2
 		public override void UpdateInteraction(FVRViveHand hand)
 		{
 			base.UpdateInteraction(hand);
-			if (base.IsHeld && this.m_hand.Input.TriggerDown && this.m_hasTriggeredUpSinceBegin)
-			{
-				this.ToggleSwitchBladeState();
-			}
+			if (IsHeld && m_hasTriggeredUpSinceBegin && hand.Input.TriggerDown) ToggleSwitchBladeState();
 		}
-
 		private void ToggleSwitchBladeState()
 		{
-			if (this.MP.IsJointedToObject)
+			if (MP.IsJointedToObject) return;
+			else if (_switchbladeState == SwitchBladeState.Closed)
 			{
-				return;
+				SM.PlayGenericSound(OpeningSounds, transform.position);
+				StopAllCoroutines();
+				StartCoroutine(OpenBlade());
 			}
-			if (this._switchbladeState == SwitchBladeState.Closed)
+			else if (_switchbladeState == SwitchBladeState.Open)
 			{
-				SM.PlayGenericSound(OpenSounds, transform.position);
-				this.StartCoroutine("OpenBlade");
-				this.MP.CanNewStab = true;
-			}
-			else if (this._switchbladeState == SwitchBladeState.Open)
-			{
-				SM.PlayGenericSound(CloseSounds, transform.position);
-				this.StartCoroutine("CloseBlade");
-				this.MP.CanNewStab = false;
+				SM.PlayGenericSound(ClosingSounds, transform.position);
+				StopAllCoroutines();
+				StartCoroutine(CloseBlade());
 			}
 		}
-
 		private void SetBladeRot(float f)
 		{
-			this.Blade.localEulerAngles = new Vector3(Mathf.Lerp(this.BladeRotRange.x, this.BladeRotRange.y, f), 0f, 0f);
+			Blade.localRotation = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis( Mathf.Lerp(BladeClosedRot, BladeOpenRot, f),BladeRotAxis );
 		}
-
 		private IEnumerator OpenBlade()
         {
-			this._switchbladeState = SwitchBladeState.Opening;
 			_timeElapsed = 0f;
+			_switchbladeState = SwitchBladeState.Open;
 			while (_timeElapsed < BladeOpeningTime)
 			{
 				_timeElapsed += Time.deltaTime;
@@ -68,13 +60,13 @@ namespace OpenScripts2
 				yield return null;
 			}
 			SetBladeRot(1f);
-			this._switchbladeState = SwitchBladeState.Open;
+			MP.CanNewStab = true;
 		}
-
 		private IEnumerator CloseBlade()
 		{
-			this._switchbladeState = SwitchBladeState.Closing;
 			_timeElapsed = 0f;
+			MP.CanNewStab = false;
+			_switchbladeState = SwitchBladeState.Closed;
 			while (_timeElapsed < BladeClosingTime)
             {
 				_timeElapsed += Time.deltaTime;
@@ -82,8 +74,6 @@ namespace OpenScripts2
 				yield return null;
 			}
 			SetBladeRot(0f);
-			this._switchbladeState = SwitchBladeState.Closed;
 		}
-
     }
 }

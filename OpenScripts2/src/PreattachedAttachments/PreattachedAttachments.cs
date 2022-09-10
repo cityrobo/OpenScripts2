@@ -21,9 +21,9 @@ namespace OpenScripts2
 			foreach (var attachment in Attachments)
             {
 				attachment.AttachToMount(AttachmentMount, false);
-				if (attachment is Suppressor tempSup)
+				if (attachment is Suppressor suppressor)
 				{
-					tempSup.AutoMountWell();
+					suppressor.AutoMountWell();
 				}
 				yield return null;
 			}

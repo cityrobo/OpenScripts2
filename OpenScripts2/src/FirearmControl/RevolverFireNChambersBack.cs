@@ -11,57 +11,54 @@ namespace Cityrobo
 {
 	public class RevolverFireNChambersBack : MonoBehaviour
 	{
-		public Revolver revolver;
+		public Revolver ModifiedRevolver;
 		public int NChambersBack = 3;
 		public Transform SecondMuzzle;
 		public float FiringDelay = 0.1f;
 
 		private List<MuzzlePSystem> m_muzzleSystems = new List<MuzzlePSystem>();
 
+		private static Dictionary<FVRFireArm, RevolverFireNChambersBack> _existingRevolverFireNChambersBack = new();
+
 #if !(DEBUG || MEATKIT)
+		static RevolverFireNChambersBack()
+        {
+			On.FistVR.Revolver.UpdateTriggerHammer += Revolver_UpdateTriggerHammer;
+			On.FistVR.FVRFireArm.RegenerateMuzzleEffects += FVRFireArm_RegenerateMuzzleEffects;
+		}
 
 		public int PrevChamberN(int n)
 		{
-			int num = revolver.CurChamber - n;
+			int num = ModifiedRevolver.CurChamber - n;
 			if (num < 0)
 			{
-				return revolver.Cylinder.numChambers + num;
+				return ModifiedRevolver.Cylinder.numChambers + num;
 			}
 			return num;
 		}
 
 		public void Awake()
 		{
-			Hook();
+			_existingRevolverFireNChambersBack.Add(ModifiedRevolver,this);
 
 			RegenerateSecondaryMuzzleEffects();
 		}
 		public void OnDestroy()
 		{
-			Unhook();
+			_existingRevolverFireNChambersBack.Remove(ModifiedRevolver);
 		}
 
-		void Unhook()
-		{
-			On.FistVR.Revolver.UpdateTriggerHammer -= Revolver_UpdateTriggerHammer;
-			On.FistVR.FVRFireArm.RegenerateMuzzleEffects -= FVRFireArm_RegenerateMuzzleEffects;
-		}
-
-		void Hook()
-		{
-			On.FistVR.Revolver.UpdateTriggerHammer += Revolver_UpdateTriggerHammer;
-			On.FistVR.FVRFireArm.RegenerateMuzzleEffects += FVRFireArm_RegenerateMuzzleEffects;
-		}
-
-		private void FVRFireArm_RegenerateMuzzleEffects(On.FistVR.FVRFireArm.orig_RegenerateMuzzleEffects orig, FVRFireArm self, MuzzleDevice m)
+		private static void FVRFireArm_RegenerateMuzzleEffects(On.FistVR.FVRFireArm.orig_RegenerateMuzzleEffects orig, FVRFireArm self, MuzzleDevice m)
 		{
 			orig(self, m);
-			if (self == revolver) RegenerateSecondaryMuzzleEffects();
+			RevolverFireNChambersBack revolverFireNChambersBack;
+			if (_existingRevolverFireNChambersBack.TryGetValue(self, out revolverFireNChambersBack)) revolverFireNChambersBack.RegenerateSecondaryMuzzleEffects();
 		}
 
-		private void Revolver_UpdateTriggerHammer(On.FistVR.Revolver.orig_UpdateTriggerHammer orig, Revolver self)
+		private static void Revolver_UpdateTriggerHammer(On.FistVR.Revolver.orig_UpdateTriggerHammer orig, Revolver self)
 		{
-			if (self == revolver)
+			RevolverFireNChambersBack revolverFireNChambersBack;
+			if (_existingRevolverFireNChambersBack.TryGetValue(self,out revolverFireNChambersBack))
 			{
 				if (self.m_hasTriggeredUpSinceBegin && !self.m_isSpinning && !self.IsAltHeld && self.isCylinderArmLocked)
 				{
@@ -128,7 +125,7 @@ namespace Cityrobo
 							self.PlayAudioEvent(FirearmAudioEventType.HammerHit, 1f);
 
 							bool PrimaryChamberFire = self.Chambers[self.CurChamber].Fire();
-							bool SecondaryChamberFire = self.Chambers[PrevChamberN(NChambersBack)].Fire();
+							bool SecondaryChamberFire = self.Chambers[revolverFireNChambersBack.PrevChamberN(revolverFireNChambersBack.NChambersBack)].Fire();
 
 							if (PrimaryChamberFire && !SecondaryChamberFire)
 							{
@@ -145,11 +142,11 @@ namespace Cityrobo
 							}
 							else if (!PrimaryChamberFire && SecondaryChamberFire)
 							{
-								FireSecondaryChamber();
+								revolverFireNChambersBack.FireSecondaryChamber();
 								if (GM.CurrentSceneSettings.IsAmmoInfinite || GM.CurrentPlayerBody.IsInfiniteAmmo)
 								{
-									self.Chambers[PrevChamberN(NChambersBack)].IsSpent = false;
-									self.Chambers[PrevChamberN(NChambersBack)].UpdateProxyDisplay();
+									self.Chambers[revolverFireNChambersBack.PrevChamberN(revolverFireNChambersBack.NChambersBack)].IsSpent = false;
+									self.Chambers[revolverFireNChambersBack.PrevChamberN(revolverFireNChambersBack.NChambersBack)].UpdateProxyDisplay();
 								}
 								if (self.DoesFiringRecock)
 								{
@@ -159,13 +156,13 @@ namespace Cityrobo
 							else if (PrimaryChamberFire && SecondaryChamberFire)
 							{
 								self.Fire();
-								StartCoroutine(DelayedFiring());
+								revolverFireNChambersBack.StartCoroutine(revolverFireNChambersBack.DelayedFiring());
 								if (GM.CurrentSceneSettings.IsAmmoInfinite || GM.CurrentPlayerBody.IsInfiniteAmmo)
 								{
 									self.Chambers[self.CurChamber].IsSpent = false;
 									self.Chambers[self.CurChamber].UpdateProxyDisplay();
-									self.Chambers[PrevChamberN(NChambersBack)].IsSpent = false;
-									self.Chambers[PrevChamberN(NChambersBack)].UpdateProxyDisplay();
+									self.Chambers[revolverFireNChambersBack.PrevChamberN(revolverFireNChambersBack.NChambersBack)].IsSpent = false;
+									self.Chambers[revolverFireNChambersBack.PrevChamberN(revolverFireNChambersBack.NChambersBack)].UpdateProxyDisplay();
 								}
 								if (self.DoesFiringRecock)
 								{
@@ -260,17 +257,17 @@ namespace Cityrobo
 
 		private void FireSecondaryChamber()
 		{
-			FVRFireArmChamber fvrfireArmChamber = revolver.Chambers[PrevChamberN(NChambersBack)];
-			revolver.Fire(fvrfireArmChamber, SecondMuzzle, true, 1f, -1f);
+			FVRFireArmChamber fvrfireArmChamber = ModifiedRevolver.Chambers[PrevChamberN(NChambersBack)];
+			ModifiedRevolver.Fire(fvrfireArmChamber, SecondMuzzle, true, 1f, -1f);
 			FireSecondMuzzleSmoke();
 			if (fvrfireArmChamber.GetRound().IsHighPressure)
 			{
-				bool twoHandStabilized = revolver.IsTwoHandStabilized();
-				bool foregripStabilized = revolver.AltGrip != null;
-				bool shoulderStabilized = revolver.IsShoulderStabilized();
-				revolver.Recoil(twoHandStabilized, foregripStabilized, shoulderStabilized, null, 1f);
+				bool twoHandStabilized = ModifiedRevolver.IsTwoHandStabilized();
+				bool foregripStabilized = ModifiedRevolver.AltGrip != null;
+				bool shoulderStabilized = ModifiedRevolver.IsShoulderStabilized();
+				ModifiedRevolver.Recoil(twoHandStabilized, foregripStabilized, shoulderStabilized, null, 1f);
 			}
-			revolver.PlayAudioGunShot(fvrfireArmChamber.GetRound(), GM.CurrentPlayerBody.GetCurrentSoundEnvironment(), revolver.ShotLoudnessMult);
+			ModifiedRevolver.PlayAudioGunShot(fvrfireArmChamber.GetRound(), GM.CurrentPlayerBody.GetCurrentSoundEnvironment(), ModifiedRevolver.ShotLoudnessMult);
 
 			if (fvrfireArmChamber.GetRound().IsCaseless)
 			{
@@ -282,17 +279,17 @@ namespace Cityrobo
 		{
 			yield return new WaitForSeconds(FiringDelay);
 
-			FVRFireArmChamber fvrfireArmChamber = revolver.Chambers[PrevChamberN(NChambersBack)];
-			revolver.Fire(fvrfireArmChamber, SecondMuzzle, true, 1f, -1f);
+			FVRFireArmChamber fvrfireArmChamber = ModifiedRevolver.Chambers[PrevChamberN(NChambersBack)];
+			ModifiedRevolver.Fire(fvrfireArmChamber, SecondMuzzle, true, 1f, -1f);
 			FireSecondMuzzleSmoke();
 			if (fvrfireArmChamber.GetRound().IsHighPressure)
 			{
-				bool twoHandStabilized = revolver.IsTwoHandStabilized();
-				bool foregripStabilized = revolver.AltGrip != null;
-				bool shoulderStabilized = revolver.IsShoulderStabilized();
-				revolver.Recoil(twoHandStabilized, foregripStabilized, shoulderStabilized, null, 1f);
+				bool twoHandStabilized = ModifiedRevolver.IsTwoHandStabilized();
+				bool foregripStabilized = ModifiedRevolver.AltGrip != null;
+				bool shoulderStabilized = ModifiedRevolver.IsShoulderStabilized();
+				ModifiedRevolver.Recoil(twoHandStabilized, foregripStabilized, shoulderStabilized, null, 1f);
 			}
-			revolver.PlayAudioGunShot(fvrfireArmChamber.GetRound(), GM.CurrentPlayerBody.GetCurrentSoundEnvironment(), revolver.ShotLoudnessMult);
+			ModifiedRevolver.PlayAudioGunShot(fvrfireArmChamber.GetRound(), GM.CurrentPlayerBody.GetCurrentSoundEnvironment(), ModifiedRevolver.ShotLoudnessMult);
 
 			if (fvrfireArmChamber.GetRound().IsCaseless)
 			{
@@ -304,7 +301,7 @@ namespace Cityrobo
 		{
 			if (GM.CurrentSceneSettings.IsSceneLowLight)
 			{
-				if (revolver.IsSuppressed())
+				if (ModifiedRevolver.IsSuppressed())
 				{
 					FXM.InitiateMuzzleFlash(SecondMuzzle.position, SecondMuzzle.forward, 0.25f, new Color(1f, 0.9f, 0.77f), 0.5f);
 				}
@@ -313,7 +310,7 @@ namespace Cityrobo
 					FXM.InitiateMuzzleFlash(SecondMuzzle.position, SecondMuzzle.forward, 1f, new Color(1f, 0.9f, 0.77f), 1f);
 				}
 			}
-			for (int i = 0; i < revolver.m_muzzleSystems.Count; i++)
+			for (int i = 0; i < ModifiedRevolver.m_muzzleSystems.Count; i++)
 			{
 				if (this.m_muzzleSystems[i].OverridePoint == null)
 				{
@@ -331,7 +328,7 @@ namespace Cityrobo
 			}
 			this.m_muzzleSystems.Clear();
 			bool flag = false;
-			MuzzleEffect[] muzzleEffects = revolver.MuzzleEffects;
+			MuzzleEffect[] muzzleEffects = ModifiedRevolver.MuzzleEffects;
 			for (int j = 0; j < muzzleEffects.Length; j++)
 			{
 				if (muzzleEffects[j].Entry != MuzzleEffectEntry.None)
@@ -340,7 +337,7 @@ namespace Cityrobo
 					MuzzleEffectSize muzzleEffectSize = muzzleEffects[j].Size;
 					if (flag)
 					{
-						muzzleEffectSize = revolver.DefaultMuzzleEffectSize;
+						muzzleEffectSize = ModifiedRevolver.DefaultMuzzleEffectSize;
 					}
 					GameObject gameObject;
 					if (GM.CurrentSceneSettings.IsSceneLowLight)

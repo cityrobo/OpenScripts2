@@ -31,6 +31,12 @@ namespace OpenScripts2
         private float _currentZ;
         private float _lastZ;
 
+        // Preallocated variables so they don't need to be garbage collected all the time
+        private float _boltLerp;
+        float _inverseLerp;
+        private Vector3 _lerpPosBolt;
+        private Vector3 _lerpPosBarrel;
+
         private bool _soundPlayed = false;
 
         public void Start()
@@ -41,42 +47,35 @@ namespace OpenScripts2
         public void Update()
         {
             _currentZ = OriginalBolt.m_boltZ_current;
-            if (OriginalBolt.IsHeld)
+            if (OriginalBolt.IsHeld || _wasHeld)
             {
-                float boltLerp = OriginalBolt.GetBoltLerpBetweenRearAndFore();
-                Vector3 lerpPos = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, boltLerp);
-                NewBolt.transform.localPosition = lerpPos;
-                _wasHeld = true;
-            }
-
-            if (_wasHeld)
-            {
-                float boltLerp = OriginalBolt.GetBoltLerpBetweenRearAndFore();
-                Vector3 lerpPos = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, boltLerp);
-                NewBolt.transform.localPosition = lerpPos;
+                _boltLerp = OriginalBolt.GetBoltLerpBetweenRearAndFore();
+                _lerpPosBolt = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, _boltLerp);
+                NewBolt.transform.localPosition = _lerpPosBolt;
                 if (OriginalBolt.CurPos == ClosedBolt.BoltPos.Forward) _wasHeld = false;
+                else _wasHeld = true;
             }
-
-            if (!_wasHeld)
+            else if (!_wasHeld)
             {
                 if (OriginalBolt.CurPos == ClosedBolt.BoltPos.ForwardToMid && _currentZ < _lastZ)
                 {
-                    float boltLerp = OriginalBolt.GetBoltLerpBetweenLockAndFore();
-                    if (boltLerp >= (1f - BarrelForwardThreshhold))
+                    _boltLerp = OriginalBolt.GetBoltLerpBetweenLockAndFore();
+                    if (_boltLerp >= (1f - BarrelForwardThreshhold))
                     {
-                        float inverseLerp = Mathf.InverseLerp((1f - BarrelForwardThreshhold), 1f, boltLerp);
-                        Vector3 lerpPosBolt = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, inverseLerp);
-                        Vector3 lerpPosBarrel = Vector3.Lerp(BarrelRearwardPos.localPosition, BarrelForwardPos.localPosition, inverseLerp);
+                        _inverseLerp = Mathf.InverseLerp((1f - BarrelForwardThreshhold), 1f, _boltLerp);
+                        _lerpPosBolt = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, _inverseLerp);
+                        _lerpPosBarrel = Vector3.Lerp(BarrelRearwardPos.localPosition, BarrelForwardPos.localPosition, _inverseLerp);
 
-                        NewBolt.transform.localPosition = lerpPosBolt;
-                        Barrel.transform.localPosition = lerpPosBarrel;
+                        NewBolt.transform.localPosition = _lerpPosBolt;
+                        Barrel.transform.localPosition = _lerpPosBarrel;
                     }
-                    else if (boltLerp < (1f - BarrelForwardThreshhold))
+                    else if (_boltLerp < (1f - BarrelForwardThreshhold))
                     {
-                        float inverseLerp = Mathf.InverseLerp((1f - BarrelForwardThreshhold), 0f, boltLerp);
-                        Vector3 lerpPosBarrel = Vector3.Lerp(BarrelRearwardPos.localPosition, BarrelLockingPos.localPosition, inverseLerp);
+                        _inverseLerp = Mathf.InverseLerp((1f - BarrelForwardThreshhold), 0f, _boltLerp);
+                        _lerpPosBarrel = Vector3.Lerp(BarrelRearwardPos.localPosition, BarrelLockingPos.localPosition, _inverseLerp);
 
-                        Barrel.transform.localPosition = lerpPosBarrel;
+                        NewBolt.transform.localPosition = NewBoltRearwardPos.localPosition;
+                        Barrel.transform.localPosition = _lerpPosBarrel;
                     }
                 }
                 else if (OriginalBolt.CurPos == ClosedBolt.BoltPos.Locked && _currentZ < _lastZ)
@@ -86,10 +85,11 @@ namespace OpenScripts2
                 }
                 else if (OriginalBolt.CurPos == ClosedBolt.BoltPos.LockedToRear && _currentZ < _lastZ)
                 {
-                    float boltLerp = Mathf.InverseLerp(OriginalBolt.m_boltZ_lock, OriginalBolt.m_boltZ_rear, OriginalBolt.m_boltZ_current);
-                    Vector3 lerpPosBarrel = Vector3.Lerp(BarrelLockingPos.localPosition, BarrelForwardPos.localPosition, boltLerp);
+                    _boltLerp = Mathf.InverseLerp(OriginalBolt.m_boltZ_lock, OriginalBolt.m_boltZ_rear, OriginalBolt.m_boltZ_current);
+                    _lerpPosBarrel = Vector3.Lerp(BarrelLockingPos.localPosition, BarrelForwardPos.localPosition, _boltLerp);
 
-                    Barrel.transform.localPosition = lerpPosBarrel;
+                    NewBolt.transform.localPosition = NewBoltRearwardPos.localPosition;
+                    Barrel.transform.localPosition = _lerpPosBarrel;
                 }
                 else if (OriginalBolt.CurPos == ClosedBolt.BoltPos.Rear && (_currentZ < _lastZ || _currentZ == _lastZ))
                 {
@@ -98,10 +98,11 @@ namespace OpenScripts2
                 }
                 else if ((OriginalBolt.CurPos == ClosedBolt.BoltPos.LockedToRear || OriginalBolt.CurPos == ClosedBolt.BoltPos.ForwardToMid) && _currentZ > _lastZ)
                 {
-                    float boltLerp = OriginalBolt.GetBoltLerpBetweenRearAndFore();
-                    Vector3 lerpPosBolt = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, boltLerp);
+                    _boltLerp = OriginalBolt.GetBoltLerpBetweenRearAndFore();
+                    _lerpPosBolt = Vector3.Lerp(NewBoltRearwardPos.localPosition, NewBoltForwardPos.localPosition, _boltLerp);
 
-                    NewBolt.transform.localPosition = lerpPosBolt;
+                    NewBolt.transform.localPosition = _lerpPosBolt;
+                    Barrel.transform.localPosition = BarrelForwardPos.localPosition;
                 }
                 else if (OriginalBolt.CurPos == ClosedBolt.BoltPos.Forward && (_currentZ > _lastZ || _currentZ == _lastZ))
                 {
@@ -115,7 +116,7 @@ namespace OpenScripts2
                     NewBolt.transform.localPosition = NewBoltLockingPos.localPosition;
                     Barrel.transform.localPosition = BarrelForwardPos.localPosition;
                 }
-
+                // Sound
                 if (!_soundPlayed && ((OriginalBolt.CurPos == ClosedBolt.BoltPos.Rear && (_currentZ < _lastZ || _currentZ == _lastZ)) || (OriginalBolt.CurPos == ClosedBolt.BoltPos.LockedToRear && _currentZ > _lastZ) || (OriginalBolt.CurPos == ClosedBolt.BoltPos.ForwardToMid && _currentZ > _lastZ)))
                 {
                     SM.PlayGenericSound(BarrelHitForward, transform.position);
@@ -124,6 +125,6 @@ namespace OpenScripts2
             }
             _lastZ = _currentZ;
         }
-        
+
     }
 }

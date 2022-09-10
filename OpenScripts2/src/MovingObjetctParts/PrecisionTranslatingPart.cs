@@ -9,11 +9,16 @@ namespace OpenScripts2
 {
     public class PrecisionTranslatingPart : FVRInteractiveObject
     {
+        [Header("PrecisionTranslatingPart Config")]
+
+        [Tooltip("One degree means linear movement, two degrees means movement on a plane, three degrees ")]
+        public EDegreesOfFreedom DegreesOfFreedom;
         public enum EDegreesOfFreedom
         {
-            One,Two,Three
+            Linear,
+            Planar,
+            Area
         }
-        public EDegreesOfFreedom DegreesOfFreedom;
         public OpenScripts2_BasePlugin.Axis LimitingAxis;
         Vector2 XLimits = new Vector2(float.NegativeInfinity, float.PositiveInfinity);
         Vector2 YLimits = new Vector2(float.NegativeInfinity, float.PositiveInfinity);
@@ -30,8 +35,8 @@ namespace OpenScripts2
         public override void Awake()
         {
             base.Awake();
-            _lowerLimit = new Vector3(XLimits.x, YLimits.x, YLimits.x);
-            _upperLimit = new Vector3(XLimits.y, YLimits.y, YLimits.y);
+            _lowerLimit = new Vector3(XLimits.x, YLimits.x, ZLimits.x);
+            _upperLimit = new Vector3(XLimits.y, YLimits.y, ZLimits.y);
         }
 
         public override void BeginInteraction(FVRViveHand hand)
@@ -47,16 +52,14 @@ namespace OpenScripts2
 
             switch (DegreesOfFreedom)
             {
-                case EDegreesOfFreedom.One:
+                case EDegreesOfFreedom.Linear:
                     OneDegreeOfFreedom(hand);
                     break;
-                case EDegreesOfFreedom.Two:
+                case EDegreesOfFreedom.Planar:
                     TwoDegreesOfFreedom(hand);
                     break;
-                case EDegreesOfFreedom.Three:
+                case EDegreesOfFreedom.Area:
                     ThreeDegreesOfFreedom(hand);
-                    break;
-                default:
                     break;
             }
 
@@ -69,7 +72,7 @@ namespace OpenScripts2
             {
                 Vector3 adjustedHandPosDelta = (hand.Input.FilteredPos - _lastHandPos) * m_hand.Input.TriggerFloat;
                 Vector3 newPosRAW = transform.position + adjustedHandPosDelta;
-                Vector3 newPosProjected = GetClosestValidPoint(newPosRAW, Vector3.Scale(_lowerLimit, OpenScripts2_BasePlugin.GetDirVector(LimitingAxis)), Vector3.Scale(_upperLimit, OpenScripts2_BasePlugin.GetDirVector(LimitingAxis)));
+                Vector3 newPosProjected = GetClosestValidPoint(newPosRAW, Vector3.Scale(_lowerLimit, OpenScripts2_BasePlugin.GetVectorFromAxis(LimitingAxis)), Vector3.Scale(_upperLimit, OpenScripts2_BasePlugin.GetVectorFromAxis(LimitingAxis)));
                 transform.position = newPosProjected;
             }
         }

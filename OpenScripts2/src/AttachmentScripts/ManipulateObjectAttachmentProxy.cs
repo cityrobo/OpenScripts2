@@ -75,15 +75,15 @@ namespace OpenScripts2
                             SetProxy(s);
                             break;
                         default:
-                            this.LogWarning("ManipulateObjectAttachmentProxy: Parent object is not a supported firearm!");
+                            LogWarning($"Parent object is not a supported FireArm type ({_weapon.GetType()})!");
                             break;
                     }
                 }
                 if (_proxy != null)
                 {
-                    this.transform.localPosition = _proxy.localPosition;
-                    this.transform.localRotation = _proxy.localRotation;
-                    this.transform.localScale = _proxy.localScale;
+                    transform.localPosition = _proxy.localPosition;
+                    transform.localRotation = _proxy.localRotation;
+                    transform.localScale = _proxy.localScale;
                 }
 
             }
@@ -101,13 +101,13 @@ namespace OpenScripts2
                 }
                 if (_proxy != null)
                 {
-                    this.transform.localPosition = _proxy.localPosition;
-                    this.transform.localRotation = _proxy.localRotation;
-                    this.transform.localScale = _proxy.localScale;
+                    transform.localPosition = _proxy.localPosition;
+                    transform.localRotation = _proxy.localRotation;
+                    transform.localScale = _proxy.localScale;
                 }
                 else
                 {
-                    this.LogWarning("ManipulateObjectAttachmentProxy: Could not find target with alternative mode path!");
+                    LogWarning("Could not find target with alternative mode path!");
                 }
             }
             else
@@ -140,7 +140,7 @@ namespace OpenScripts2
                     _proxy = s.MagReleaseButton;
                     break;
                 default:
-                    this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
+                    LogWarning($"TargetType not available for this type of FireArm ({s.GetType()}/{targetType})!");
                     break;
             }
         }
@@ -167,7 +167,7 @@ namespace OpenScripts2
                     _proxy = s.Bolt.Hammer;
                     break;
                 default:
-                    this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
+                    LogWarning($"TargetType not available for this type of FireArm ({s.GetType()}/{targetType})!");
                     break;
             }
         }
@@ -185,7 +185,7 @@ namespace OpenScripts2
                     _proxy = s.MagazineReleaseButton;
                     break;
                 case TargetType.Safety:
-                    if (_debug && s.Safety == null) this.LogWarning("ManipulateObjectAttachmentProxy: Handgun.Safety == null");
+                    if (_debug && s.Safety == null) LogWarning("Handgun.Safety == null");
                     if (_debug) DebugMessage("Safety: " + s.Safety);
                     _proxy = s.Safety;
                     if (_debug) DebugMessage("proxy: " + _proxy);
@@ -200,10 +200,10 @@ namespace OpenScripts2
                     _proxy = s.Hammer;
                     break;
                 default:
-                    this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
+                    LogWarning($"TargetType not available for this type of FireArm ({s.GetType()}/{targetType})!");
                     break;
             }
-            if (_debug && _proxy == null) this.LogWarning("ManipulateObjectAttachmentProxy: Proxy should be set but isn't!");
+            if (_debug && _proxy == null) LogWarning("Proxy should be set but isn't!");
         }
         private void SetProxy(TubeFedShotgun s)
         {
@@ -222,7 +222,7 @@ namespace OpenScripts2
                     _proxy = s.Bolt.Hammer;
                     break;
                 default:
-                    this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
+                    LogWarning($"TargetType not available for this type of FireArm ({s.GetType()}/{targetType})!");
                     break;
             }
         }
@@ -243,7 +243,7 @@ namespace OpenScripts2
                     _proxy = s.Hammer;
                     break;
                 default:
-                    this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
+                    LogWarning($"TargetType not available for this type of FireArm ({s.GetType()}/{targetType})!");
                     break;
             }
         }
@@ -259,13 +259,13 @@ namespace OpenScripts2
                     _proxy = s.Hammer;
                     break;
                 default:
-                    this.LogWarning("ManipulateObjectAttachmentProxy: TargetType not available for this type of FireArm!");
+                    LogWarning($"TargetType not available for this type of FireArm ({s.GetType()}/{targetType})!");
                     break;
             }
         }
         private void DebugMessage(string message)
         {
-            if (_debug) this.Log("ManipulateObjectAttachmentProxy: " + message);
+            if (_debug) Log(message);
         }
     }
 }

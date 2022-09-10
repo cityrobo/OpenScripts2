@@ -18,9 +18,9 @@ namespace OpenScripts2
 		{
 			yield return null;
 			Attachment.AttachToMount(AttachmentMount, false);
-            if (Attachment is Suppressor tempSup)
+            if (Attachment is Suppressor suppressor)
             {
-				tempSup.AutoMountWell();
+				suppressor.AutoMountWell();
             }
 		}
 #endif

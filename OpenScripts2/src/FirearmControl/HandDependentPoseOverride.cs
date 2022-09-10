@@ -17,18 +17,49 @@ namespace OpenScripts2
 
         private bool _hasPoseOverride_Touch = false;
 
+        private static Dictionary<FVRPhysicalObject, HandDependentPoseOverride> _existingHandDependentPoseOverride = new();
+
 #if !DEBUG
+        static HandDependentPoseOverride()
+        {
+            On.FistVR.FVRPhysicalObject.BeginInteraction += FVRPhysicalObject_BeginInteraction2;
+        }
 
         public void Start()
         {
             if (LeftPoseOverride_Touch != null && RightPoseOverride_Touch != null) _hasPoseOverride_Touch = true;
 
-            Hook();
+            _existingHandDependentPoseOverride.Add(PhysicalObject, this);
+
+            //Hook();
         }
 
         public void OnDestroy()
         {
-            Unhook();
+            _existingHandDependentPoseOverride.Remove(PhysicalObject);
+
+            //Unhook();
+        }
+
+        private static void FVRPhysicalObject_BeginInteraction2(On.FistVR.FVRPhysicalObject.orig_BeginInteraction orig, FVRPhysicalObject self, FVRViveHand hand)
+        {
+            HandDependentPoseOverride handDependentPoseOverride = null;
+
+            if (_existingHandDependentPoseOverride.TryGetValue(self,out handDependentPoseOverride))
+            {
+                if (!hand.IsThisTheRightHand)
+                {
+                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && handDependentPoseOverride._hasPoseOverride_Touch) self.PoseOverride = handDependentPoseOverride.LeftPoseOverride_Touch;
+                    else self.PoseOverride = handDependentPoseOverride.LeftPoseOverride;
+                }
+                else
+                {
+                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && handDependentPoseOverride._hasPoseOverride_Touch) self.PoseOverride = handDependentPoseOverride.RightPoseOverride_Touch;
+                    else self.PoseOverride = handDependentPoseOverride.RightPoseOverride;
+                }
+            }
+
+            orig(self, hand);
         }
 
         void Unhook()
@@ -55,7 +86,7 @@ namespace OpenScripts2
                     else PhysicalObject.PoseOverride = RightPoseOverride;
                 }
             }
-        
+
             orig(self, hand);
         }
 #endif

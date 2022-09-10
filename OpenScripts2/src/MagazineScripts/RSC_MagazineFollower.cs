@@ -26,7 +26,6 @@ namespace OpenScripts2
         [Tooltip("first entry is Angle when open to load magazine, all following are for the ammount loaded in the magazine, starting with full mag. Last pos is follower with empty mag.")]
         public float[] RotationalAngles;
 
-
         private bool _open = true;
         private bool _lockedSafety = false;
         private int _origSafetyPos;
@@ -38,7 +37,6 @@ namespace OpenScripts2
             base.Start();
             StartCoroutine(SetFollowerRot(RotationalAngles[0]));
         }
-
 
         public override void SimpleInteraction(FVRViveHand hand)
         {
@@ -52,8 +50,6 @@ namespace OpenScripts2
                 case true:
                     _open = false;
                     FireArm.PlayAudioEvent(FirearmAudioEventType.BreachClose);
-                    break;
-                default:
                     break;
             }
 
@@ -120,7 +116,7 @@ namespace OpenScripts2
             //lastRot = rot;
             _lastRot = rot;
 
-            Quaternion targetRotation = OpenScripts2_BasePlugin.GetTargetQuaternion(rot, RotationalAxis);
+            Quaternion targetRotation = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(rot, RotationalAxis);
 
             /*
             switch (rotationalAxis)
@@ -150,7 +146,6 @@ namespace OpenScripts2
             {
                 MagazineWell.SetActive(true);
                 MagazineGrabTrigger.SetActive(true);
-                //Debug.Log("magazine active");
             }
         }
 #endif

@@ -45,10 +45,17 @@ namespace OpenScripts2
 
 		private bool _timeoutStarted = false;
 
+		private static Dictionary<FVRFireArm, SmartWeapon> _existingSmartWeapon = new();
+
 #if !(DEBUG || MEATKIT)
+		static SmartWeapon()
+        {
+			On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
+		}
+
 		public void Awake()
         {
-			Hook();
+			_existingSmartWeapon.Add(FireArm, this);
 
 			_origMuzzlePos = Instantiate(FireArm.MuzzlePos.gameObject, this.transform);
 			_origMuzzlePos.transform.localPosition = FireArm.MuzzlePos.localPosition;
@@ -56,21 +63,14 @@ namespace OpenScripts2
         }
 		public void OnDestroy()
         {
-			Unhook();
+			_existingSmartWeapon.Remove(FireArm);
         }
 
-		public void Unhook()
+        private static void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
         {
-			On.FistVR.FVRFireArm.Fire -= FVRFireArm_Fire;
-		}
-		public void Hook()
-        {
-            On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
-        }
+			SmartWeapon smartWeapon;
 
-        private void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
-        {
-			if (self == FireArm)
+			if (_existingSmartWeapon.TryGetValue(self, out smartWeapon))
 			{
 				if (doBuzz && self.m_hand != null)
 				{
@@ -104,26 +104,26 @@ namespace OpenScripts2
 						BallisticProjectile component = gameObject.GetComponent<BallisticProjectile>();
 
 						float baseVelocity = component.MuzzleVelocityBase * chamber.ChamberVelocityMultiplier * velMult * chamberVelMult;
-						component.Fire(baseVelocity * BulletVelocityModifier, gameObject.transform.forward, self, true);
+						component.Fire(baseVelocity * smartWeapon.BulletVelocityModifier, gameObject.transform.forward, self, true);
 
 						SmartProjectile smartProjectile = gameObject.GetComponent<SmartProjectile>();
-						if (smartProjectile == null && WasManuallyAdded)
+						if (smartProjectile == null && smartWeapon.WasManuallyAdded)
 						{
 							smartProjectile = gameObject.AddComponent<SmartProjectile>();
 							smartProjectile.Projectile = component;
-							smartProjectile.ConfigureFromData(ProjectileData);
+							smartProjectile.ConfigureFromData(smartWeapon.ProjectileData);
 						}
 						if (smartProjectile != null)
                         {
-							smartProjectile.TargetLink = _lastTarget;
+							smartProjectile.TargetLink = smartWeapon._lastTarget;
                         }
 						if (rangeOverride > 0f)
 						{
 							component.ForceSetMaxDist(rangeOverride);
 						}
-                        if (BulletVelocityModifier != 1f)
+                        if (smartWeapon.BulletVelocityModifier != 1f)
                         {
-							component.Mass = (Mathf.Pow(baseVelocity, 2f) * component.Mass) / Mathf.Pow(baseVelocity * BulletVelocityModifier, 2f);
+							component.Mass = (Mathf.Pow(baseVelocity, 2f) * component.Mass) / Mathf.Pow(baseVelocity * smartWeapon.BulletVelocityModifier, 2f);
 						}
 						
 					}

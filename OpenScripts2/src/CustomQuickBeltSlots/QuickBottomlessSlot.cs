@@ -35,18 +35,7 @@ namespace OpenScripts2
         {
             FVRQuickBeltSlot QBS = GetComponent<FVRQuickBeltSlot>();
 
-            this.QuickbeltRoot = QBS.QuickbeltRoot;
-            this.PoseOverride = QBS.PoseOverride;
-            this.SizeLimit = QBS.SizeLimit;
-            this.Shape = QBS.Shape;
-            this.Type = QBS.Type;
-            this.HoverGeo = QBS.HoverGeo;
-            this.RectBounds = QBS.RectBounds;
-            this.CurObject = QBS.CurObject;
-            this.IsSelectable = QBS.IsSelectable;
-            this.IsPlayer = QBS.IsPlayer;
-            this.UseStraightAxisAlignment = QBS.UseStraightAxisAlignment;
-            this.HeldObject = QBS.HeldObject;
+            this.CopyComponent(QBS);
         }
 
         private GameObject _currentSelectedObject;
@@ -58,35 +47,27 @@ namespace OpenScripts2
         private int _selectedObjectIndex = 0;
 
         private float _timeWaited = 0f;
-
-        public void Start()
-        {
-            _storedGameObjects = new List<GameObject>();
-
-            Hook();
-        }
-        void Unhook()
-        {
-            On.FistVR.FVRQuickBeltSlot.Update -= FVRQuickBeltSlot_Update;
-            On.FistVR.FVRQuickBeltSlot.MoveContents -= FVRQuickBeltSlot_MoveContents;
-            On.FistVR.FVRQuickBeltSlot.MoveContentsInstant -= FVRQuickBeltSlot_MoveContentsInstant;
-            On.FistVR.FVRQuickBeltSlot.MoveContentsCheap -= FVRQuickBeltSlot_MoveContentsCheap;
-        }
-        void Hook()
+#if !DEBUG
+        static QuickBottomlessSlot()
         {
             On.FistVR.FVRQuickBeltSlot.Update += FVRQuickBeltSlot_Update;
             On.FistVR.FVRQuickBeltSlot.MoveContents += FVRQuickBeltSlot_MoveContents;
             On.FistVR.FVRQuickBeltSlot.MoveContentsInstant += FVRQuickBeltSlot_MoveContentsInstant;
             On.FistVR.FVRQuickBeltSlot.MoveContentsCheap += FVRQuickBeltSlot_MoveContentsCheap;
         }
-
-        private void FVRQuickBeltSlot_MoveContentsCheap(On.FistVR.FVRQuickBeltSlot.orig_MoveContentsCheap orig, FVRQuickBeltSlot self, Vector3 dir)
+        new public void Awake()
         {
-            if (self == this)
+            base.Awake();
+
+            _storedGameObjects = new List<GameObject>();
+        }
+        private static void FVRQuickBeltSlot_MoveContentsCheap(On.FistVR.FVRQuickBeltSlot.orig_MoveContentsCheap orig, FVRQuickBeltSlot self, Vector3 dir)
+        {
+            if (self is QuickBottomlessSlot quickBottomlessSlot)
             {
-                if (this._currentSelectedObject != null)
+                if (quickBottomlessSlot._currentSelectedObject != null)
                 {
-                    FVRPhysicalObject mag = this._currentSelectedObject.GetComponent<FVRPhysicalObject>();
+                    FVRPhysicalObject mag = quickBottomlessSlot._currentSelectedObject.GetComponent<FVRPhysicalObject>();
                     if (mag.IsHeld)
                     {
                         return;
@@ -98,13 +79,13 @@ namespace OpenScripts2
             else orig(self, dir);
         }
 
-        private void FVRQuickBeltSlot_MoveContentsInstant(On.FistVR.FVRQuickBeltSlot.orig_MoveContentsInstant orig, FVRQuickBeltSlot self, Vector3 dir)
+        private static void FVRQuickBeltSlot_MoveContentsInstant(On.FistVR.FVRQuickBeltSlot.orig_MoveContentsInstant orig, FVRQuickBeltSlot self, Vector3 dir)
         {
-            if (self == this)
+            if (self is QuickBottomlessSlot quickBottomlessSlot)
             {
-                if (this._currentSelectedObject != null)
+                if (quickBottomlessSlot._currentSelectedObject != null)
                 {
-                    FVRPhysicalObject mag = this._currentSelectedObject.GetComponent<FVRPhysicalObject>();
+                    FVRPhysicalObject mag = quickBottomlessSlot._currentSelectedObject.GetComponent<FVRPhysicalObject>();
                     if (mag.IsHeld)
                     {
                         return;
@@ -116,13 +97,13 @@ namespace OpenScripts2
             else orig(self, dir);
         }
 
-        private void FVRQuickBeltSlot_MoveContents(On.FistVR.FVRQuickBeltSlot.orig_MoveContents orig, FVRQuickBeltSlot self, Vector3 dir)
+        private static void FVRQuickBeltSlot_MoveContents(On.FistVR.FVRQuickBeltSlot.orig_MoveContents orig, FVRQuickBeltSlot self, Vector3 dir)
         {
-            if (self == this)
+            if (self is QuickBottomlessSlot quickBottomlessSlot)
             {
-                if (this._currentSelectedObject != null)
+                if (quickBottomlessSlot._currentSelectedObject != null)
                 {
-                    FVRPhysicalObject mag = this._currentSelectedObject.GetComponent<FVRPhysicalObject>();
+                    FVRPhysicalObject mag = quickBottomlessSlot._currentSelectedObject.GetComponent<FVRPhysicalObject>();
                     if (mag.IsHeld)
                     {
                         return;
@@ -134,106 +115,106 @@ namespace OpenScripts2
             else orig(self, dir);
         }
 
-        private void FVRQuickBeltSlot_Update(On.FistVR.FVRQuickBeltSlot.orig_Update orig, FVRQuickBeltSlot self)
+        private static void FVRQuickBeltSlot_Update(On.FistVR.FVRQuickBeltSlot.orig_Update orig, FVRQuickBeltSlot self)
         {
-            if (this == self)
+            if (self is QuickBottomlessSlot quickBottomlessSlot)
             {
-                if (!GM.CurrentSceneSettings.IsSpawnLockingEnabled && this.HeldObject != null && (this.HeldObject as FVRPhysicalObject).m_isSpawnLock)
+                if (!GM.CurrentSceneSettings.IsSpawnLockingEnabled && quickBottomlessSlot.HeldObject != null && (quickBottomlessSlot.HeldObject as FVRPhysicalObject).m_isSpawnLock)
                 {
-                    (this.HeldObject as FVRPhysicalObject).m_isSpawnLock = false;
+                    (quickBottomlessSlot.HeldObject as FVRPhysicalObject).m_isSpawnLock = false;
                 }
-                if (this.HeldObject != null)
+                if (quickBottomlessSlot.HeldObject != null)
                 {
-                    if ((this.HeldObject as FVRPhysicalObject).m_isSpawnLock)
+                    if ((quickBottomlessSlot.HeldObject as FVRPhysicalObject).m_isSpawnLock)
                     {
-                        if (!this.HoverGeo.activeSelf)
+                        if (!quickBottomlessSlot.HoverGeo.activeSelf)
                         {
-                            this.HoverGeo.SetActive(true);
+                            quickBottomlessSlot.HoverGeo.SetActive(true);
                         }
-                        this.m_hoverGeoRend.material.SetColor("_RimColor", new Color(0.3f, 0.3f, 1f, 1f));
+                        quickBottomlessSlot.m_hoverGeoRend.material.SetColor("_RimColor", new Color(0.3f, 0.3f, 1f, 1f));
                     }
-                    else if ((this.HeldObject as FVRPhysicalObject).m_isHardnessed)
+                    else if ((quickBottomlessSlot.HeldObject as FVRPhysicalObject).m_isHardnessed)
                     {
-                        if (!this.HoverGeo.activeSelf)
+                        if (!quickBottomlessSlot.HoverGeo.activeSelf)
                         {
-                            this.HoverGeo.SetActive(true);
+                            quickBottomlessSlot.HoverGeo.SetActive(true);
                         }
-                        this.m_hoverGeoRend.material.SetColor("_RimColor", new Color(0.3f, 1f, 0.3f, 1f));
+                        quickBottomlessSlot.m_hoverGeoRend.material.SetColor("_RimColor", new Color(0.3f, 1f, 0.3f, 1f));
                     }
                     else
                     {
-                        if (this.HoverGeo.activeSelf != this.IsHovered)
+                        if (quickBottomlessSlot.HoverGeo.activeSelf != quickBottomlessSlot.IsHovered)
                         {
-                            this.HoverGeo.SetActive(this.IsHovered);
+                            quickBottomlessSlot.HoverGeo.SetActive(quickBottomlessSlot.IsHovered);
                         }
-                        this.m_hoverGeoRend.material.SetColor("_RimColor", HoverColor);
+                        quickBottomlessSlot.m_hoverGeoRend.material.SetColor("_RimColor", quickBottomlessSlot.HoverColor);
                     }
                 }
                 else
                 {
-                    if (this.HoverGeo.activeSelf != this.IsHovered)
+                    if (quickBottomlessSlot.HoverGeo.activeSelf != quickBottomlessSlot.IsHovered)
                     {
-                        this.HoverGeo.SetActive(this.IsHovered);
+                        quickBottomlessSlot.HoverGeo.SetActive(quickBottomlessSlot.IsHovered);
                     }
-                    this.m_hoverGeoRend.material.SetColor("_RimColor", HoverColor);
+                    quickBottomlessSlot.m_hoverGeoRend.material.SetColor("_RimColor", quickBottomlessSlot.HoverColor);
                 }
 
-                if (StoresMagazines && CurObject != null && CurObject is FVRFireArmMagazine && _storedGameObjects.Count < MaxItems)
+                if (quickBottomlessSlot.StoresMagazines && quickBottomlessSlot.CurObject != null && quickBottomlessSlot.CurObject is FVRFireArmMagazine && quickBottomlessSlot._storedGameObjects.Count < quickBottomlessSlot.MaxItems)
                 {
-                    StoreCurObject();
+                    quickBottomlessSlot.StoreCurObject();
                 }
-                else if (StoresClips && CurObject != null && CurObject is FVRFireArmClip && _storedGameObjects.Count < MaxItems)
+                else if (quickBottomlessSlot.StoresClips && quickBottomlessSlot.CurObject != null && quickBottomlessSlot.CurObject is FVRFireArmClip && quickBottomlessSlot._storedGameObjects.Count < quickBottomlessSlot.MaxItems)
                 {
-                    StoreCurObject();
+                    quickBottomlessSlot.StoreCurObject();
                 }
-                else if (StoresSpeedloaders && CurObject != null && CurObject is Speedloader && _storedGameObjects.Count < MaxItems)
+                else if (quickBottomlessSlot.StoresSpeedloaders && quickBottomlessSlot.CurObject != null && quickBottomlessSlot.CurObject is Speedloader && quickBottomlessSlot._storedGameObjects.Count < quickBottomlessSlot.MaxItems)
                 {
-                    StoreCurObject();
+                    quickBottomlessSlot.StoreCurObject();
                 }
-                else if (CurObject != null)
+                else if (quickBottomlessSlot.CurObject != null)
                 {
-                    EjectCurObject();
+                    quickBottomlessSlot.EjectCurObject();
                 }
 
-                if (_storedGameObjects.Count > 0)
+                if (quickBottomlessSlot._storedGameObjects.Count > 0)
                 {
-                    _timeWaited += Time.deltaTime;
-                    if (!_switchingObject)
+                    quickBottomlessSlot._timeWaited += Time.deltaTime;
+                    if (!quickBottomlessSlot._switchingObject)
                     {
-                        _timeWaited = 0f;
-                        SelectObject();
+                        quickBottomlessSlot._timeWaited = 0f;
+                        quickBottomlessSlot.SelectObject();
                     }
-                    else if (_timeWaited > TimeBetweenMagSwitch)
+                    else if (quickBottomlessSlot._timeWaited > quickBottomlessSlot.TimeBetweenMagSwitch)
                     {
-                        _switchingObject = false;
+                        quickBottomlessSlot._switchingObject = false;
                     }
 
                     int removalIndex = -1;
 
-                    for (int i = 0; i < _storedGameObjects.Count; i++)
+                    for (int i = 0; i < quickBottomlessSlot._storedGameObjects.Count; i++)
                     {
-                        _storedGameObjects[i].SetActive(i == _selectedObjectIndex);
+                        quickBottomlessSlot._storedGameObjects[i].SetActive(i == quickBottomlessSlot._selectedObjectIndex);
 
-                        if (i != _selectedObjectIndex)
+                        if (i != quickBottomlessSlot._selectedObjectIndex)
                         {
-                            if (QuickbeltRoot != null)
+                            if (quickBottomlessSlot.QuickbeltRoot != null)
                             {
-                                _storedGameObjects[i].transform.position = this.QuickbeltRoot.position;
-                                _storedGameObjects[i].transform.rotation = this.QuickbeltRoot.rotation;
+                                quickBottomlessSlot._storedGameObjects[i].transform.position = quickBottomlessSlot.QuickbeltRoot.position;
+                                quickBottomlessSlot._storedGameObjects[i].transform.rotation = quickBottomlessSlot.QuickbeltRoot.rotation;
                             }
-                            else if (PoseOverride != null)
+                            else if (quickBottomlessSlot.PoseOverride != null)
                             {
-                                _storedGameObjects[i].transform.position = this.PoseOverride.position;
-                                _storedGameObjects[i].transform.rotation = this.PoseOverride.rotation;
+                                quickBottomlessSlot._storedGameObjects[i].transform.position = quickBottomlessSlot.PoseOverride.position;
+                                quickBottomlessSlot._storedGameObjects[i].transform.rotation = quickBottomlessSlot.PoseOverride.rotation;
                             }
                             else
                             {
-                                _storedGameObjects[i].transform.position = this.transform.position;
-                                _storedGameObjects[i].transform.rotation = this.transform.rotation;
+                                quickBottomlessSlot._storedGameObjects[i].transform.position = quickBottomlessSlot.transform.position;
+                                quickBottomlessSlot._storedGameObjects[i].transform.rotation = quickBottomlessSlot.transform.rotation;
                             }
                         }
 
-                        FVRPhysicalObject objectComponent = _storedGameObjects[i].GetComponent<FVRPhysicalObject>();
+                        FVRPhysicalObject objectComponent = quickBottomlessSlot._storedGameObjects[i].GetComponent<FVRPhysicalObject>();
                         if (objectComponent.IsHeld)
                         {
                             removalIndex = i;
@@ -246,29 +227,29 @@ namespace OpenScripts2
 
                     if (removalIndex >= 0)
                     {
-                        _storedGameObjects[removalIndex].SetActive(true);
-                        _storedGameObjects.RemoveAt(removalIndex);
-                        SM.PlayGenericSound(ExtractSounds, this.transform.position);
-                        _switchingObject = false;
+                        quickBottomlessSlot._storedGameObjects[removalIndex].SetActive(true);
+                        quickBottomlessSlot._storedGameObjects.RemoveAt(removalIndex);
+                        SM.PlayGenericSound(quickBottomlessSlot.ExtractSounds, quickBottomlessSlot.transform.position);
+                        quickBottomlessSlot._switchingObject = false;
                     }
 
-                    if (TextRoot != null && NumberOfItemsDisplay != null)
+                    if (quickBottomlessSlot.TextRoot != null && quickBottomlessSlot.NumberOfItemsDisplay != null)
                     {
-                        if (TextTurnsOffOnNoItemsStored) TextRoot.SetActive(true);
-                        NumberOfItemsDisplay.text = TextPrefix + _storedGameObjects.Count.ToString();
+                        if (quickBottomlessSlot.TextTurnsOffOnNoItemsStored) quickBottomlessSlot.TextRoot.SetActive(true);
+                        quickBottomlessSlot.NumberOfItemsDisplay.text = quickBottomlessSlot.TextPrefix + quickBottomlessSlot._storedGameObjects.Count.ToString();
                     }
                 }
-                else if (TextRoot != null && NumberOfItemsDisplay != null)
+                else if (quickBottomlessSlot.TextRoot != null && quickBottomlessSlot.NumberOfItemsDisplay != null)
                 {
-                    if (TextTurnsOffOnNoItemsStored) TextRoot.SetActive(false);
-                    NumberOfItemsDisplay.text = TextPrefix + _storedGameObjects.Count.ToString();
+                    if (quickBottomlessSlot.TextTurnsOffOnNoItemsStored) quickBottomlessSlot.TextRoot.SetActive(false);
+                    quickBottomlessSlot.NumberOfItemsDisplay.text = quickBottomlessSlot.TextPrefix + quickBottomlessSlot._storedGameObjects.Count.ToString();
                 }
 
             }
             else orig(self);
         }
 
-        void StoreCurObject()
+        private void StoreCurObject()
         {
             if (!_storedGameObjects.Contains(CurObject.gameObject))
             {
@@ -282,20 +263,20 @@ namespace OpenScripts2
                 CurObject = null;
                 HeldObject = null;
 
-                SM.PlayGenericSound(InsertSounds, this.transform.position);
+                SM.PlayGenericSound(InsertSounds, transform.position);
             }
         }
 
-        bool EjectCurObject()
+        private bool EjectCurObject()
         {
             CurObject.SetQuickBeltSlot(null);
             CurObject = null;
             HeldObject = null;
-            SM.PlayGenericSound(FailureSounds, this.transform.position);
+            SM.PlayGenericSound(FailureSounds, transform.position);
             return false;
         }
 
-        bool CheckEmpty()
+        private bool CheckEmpty()
         {
             FVRFireArmMagazine mag = CurObject.gameObject.GetComponent<FVRFireArmMagazine>();
             FVRFireArmClip clip = CurObject.gameObject.GetComponent<FVRFireArmClip>();
@@ -315,7 +296,7 @@ namespace OpenScripts2
             return true;
         }
 
-        Vector3 GetPointInside()
+        private Vector3 GetPointInside()
         {
             switch (Shape)
             {
@@ -327,12 +308,13 @@ namespace OpenScripts2
                     return new Vector3();
             }
         }
-        void SelectObject()
+        private void SelectObject()
         {
             _switchingObject = true;
             _selectedObjectIndex = UnityEngine.Random.Range(0, _storedGameObjects.Count);
             _currentSelectedObject = _storedGameObjects[_selectedObjectIndex];
             _currentSelectedObject.SetActive(true);
         }
+#endif
     }
 }

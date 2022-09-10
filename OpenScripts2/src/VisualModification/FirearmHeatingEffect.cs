@@ -19,27 +19,56 @@ namespace OpenScripts2
         public FVRFireArmAttachment Attachment;
 
         // Heat System
-        [Header("Heat system config")]
-        public MeshRenderer MeshRenderer;
-        [Tooltip("Index of the material in the MeshRenderer's materials list.")]
-        public int MaterialIndex = 0;
-        [Header("Heating Effect Config")]
+        [Header("Heat Config")]
         [Tooltip("Heat added to the effect per shot fired. Heat caps out at 1.")]
         public float HeatPerShot = 0.01f;
         [Tooltip("Heat removed per second.")]
         public float CooldownRate = 0.01f;
+        [Tooltip("This multiplier will affect the heat gain of all parts of the gun. It will act multiplicatively with other such multipliers.")]
+        public float HeatMultiplier = 1f;
+        [Tooltip("Adds a separate Multiplier for Round power. (None, Tiny, Pistol, Shotgun, Intermediate, FullPower, AntiMaterial, Ordnance, Exotic, Fire)")]
+        public bool ChangesWithCartridgePower = false;
+        [Tooltip("None, Tiny, Pistol, Shotgun, Intermediate, FullPower, AntiMaterial, Ordnance, Exotic, Fire")]
+        public float[] RoundPowerMultipliers =
+        {
+            0f,
+            0.25f,
+            0.5f,
+            0.75f,
+            1f,
+            2f,
+            4f,
+            4f,
+            1f,
+            8f
+        };
+        
 
         // Emission weight system
-        [Header("Emission weight config")]
+        [Header("Emission modification config")]
+        public MeshRenderer MeshRenderer;
+        [Tooltip("Index of the material in the MeshRenderer's materials list.")]
+        public int MaterialIndex = 0;
         [Tooltip("Anton uses the squared value of the heat to determine the emission weight. If you wanna replicate that behavior, leave the value as is, but feel free to go crazy if you wanna mix things up.")]
         public float HeatExponent = 2f;
+        public bool HeatAffectsEmissionWeight = true;
+        public bool HeatAffectsEmissionScrollSpeed = false;
+        [Tooltip("Maximum left/right emission scroll speed.")]
+        public float MaxEmissionScrollSpeed_X = 0f;
+        [Tooltip("Maximum up/down emission scroll speed.")]
+        public float MaxEmissionScrollSpeed_Y = 0f;
         [Tooltip("Enables emission weight AnimationCurve system.")]
         public bool EmissionUsesAdvancedCurve = false;
         [Tooltip("Advanced emission weight control. Values from 0 to 1 only!")]
         public AnimationCurve EmissionCurve;
+        [Tooltip("Advanced left/right emission scroll speed control. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-Axis) represents the actual scroll speed and is uncapped. The max value set above is ignored.")]
+        public AnimationCurve EmissionScrollSpeedCurve_X;
+        [Tooltip("Advanced up/down emission scroll speed control. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-Axis) represents the actual scroll speed and is uncapped. The max value set above is ignored.")]
+        public AnimationCurve EmissionScrollSpeedCurve_Y;
 
         // Detail weight system
         [Header("Detail weight config")]
+        public bool HeatAffectsDetailWeight = true;
         [Tooltip("Same as the normal HeatExponent, but for the detail weight.")]
         public float DetailExponent = 2f;
         [Tooltip("Enables emission weight AnimationCurve system.")]
@@ -59,7 +88,7 @@ namespace OpenScripts2
         public bool ParticleEmissionRateStartsAtZero = false;
         [Tooltip("Enables particle rate AnimationCurve system.")]
         public bool ParticlesUsesAdvancedCurve = false;
-        [Tooltip("Advanced particle rate control. Values from 0 to 1 only! The Y axis acts like percentages of the max MOA multiplier.")]
+        [Tooltip("Advanced particle rate control. Values from 0 to 1 only! The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts like a multiplier of the max emission rate, clamped between 0 and 1.")]
         public AnimationCurve ParticlesCurve;
 
         // Sound volume system
@@ -72,11 +101,11 @@ namespace OpenScripts2
         public float MaxVolume = 0.4f;
         [Tooltip("Heat level at which audio starts.")]
         public float SoundHeatThreshold = 0f;
-        [Tooltip("If checked, the sound volume starts at 0 when hitting the threshold and hits the max when heat is 1, else the volume using the threshold heat value as a reference, aka the heat level it gets enabled at.")]
+        [Tooltip("If checked, the sound volume starts at 0 when hitting the threshold and hits the max when heat is 1, else the volume is using the threshold heat value as a reference, aka the heat level it gets enabled at.")]
         public bool SoundVolumeStartsAtZero = false;
         [Tooltip("Enables sound volume AnimationCurve system.")]
         public bool SoundUsesAdvancedCurve = false;
-        [Tooltip("Advanced sound volume control. Values from 0 to 1 only!. The Y axis acts like percentages of the max volume.")]
+        [Tooltip("Advanced sound volume control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) is the volume at that heat level.")]
         public AnimationCurve VolumeCurve;
 
         // Accuracy MOA multiplier system
@@ -87,38 +116,114 @@ namespace OpenScripts2
         public float AccuracyHeatExponent = 2f;
         [Tooltip("Enables MOA multiplier AnimationCurve system.")]
         public bool AccuracyUsesAdvancedCurve = false;
-        [Tooltip("Advanced MOA multiplier control. Values from 0 to 1 only!. The Y axis acts like percentages of the max MOA multiplier.")]
+        [Tooltip("Advanced MOA multiplier control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts like a multiplier of the max MOA multiplier, clamped between 0 and 1.")]
         public AnimationCurve AccuracyCurve;
+
+        // Bolt Speed Change System
+        [Header("Bolt Speed Settings")]
+        public bool DoesHeatAffectBoltSpeed = false;
+        public float MaxBoltForwardSpeedMultiplier = 0.8f;
+        public float MaxBoltRearwardSpeedMultiplier = 0.8f;
+        public float MaxBoltSpringStiffnessesMultiplier = 0.8f;
+        [Tooltip("Same as the normal HeatExponent, but for the bolt speed system.")]
+        public float BoltSpeedHeatExponent = 2f;
+
+        [Tooltip("Enables bolt speed AnimationCurve system.")]
+        public bool BoltSpeedUsesAdvancedCurve = false;
+        [Tooltip("Advanced bolt speed control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts as an advanced lerp for the above set maximum values.")]
+        public AnimationCurve BoltForwardSpeedMultiplierCurve;
+        [Tooltip("Advanced bolt speed control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts as an advanced lerp for the above set maximum values.")]
+        public AnimationCurve BoltRearwardSpeedMultiplierCurve;
+        [Tooltip("Advanced bolt speed control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts as an advanced lerp for the above set maximum values.")]
+        public AnimationCurve BoltSpringStiffnessMultiplierCurve;
+
+        // Exploding Part System
+        [Header("Explosion System")]
+        public MeshRenderer ExplodingPart;
+        [Tooltip("Heat level at which part explodes. Don't use a value of 1. It is very unlikely the part will actually hit a perfect 1 heat.")]
+        public float ExplodingHeatThreshhold = 0.95f;
+        public bool MessesUpAccuracy = true;
+        [Tooltip("Choose a high enough number for your accuracy class.")]
+        public float FailureAccuracyMultiplier = 1000f;
+        [Tooltip("Causes bolt rearwards speed to become a positive number, therefor the firearm won't cycle correctly")]
+        public bool CausesStoppage = true;
+        [Tooltip("Just some random high number to offset the averaging affect of the different FirearmHeatingEffect components.")]
+        public float StoppageSpeed = 1000f;
+        public AudioEvent ExplosionSound;
+        [Tooltip("DEBUG VALUE for in editor testing! Actual value determined by in game config. Can Explosion revert?")]
+        public bool CanRecoverFromExplosion = true;
+        [Tooltip("DEBUG VALUE for in editor testing! Actual value determined by in game config. Heat level at which explosion will be reverted.")]
+        public float RevertHeatThreshold = 0f;
+
+        // Cookoff System
+        [Header("Cookoff System")]
+        [Tooltip("Cookoff is a random heat caused discharge, aka YOUR GUN GO BOOM without you pulling the trigger. Scary stuff.")]
+        public bool DoesHeatCauseCookoff = false;
+        [Tooltip("Chance of a cookoff to happen every second.")]
+        public float MaxCookoffChancePerSecond = 0.5f;
+        [Tooltip("Same as the normal HeatExponent, but for the bolt speed system.")]
+        public float CookoffHeatExponent = 2f;
+        [Tooltip("Heat level at which cookoff starts happening.")]
+        public float CookoffHeatThreshold = 0f;
+        [Tooltip("If checked, the cookoff chance starts at 0 when hitting the threshold and hits the max when heat is 1, else the chance is using the threshold heat value as a reference, aka the heat level it gets enabled at.")]
+        public bool CookoffChanceStartsAtZero = true;
 
         // Debugging system
         [Header("Debug Messages")]
         public bool DebugEnabled = false;
+        [Range(0f,1f)]
+        public float Heat = 0f;
+
+        [HideInInspector]
+        public float CurrentBoltForwardSpeedMultiplier;
+        [HideInInspector]
+        public float CurrentBoltRearwardSpeedMultiplier;
+        [HideInInspector]
+        public float CurrentBoltSpringMultiplier;
 
         // Private variables
+        private FirearmHeatingEffect_FirearmCore Core;
         private Material _copyMaterial;
-        private float _heat = 0f;
+        private Material _copyExplodedMaterial;
+        
 
         private bool _isAttached = false;
 
         private bool _soundEnabled = false;
+        private bool _canExplode = false;
+        private bool _hasPartExploded = false;
 
         private float _origInternalMechanicalMOA = 0f;
+
         // Constants
         private const string c_EmissionWeightPropertyString = "_EmissionWeight";
+        private const string c_IncandescenceScrollSpeedPropertyString = "_IncandescenceMapVelocity";
         private const string c_DetailWeightPropertyString = "_DetailWeight";
-#if !(DEBUG)
+
 
         public void Awake()
         {
 			Hook();
-            if (FireArm != null) _origInternalMechanicalMOA = FireArm.m_internalMechanicalMOA;
-            else if (Attachment != null && Attachment is MuzzleDevice muzzleDevice) _origInternalMechanicalMOA = muzzleDevice.m_mechanicalAccuracy;
+#if !DEBUG
+            _canExplode = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.Value;
+            CanRecoverFromExplosion = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.Value;
+            RevertHeatThreshold = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.Value;
+#endif
+            if (FireArm != null)
+            {
+                _origInternalMechanicalMOA = FireArm.m_internalMechanicalMOA;
 
+                Core = FireArm.GetComponent<FirearmHeatingEffect_FirearmCore>();
+                if (Core == null)
+                {
+                    Core = FireArm.gameObject.AddComponent<FirearmHeatingEffect_FirearmCore>(); 
+                }
+                Core.FirearmHeatingEffects.Add(this);
+            }
+            else if (Attachment != null && Attachment is MuzzleDevice muzzleDevice) _origInternalMechanicalMOA = muzzleDevice.m_mechanicalAccuracy;
             if (MeshRenderer != null)
             {
-                Log(MeshRenderer.sharedMaterials[MaterialIndex]);
                 _copyMaterial = MeshRenderer.materials[MaterialIndex];
-                Log(_copyMaterial);
             }
 
             if (ParticleSystem != null) ChangeParticleEmissionRate(0f);
@@ -130,53 +235,124 @@ namespace OpenScripts2
                 SoundEffectSource.volume = 0f;
                 SoundEffectSource.Stop();
             }
+
+            if (ExplodingPart != null)
+            {
+                _copyExplodedMaterial = ExplodingPart.materials[MaterialIndex];
+                ExplodingPart.gameObject.SetActive(false);
+            }
+            else _canExplode = false;
+
+            if (DoesHeatCauseCookoff)
+            {
+                StartCoroutine(CookoffSystem());
+            }
         }
 		public void OnDestroy()
         {
 			Unhook();
 
             if (_copyMaterial != null) Destroy(_copyMaterial);
+            if (_copyExplodedMaterial != null) Destroy(_copyExplodedMaterial);
         }
 
         public void Update()
         {
+            // Attachment Stuff
             if (Attachment != null)
             {
-                if (Attachment.curMount != null && !_isAttached)
+                if (!_isAttached && Attachment.curMount != null && Attachment.curMount.GetRootMount().MyObject is FVRFireArm fireArm)
                 {
-                    FireArm = Attachment.curMount.GetRootMount().MyObject as FVRFireArm;
+                    FireArm = fireArm;
                     if (!(Attachment is MuzzleDevice)) _origInternalMechanicalMOA = FireArm.m_internalMechanicalMOA;
+                    AttachToCore();
                     _isAttached = true;
                 }
-                else if (Attachment.curMount == null && _isAttached)
+                else if (_isAttached && Attachment.curMount == null)
                 {
+                    DetachFromCore();
                     if (!(Attachment is MuzzleDevice)) FireArm.m_internalMechanicalMOA = _origInternalMechanicalMOA;
                     FireArm = null;
                     _isAttached = false;
                 }
             }
+            // Cooldown
+            if (Heat > 0f) Heat -= Time.deltaTime * CooldownRate;
+            Heat = Mathf.Clamp(Heat, 0f, 1f);
 
-            if (_heat > 0f) _heat -= Time.deltaTime * CooldownRate;
-            _heat = Mathf.Clamp(_heat, 0f, 1f);
+            // Emission and Detail
             if (MeshRenderer != null)
             {
-                if (!EmissionUsesAdvancedCurve) _copyMaterial.SetFloat(c_EmissionWeightPropertyString, Mathf.Pow(_heat, HeatExponent));
-                else _copyMaterial.SetFloat(c_EmissionWeightPropertyString, EmissionCurve.Evaluate(_heat));
+                if (!EmissionUsesAdvancedCurve)
+                {
+                    float pow = Mathf.Pow(Heat, HeatExponent);
+                    if (!_hasPartExploded)
+                    {
+                        if (HeatAffectsEmissionWeight) _copyMaterial.SetFloat(c_EmissionWeightPropertyString, pow);
+                        if (HeatAffectsEmissionScrollSpeed)
+                        {
+                            Vector4 ScrollSpeed = Vector4.zero;
+                            ScrollSpeed.x = Mathf.Lerp(0f, MaxEmissionScrollSpeed_X, pow);
+                            ScrollSpeed.y = Mathf.Lerp(0f, MaxEmissionScrollSpeed_Y, pow);
+                            _copyMaterial.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
+                        }
+                    }
+                    else
+                    {
+                        if (HeatAffectsEmissionWeight) _copyExplodedMaterial.SetFloat(c_EmissionWeightPropertyString, pow);
+                        if (HeatAffectsEmissionScrollSpeed)
+                        {
+                            Vector4 ScrollSpeed = Vector4.zero;
+                            ScrollSpeed.x = Mathf.Lerp(0f, MaxEmissionScrollSpeed_X, pow);
+                            ScrollSpeed.y = Mathf.Lerp(0f, MaxEmissionScrollSpeed_Y, pow);
+                            _copyExplodedMaterial.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
+                        }
+                    }
+                }
+                else
+                {
+                    if (!_hasPartExploded)
+                    {
+                        if (HeatAffectsEmissionWeight) _copyMaterial.SetFloat(c_EmissionWeightPropertyString, EmissionCurve.Evaluate(Heat));
+                        if (HeatAffectsEmissionScrollSpeed)
+                        {
+                            Vector4 ScrollSpeed = Vector4.zero;
+                            ScrollSpeed.x = EmissionScrollSpeedCurve_X.Evaluate(Heat);
+                            ScrollSpeed.y = EmissionScrollSpeedCurve_Y.Evaluate(Heat);
+                            _copyMaterial.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
+                        }
+                    }
+                    else
+                    {
+                        if (HeatAffectsEmissionWeight) _copyExplodedMaterial.SetFloat(c_EmissionWeightPropertyString, EmissionCurve.Evaluate(Heat));
+                        if (HeatAffectsEmissionScrollSpeed)
+                        {
+                            Vector4 ScrollSpeed = Vector4.zero;
+                            ScrollSpeed.x = EmissionScrollSpeedCurve_X.Evaluate(Heat);
+                            ScrollSpeed.y = EmissionScrollSpeedCurve_Y.Evaluate(Heat);
+                            _copyExplodedMaterial.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
+                        }
+                    }
+                }
+
                 Log(MeshRenderer.materials[MaterialIndex].GetFloat(c_EmissionWeightPropertyString));
-                if (!DetailUsesAdvancedCurve) _copyMaterial.SetFloat(c_DetailWeightPropertyString, Mathf.Pow(_heat, DetailExponent));
-                else _copyMaterial.SetFloat(c_DetailWeightPropertyString, DetailCurve.Evaluate(_heat));
+                if (HeatAffectsDetailWeight)
+                {
+                    if (!DetailUsesAdvancedCurve) _copyMaterial.SetFloat(c_DetailWeightPropertyString, Mathf.Pow(Heat, DetailExponent));
+                    else _copyMaterial.SetFloat(c_DetailWeightPropertyString, DetailCurve.Evaluate(Heat));
+                }
             }
 
-
+            // Particles
             if (ParticleSystem != null)
             {
                 if (!ParticlesUsesAdvancedCurve)
                 {
-                    if (_heat > ParticleHeatThreshold)
+                    if (Heat > ParticleHeatThreshold)
                     {
                         float inverseLerp;
-                        if (ParticleEmissionRateStartsAtZero) inverseLerp = Mathf.InverseLerp(ParticleHeatThreshold, 1f, _heat);
-                        else inverseLerp = _heat;
+                        if (ParticleEmissionRateStartsAtZero) inverseLerp = Mathf.InverseLerp(ParticleHeatThreshold, 1f, Heat);
+                        else inverseLerp = Heat;
                         ChangeParticleEmissionRate(inverseLerp);
                     }
                     else
@@ -184,14 +360,15 @@ namespace OpenScripts2
                         ChangeParticleEmissionRate(0f);
                     }
                 }
-                else ChangeParticleEmissionRate(ParticlesCurve.Evaluate(_heat) * MaxEmissionRate);
+                else ChangeParticleEmissionRate(ParticlesCurve.Evaluate(Heat) * MaxEmissionRate);
             }
 
+            // Sounds
             if (SoundEffect != null)
             {
                 if (!SoundUsesAdvancedCurve)
                 {
-                    if (_heat > SoundHeatThreshold)
+                    if (Heat > SoundHeatThreshold)
                     {
                         if (!_soundEnabled)
                         {
@@ -199,8 +376,8 @@ namespace OpenScripts2
                             _soundEnabled = true;
                         }
                         float inverseLerp;
-                        if (SoundVolumeStartsAtZero) inverseLerp = Mathf.InverseLerp(SoundHeatThreshold, 1f, _heat);
-                        else inverseLerp = _heat;
+                        if (SoundVolumeStartsAtZero) inverseLerp = Mathf.InverseLerp(SoundHeatThreshold, 1f, Heat);
+                        else inverseLerp = Heat;
                         SoundEffectSource.volume = Mathf.Lerp(0f, MaxVolume, Mathf.Pow(inverseLerp, SoundHeatExponent));
                     }
                     else if (_soundEnabled)
@@ -211,7 +388,7 @@ namespace OpenScripts2
                 }
                 else
                 {
-                    float volumeEvaluation = VolumeCurve.Evaluate(_heat);
+                    float volumeEvaluation = VolumeCurve.Evaluate(Heat);
                     if (volumeEvaluation > 0f)
                     {
                         if (!_soundEnabled)
@@ -219,7 +396,7 @@ namespace OpenScripts2
                             SoundEffectSource.Play();
                             _soundEnabled = true;
                         }
-                        SoundEffectSource.volume = Mathf.Lerp(0f, MaxVolume, volumeEvaluation);
+                        SoundEffectSource.volume = volumeEvaluation;
                     }
                     else if (_soundEnabled)
                     {
@@ -229,25 +406,71 @@ namespace OpenScripts2
                 }
             }
 
-            if (DoesHeatAffectAccuracy && FireArm != null)
+            // Accuracy
+            if (DoesHeatAffectAccuracy && FireArm != null && !_hasPartExploded)
             {
-                if (Attachment == null)
+                ChangeAccuracy();
+            }
+
+            // Bolt Speed
+            if (DoesHeatAffectBoltSpeed && !_hasPartExploded)
+            {
+                if (!BoltSpeedUsesAdvancedCurve)
                 {
-                    if (!AccuracyUsesAdvancedCurve) FireArm.m_internalMechanicalMOA = Mathf.Lerp(1f, MaximumMOAMultiplier, Mathf.Pow(_heat, AccuracyHeatExponent)) * _origInternalMechanicalMOA;
-                    else FireArm.m_internalMechanicalMOA = Mathf.Lerp(1f, MaximumMOAMultiplier, AccuracyCurve.Evaluate(_heat)) * _origInternalMechanicalMOA;
+                    float pow = Mathf.Pow(Heat, BoltSpeedHeatExponent);
+                    CurrentBoltForwardSpeedMultiplier = Mathf.Lerp(1f, MaxBoltForwardSpeedMultiplier, pow);
+                    CurrentBoltRearwardSpeedMultiplier = Mathf.Lerp(1f, MaxBoltRearwardSpeedMultiplier, pow);
+                    CurrentBoltSpringMultiplier = Mathf.Lerp(1f, MaxBoltSpringStiffnessesMultiplier, pow);
                 }
-                else if (Attachment != null && Attachment is MuzzleDevice muzzleDevice)
+                else
                 {
-                    if (!AccuracyUsesAdvancedCurve) muzzleDevice.m_mechanicalAccuracy = Mathf.Lerp(1f, MaximumMOAMultiplier, Mathf.Pow(_heat, AccuracyHeatExponent)) * _origInternalMechanicalMOA;
-                    else muzzleDevice.m_mechanicalAccuracy = Mathf.Lerp(1f, MaximumMOAMultiplier, AccuracyCurve.Evaluate(_heat)) * _origInternalMechanicalMOA;
-                }
-                else if (Attachment != null && !(Attachment is MuzzleDevice))
-                {
-                    if (!AccuracyUsesAdvancedCurve) FireArm.m_internalMechanicalMOA = Mathf.Lerp(1f, MaximumMOAMultiplier, Mathf.Pow(_heat, AccuracyHeatExponent)) * _origInternalMechanicalMOA;
-                    else FireArm.m_internalMechanicalMOA = Mathf.Lerp(1f, MaximumMOAMultiplier, AccuracyCurve.Evaluate(_heat)) * _origInternalMechanicalMOA;
+                    CurrentBoltForwardSpeedMultiplier = Mathf.Lerp(1f, MaxBoltForwardSpeedMultiplier, BoltForwardSpeedMultiplierCurve.Evaluate(Heat));
+                    CurrentBoltRearwardSpeedMultiplier = Mathf.Lerp(1f, MaxBoltRearwardSpeedMultiplier, BoltRearwardSpeedMultiplierCurve.Evaluate(Heat));
+                    CurrentBoltSpringMultiplier = Mathf.Lerp(1f, MaxBoltSpringStiffnessesMultiplier, BoltSpringStiffnessMultiplierCurve.Evaluate(Heat));
                 }
             }
-            Log(_heat);
+
+            // Part Explosion
+
+            if (!_hasPartExploded && _canExplode && Heat > ExplodingHeatThreshhold)
+            {
+                _hasPartExploded = true;
+                SM.PlayCoreSound(FVRPooledAudioType.Explosion, ExplosionSound, transform.position);
+                if (MeshRenderer.gameObject == this.gameObject) MeshRenderer.enabled = false;
+                else MeshRenderer.gameObject.SetActive(false);
+                ExplodingPart.gameObject.SetActive(true);
+
+                if (Attachment == null) FireArm.m_internalMechanicalMOA = FailureAccuracyMultiplier * _origInternalMechanicalMOA;
+                else if (Attachment != null && Attachment is MuzzleDevice muzzleDevice) muzzleDevice.m_mechanicalAccuracy = FailureAccuracyMultiplier * _origInternalMechanicalMOA;
+                else if (Attachment != null && !(Attachment is MuzzleDevice)) FireArm.m_internalMechanicalMOA = FailureAccuracyMultiplier * _origInternalMechanicalMOA;
+
+                CurrentBoltRearwardSpeedMultiplier = StoppageSpeed;
+            }
+            else if (_hasPartExploded && _canExplode && Heat <= RevertHeatThreshold)
+            {
+                _hasPartExploded = false;
+                if (MeshRenderer.gameObject == this.gameObject) MeshRenderer.enabled = true;
+                else MeshRenderer.gameObject.SetActive(true);
+                ExplodingPart.gameObject.SetActive(false);
+
+                if (Attachment == null) FireArm.m_internalMechanicalMOA = _origInternalMechanicalMOA;
+                else if (Attachment != null && Attachment is MuzzleDevice muzzleDevice) muzzleDevice.m_mechanicalAccuracy = _origInternalMechanicalMOA;
+                else if (Attachment != null && !(Attachment is MuzzleDevice)) FireArm.m_internalMechanicalMOA = _origInternalMechanicalMOA;
+
+                CurrentBoltRearwardSpeedMultiplier = 1f;
+            }
+            Log(Heat);
+        }
+
+        private void ChangeAccuracy()
+        {
+            float pow;
+            if (!AccuracyUsesAdvancedCurve) pow = Mathf.Pow(Heat, AccuracyHeatExponent);
+            else pow = AccuracyCurve.Evaluate(Heat);
+
+            if (Attachment == null) FireArm.m_internalMechanicalMOA = Mathf.Lerp(1f, MaximumMOAMultiplier, pow) * _origInternalMechanicalMOA;
+            else if (Attachment != null && Attachment is MuzzleDevice muzzleDevice) muzzleDevice.m_mechanicalAccuracy = Mathf.Lerp(1f, MaximumMOAMultiplier, pow) * _origInternalMechanicalMOA;
+            else if (Attachment != null && !(Attachment is MuzzleDevice)) FireArm.m_internalMechanicalMOA = Mathf.Lerp(1f, MaximumMOAMultiplier, pow) * _origInternalMechanicalMOA;
         }
 
         private void ChangeParticleEmissionRate(float heat)
@@ -261,26 +484,99 @@ namespace OpenScripts2
             emission.rateOverTime = rateOverTime;
         }
 
-
-		void Unhook()
+        private void AttachToCore()
         {
-            GM.CurrentSceneSettings.ShotFiredEvent -= OnShotFired;
+            Core = FireArm.GetComponent<FirearmHeatingEffect_FirearmCore>();
+            if (Core == null)
+            {
+                Core = FireArm.gameObject.AddComponent<FirearmHeatingEffect_FirearmCore>();
+            }
+            Core.FirearmHeatingEffects.Add(this);
         }
 
-		void Hook()
+        private void DetachFromCore()
+        {
+            Core.FirearmHeatingEffects.Remove(this);
+            Core = null;
+        }
+        void Unhook()
+        {
+            GM.CurrentSceneSettings.ShotFiredEvent -= OnShotFired;
+#if !DEBUG
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.SettingChanged -= SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.SettingChanged -= SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.SettingChanged -= SettingsChanged;
+#endif
+        }
+
+        void Hook()
         {
             GM.CurrentSceneSettings.ShotFiredEvent += OnShotFired;
+#if !DEBUG
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.SettingChanged += SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.SettingChanged += SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.SettingChanged += SettingsChanged;
+#endif
         }
 
         private void OnShotFired(FVRFireArm firearm)
         {
-            if (FireArm != null && firearm == FireArm) _heat += HeatPerShot;
+            if (FireArm != null && firearm == FireArm)
+            {
+                float powerMult = 1f;
+                if (ChangesWithCartridgePower)
+                {
+                    FVRObject.OTagFirearmRoundPower power = AM.GetRoundPower(FireArm.RoundType);
+                    powerMult = RoundPowerMultipliers[(int)power];
+                }
+
+                if (Core != null) Heat += HeatPerShot * Core.CombinedHeatMultiplier * powerMult;
+                else Heat += HeatPerShot * HeatMultiplier * powerMult;
+            }
         }
 
+        private void SettingsChanged(object sender, EventArgs e)
+        {
+            if (ExplodingPart != null) _canExplode = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.Value;
+            else _canExplode = false;
+            CanRecoverFromExplosion = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.Value;
+            RevertHeatThreshold = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.Value;
+        }
+
+        private IEnumerator CookoffSystem()
+        {
+            while (DoesHeatCauseCookoff)
+            {
+                float rand = UnityEngine.Random.Range(0f, 1f);
+                if (Heat > CookoffHeatThreshold)
+                {
+                    float inverseLerp;
+                    if (CookoffChanceStartsAtZero) inverseLerp = Mathf.InverseLerp(CookoffHeatThreshold, 1f, Heat);
+                    else inverseLerp = Heat;
+                    float chance = Mathf.Lerp(0f, MaxCookoffChancePerSecond, inverseLerp);
+
+                    if (rand < chance && FireArm != null)
+                    {
+                        switch (FireArm)
+                        {
+                            case ClosedBoltWeapon w:
+                                w.DropHammer();
+                                break;
+                            case Handgun w:
+                                w.DropHammer(false);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+                yield return new WaitForSeconds(1f);
+            }
+        }
+        
         private void Log(object message)
         {
-            if (DebugEnabled) Log(message);
+            if (DebugEnabled) Debug.Log(gameObject.name + " " + message);
         }
-#endif
     }
 }

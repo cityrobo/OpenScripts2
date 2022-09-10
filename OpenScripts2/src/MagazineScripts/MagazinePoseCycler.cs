@@ -21,24 +21,30 @@ namespace OpenScripts2
 
         private bool _offsetCalculated = false;
 
+        private static Dictionary<FVRPhysicalObject, MagazinePoseCycler> _existingMagazinePoseCyclers = new();
+
 #if!DEBUG
+        static MagazinePoseCycler()
+        {
+            Hook();
+        }
+
         public void Awake()
         {
-            AlternatePoseOverrides.Add(Transform.Instantiate(Magazine.PoseOverride));
+            AlternatePoseOverrides.Add(Instantiate(Magazine.PoseOverride));
             _poseIndex = AlternatePoseOverrides.Count - 1;
 
-            Hook();
+            _existingMagazinePoseCyclers.Add(Magazine,this);
         }
 
         public void OnDestroy()
         {
-            Unhook();
+            _existingMagazinePoseCyclers.Remove(Magazine);
         }
 
         public void Update()
         {
             FVRViveHand hand = Magazine.m_hand;
-
             if (hand != null)
             {
                 if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f)
@@ -49,7 +55,7 @@ namespace OpenScripts2
             }
         }
 
-        void NextPose()
+        private void NextPose()
         {
             _poseIndex++;
             if (_poseIndex >= AlternatePoseOverrides.Count) _poseIndex = 0;
@@ -57,36 +63,32 @@ namespace OpenScripts2
             UpdatePose();
         }
 
-        void UpdatePose()
+        private void UpdatePose()
         {
             Magazine.PoseOverride.localPosition = AlternatePoseOverrides[_poseIndex].localPosition + _positionalOffset;
             Magazine.PoseOverride.localRotation = _rotationalOffset * AlternatePoseOverrides[_poseIndex].localRotation;
         }
 
-        void CalculateOffset(FVRFireArmMagazine magazine)
+        private void CalculateOffset(FVRPhysicalObject physicalObject)
         {
-            _positionalOffset = magazine.PoseOverride_Touch.localPosition - magazine.PoseOverride.localPosition;
-            _rotationalOffset = magazine.PoseOverride_Touch.localRotation * Quaternion.Inverse(magazine.PoseOverride.localRotation);
+            _positionalOffset = physicalObject.PoseOverride_Touch.localPosition - physicalObject.PoseOverride.localPosition;
+            _rotationalOffset = physicalObject.PoseOverride_Touch.localRotation * Quaternion.Inverse(physicalObject.PoseOverride.localRotation);
             _offsetCalculated = true;
         }
 
-        public void Unhook()
-        {
-            On.FistVR.FVRPhysicalObject.UpdatePosesBasedOnCMode -= FVRPhysicalObject_UpdatePosesBasedOnCMode;
-        }
-
-        public void Hook()
+        public static void Hook()
         {
             On.FistVR.FVRPhysicalObject.UpdatePosesBasedOnCMode += FVRPhysicalObject_UpdatePosesBasedOnCMode;
         }
 
-        private void FVRPhysicalObject_UpdatePosesBasedOnCMode(On.FistVR.FVRPhysicalObject.orig_UpdatePosesBasedOnCMode orig, FVRPhysicalObject self, FVRViveHand hand)
+        private static void FVRPhysicalObject_UpdatePosesBasedOnCMode(On.FistVR.FVRPhysicalObject.orig_UpdatePosesBasedOnCMode orig, FVRPhysicalObject self, FVRViveHand hand)
         {
-            if (self as FVRFireArmMagazine == Magazine)
+            MagazinePoseCycler magazinePoseCycler;
+            if (_existingMagazinePoseCyclers.TryGetValue(self, out magazinePoseCycler))
             {
-                if (!_offsetCalculated && (hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && (self as FVRFireArmMagazine).PoseOverride_Touch != null)
+                if (!magazinePoseCycler._offsetCalculated && (hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && self.PoseOverride_Touch != null)
                 {
-                    CalculateOffset(self as FVRFireArmMagazine);
+                    magazinePoseCycler.CalculateOffset(self);
                 }
             }
             orig(self, hand);

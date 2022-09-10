@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace OpenScripts2
 {
-    public class WeaponEnhancementAttachment : FVRFireArmAttachment
+    public class RoundClassChangerAttachment : FVRFireArmAttachment
     {
         public FireArmRoundClass RoundClass = FireArmRoundClass.AP;
 
@@ -18,9 +18,9 @@ namespace OpenScripts2
         {
             base.FVRUpdate();
 
-            if (base.curMount != null)
+            if (curMount != null)
             {
-                _firearm = base.curMount.GetRootMount().MyObject as FVRFireArm;
+                _firearm = curMount.GetRootMount().MyObject as FVRFireArm;
                 if (_firearm != null)
                 {
                     FVRFireArmChamber chamber = OpenScripts2_BasePlugin.GetCurrentChamber(_firearm);

@@ -22,7 +22,7 @@ namespace OpenScripts2
             return copy as T;
         }
 
-        public static T GetCopyOf<T>(this Component target, T reference) where T : Component
+        public static T CopyComponent<T>(this Component target, T reference) where T : Component
 		{
 			Type type = target.GetType();
 			if (type != reference.GetType()) return null; // type mis-match
@@ -47,7 +47,7 @@ namespace OpenScripts2
 			return target as T;
 		}
 
-		public static T GetCopyOf<T>(this UnityEngine.Object target, T reference) where T : UnityEngine.Object
+		public static T CopyObject<T>(this UnityEngine.Object target, T reference) where T : UnityEngine.Object
 		{
 			Type type = target.GetType();
 			if (type != reference.GetType()) return null; // type mis-match
@@ -102,7 +102,6 @@ namespace UnityEngine
 {
     public static class UnityEngineExtensions
     {
-
         public static T GetComponentInDirectChildren<T>(this Component parent) where T : Component
         {
             return parent.GetComponentInDirectChildren<T>(false);
@@ -281,6 +280,11 @@ namespace UnityEngine
             }
         }
 
+        public static float GetAxis(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis)
+        {
+            return vector[(int)axis];
+        }
+
         public static void ModifyAxis(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             vector[(int)axis] = value;
@@ -312,6 +316,16 @@ namespace UnityEngine
             Vector3 newRot = transform.localRotation.eulerAngles;
             newRot[(int)axis] = value;
             transform.localRotation = Quaternion.Euler(newRot);
+        }
+
+        public static Quaternion TransformRotation(this Transform transform, Quaternion rot)
+        {
+            return transform.parent.rotation * rot;
+        }
+
+        public static Quaternion InverseTransformRotation(this Transform transform, Quaternion rot)
+        {
+            return Quaternion.Inverse(transform.rotation) * rot;
         }
     }
 }

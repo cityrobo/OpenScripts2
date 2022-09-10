@@ -81,9 +81,9 @@ namespace OpenScripts2
                             newFireSelectorMode.ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
                             OpenBoltBurstFire openBoltBurst = openBoltReceiver.gameObject.AddComponent<OpenBoltBurstFire>();
                             openBoltBursts.Add(openBoltBurst);
-                            openBoltBurst.Receiver = openBoltReceiver;
+                            openBoltBurst.OpenBoltReceiver = openBoltReceiver;
                             openBoltBurst.SelectorSetting = openBoltReceiver.FireSelector_Modes.Length;
-                            openBoltBurst.BurstAmt = burstAmounts[burstIndex];
+                            openBoltBurst.BurstAmount = burstAmounts[burstIndex];
                             //openBoltBurstGM.SetActive(true);
 
                             burstIndex++;
@@ -92,7 +92,7 @@ namespace OpenScripts2
                             newFireSelectorMode.ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
                             break;
                         default:
-                            this.LogError("FireSelectorMode not supported: " + FireSelectorModeType);
+                            LogError("FireSelectorMode not supported: " + FireSelectorModeType);
                             continue;
                     }
 

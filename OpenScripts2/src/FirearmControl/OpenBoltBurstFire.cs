@@ -9,72 +9,65 @@ namespace OpenScripts2
 {
 	public class OpenBoltBurstFire : OpenScripts2_BasePlugin
 	{
-		public OpenBoltReceiver Receiver = null;
+		public OpenBoltReceiver OpenBoltReceiver;
 
 		[Tooltip("Selector setting position that will be burst. Remember, selectors go pos: 0, 1 ,2, not 1, 2, 3")]
 		public int SelectorSetting = 0;
 
-		public  int BurstAmt = 1;
-		private int BurstSoFar;
+		public  int BurstAmount = 1;
+		private int _shotsSoFar;
 
-		private bool _wasLoaded;
-
-
-		public void Start()
+		public void Awake()
 		{
-			Receiver.FireSelector_Modes[SelectorSetting].ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
-			// Debug.Log("OBB Loaded!");
+			OpenBoltReceiver.FireSelector_Modes[SelectorSetting].ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
+
+			GM.CurrentSceneSettings.ShotFiredEvent += ShotFired;
+		}
+
+		public void OnDestroy()
+        {
+			GM.CurrentSceneSettings.ShotFiredEvent -= ShotFired;
 		}
 
 		public void Update()
 		{
-			//this script breaks without publicized assembly
-			//if it's not the correct selector, just don't do anything
-			if (Receiver.m_hand == null) return;
-			if (Receiver.m_fireSelectorMode != SelectorSetting)
+			// if it's not the correct selector, just don't do anything
+			if (OpenBoltReceiver.m_hand == null) return;
+			if (OpenBoltReceiver.m_fireSelectorMode != SelectorSetting)
 			{
-				BurstSoFar = 0;
+				_shotsSoFar = 0;
 				return;
 			}
-
-			//add to burst if chamber is shot
-			if(_wasLoaded && !Receiver.Chamber.IsFull)
+			// if burst amount hit
+			if (_shotsSoFar >= BurstAmount)
 			{
-				BurstSoFar++;
-				// Debug.Log(BurstSoFar);
-			}
-			_wasLoaded = Receiver.Chamber.IsFull;
-			//if burst amount hit
-			if (BurstSoFar >= BurstAmt)
-			{
-				lockUp();
-				if (Receiver.m_hand.Input.TriggerFloat < Receiver.TriggerFiringThreshold)
-				{
-					unLock();
-				}
+				LockUp();
 			}
 
-			//reset amt if trigger is let go
-			if (Receiver.m_hand.Input.TriggerFloat < Receiver.TriggerFiringThreshold)
+			// reset amount if trigger is let go and unlock
+			if (OpenBoltReceiver.m_hand.Input.TriggerFloat < OpenBoltReceiver.TriggerResetThreshold)
 			{
-				// if (BurstSoFar > 0) Debug.Log("OBB Mid Burst Reset");
-				BurstSoFar = 0;
+				_shotsSoFar = 0;
+				Unlock();
 			}
 		}
 
-		public void lockUp()
-		{
-			//put to safe
-			Receiver.FireSelector_Modes[SelectorSetting].ModeType = OpenBoltReceiver.FireSelectorModeType.Safe;
-			//Debug.Log("OBB Lock");
+		public void ShotFired(FVRFireArm fireArm)
+        {
+			if (fireArm == OpenBoltReceiver && OpenBoltReceiver.m_fireSelectorMode == SelectorSetting) _shotsSoFar++;
 		}
 
-		public void unLock()
+		public void LockUp()
 		{
-			//put to auto; reset
-			BurstSoFar = 0;
-			Receiver.FireSelector_Modes[SelectorSetting].ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
-			// Debug.Log("OBB Unlock");
+			// put to safe
+			OpenBoltReceiver.FireSelector_Modes[SelectorSetting].ModeType = OpenBoltReceiver.FireSelectorModeType.Safe;
+		}
+
+		public void Unlock()
+		{
+			// put to auto; reset
+			_shotsSoFar = 0;
+			OpenBoltReceiver.FireSelector_Modes[SelectorSetting].ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
 		}
 	}
 }

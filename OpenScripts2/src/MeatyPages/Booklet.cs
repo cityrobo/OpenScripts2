@@ -33,20 +33,20 @@ namespace OpenScripts2
             UpdateInputsAndAnimate(hand);
         }
 
-        void UpdateInputsAndAnimate(FVRViveHand hand)
+        private void UpdateInputsAndAnimate(FVRViveHand hand)
         {
             if (hand != null)
             {
-                if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) FlipLeft();
-                else if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) FlipRight();
-                else if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.up) < 45f) CloseBooklet();
+                if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.left)) FlipLeft();
+                else if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.right)) FlipRight();
+                else if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.up)) CloseBooklet();
             }
         }
 
-        void FlipLeft()
+        private void FlipLeft()
         {
             if (_isClosing || _currentPage >= Pages.Length) return;
-            SM.PlayGenericSound(FlipPageLeftSounds,this.transform.position);
+            SM.PlayGenericSound(FlipPageLeftSounds, transform.position);
             if (_isFlipping)
             {
                 StopAllCoroutines();
@@ -55,10 +55,11 @@ namespace OpenScripts2
             StartCoroutine(FlipPage(Pages[_currentPage], FlipStopAngle));
             _currentPage++;
         }
-        void FlipRight()
+
+        private void FlipRight()
         {
             if (_isClosing || _currentPage <= 0) return;
-            SM.PlayGenericSound(FlipPageRightSounds, this.transform.position);
+            SM.PlayGenericSound(FlipPageRightSounds, transform.position);
             if (_isFlipping)
             {
                 StopAllCoroutines();
@@ -67,10 +68,10 @@ namespace OpenScripts2
             StartCoroutine(FlipPage(Pages[_currentPage - 1], FlipStartAngle));
             _currentPage--;
         }
-        void CloseBooklet()
+        private void CloseBooklet()
         {
             if (_isClosing) return;
-            SM.PlayGenericSound(CloseBookletSounds, this.transform.position);
+            SM.PlayGenericSound(CloseBookletSounds, transform.position);
 
             if (_isFlipping)
             {
@@ -82,7 +83,7 @@ namespace OpenScripts2
             _currentPage = 0;
         }
 
-        IEnumerator FlipPage(GameObject page, float angle)
+        private IEnumerator FlipPage(GameObject page, float angle)
         {
             _isFlipping = true;
             Vector3 angleVector = GetRotationalVector(angle);
@@ -97,7 +98,7 @@ namespace OpenScripts2
             _isFlipping = false;
         }
 
-        IEnumerator ClosingBooklet()
+        private IEnumerator ClosingBooklet()
         {
             _isClosing = true;
             for (int i = 0; i < Pages.Length; i++)
@@ -108,26 +109,18 @@ namespace OpenScripts2
             _isClosing = false;
         }
 
-        Vector3 GetRotationalVector(float angle)
+        private Vector3 GetRotationalVector(float angle)
         {
-            Vector3 angleVector;
             switch (PageAxis)
             {
                 case Axis.X:
-                    angleVector = new Vector3(angle, 0f, 0f);
-                    break;
+                    return new Vector3(angle, 0f, 0f);
                 case Axis.Y:
-                    angleVector = new Vector3(0f, angle, 0f);
-                    break;
+                    return new Vector3(0f, angle, 0f);
                 case Axis.Z:
-                    angleVector = new Vector3(0f, 0f, angle);
-                    break;
-                default:
-                    angleVector = new Vector3();
-                    break;
+                    return new Vector3(0f, 0f, angle);
             }
-
-            return angleVector;
+            return new Vector3();
         }
     }
 }

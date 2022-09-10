@@ -25,18 +25,24 @@ namespace OpenScripts2
 
         private bool _isRamRodExtended = false;
 
+        static CapAndBallRevolver()
+        {
+            Hook();
+        }
+
+
         public override void Start()
         {
             base.Start();
             _capCylinder = base.Cylinder as CapAndBallRevolverCylinder;
             NumberOfChambersBackwardsToRam = Mathf.Abs(NumberOfChambersBackwardsToRam);
 
-            Hook();
+            //Hook();
         }
 
         public override void OnDestroy()
         {
-            Unhook();
+            //Unhook();
             base.OnDestroy();
         }
 
@@ -95,7 +101,7 @@ namespace OpenScripts2
 #endif
         }
 
-        private void Hook()
+        static private void Hook()
         {
 #if !DEBUG
             On.FistVR.SingleActionRevolver.Fire += SingleActionRevolver_Fire;
@@ -105,89 +111,89 @@ namespace OpenScripts2
 #endif
         }
 #if !DEBUG
-        private void SingleActionRevolver_AdvanceCylinder(On.FistVR.SingleActionRevolver.orig_AdvanceCylinder orig, SingleActionRevolver self)
+        static private void SingleActionRevolver_AdvanceCylinder(On.FistVR.SingleActionRevolver.orig_AdvanceCylinder orig, SingleActionRevolver self)
         {
-            if (self == this)
+            if (self is CapAndBallRevolver capAndBallRevolver)
             {
-                if (_isRamRodExtended || (!_capCylinder.GetChamberRammed(RammingChamber) && _capCylinder.Chambers[RammingChamber].IsFull))
+                if (capAndBallRevolver._isRamRodExtended || (!capAndBallRevolver._capCylinder.GetChamberRammed(capAndBallRevolver.RammingChamber) && capAndBallRevolver._capCylinder.Chambers[capAndBallRevolver.RammingChamber].IsFull))
                 {
                     return;
                 }
                 
-                if (_lastChamber == this.CurChamber)
+                if (capAndBallRevolver._lastChamber == capAndBallRevolver.CurChamber)
                 {
-                    _lastChamber--;
+                    capAndBallRevolver._lastChamber--;
                 }
                 else
                 {
-                    this.CurChamber++;
-                    _lastChamber = this.CurChamber;
+                    capAndBallRevolver.CurChamber++;
+                    capAndBallRevolver._lastChamber = capAndBallRevolver.CurChamber;
                 }
 
-                this.PlayAudioEvent(FirearmAudioEventType.FireSelector, 1f);
+                capAndBallRevolver.PlayAudioEvent(FirearmAudioEventType.FireSelector, 1f);
             }
             else orig(self);
         }
 
-        private void SingleActionRevolver_UpdateCylinderRot(On.FistVR.SingleActionRevolver.orig_UpdateCylinderRot orig, SingleActionRevolver self)
+        static private void SingleActionRevolver_UpdateCylinderRot(On.FistVR.SingleActionRevolver.orig_UpdateCylinderRot orig, SingleActionRevolver self)
         {
-            if (self == this)
+            if (self is CapAndBallRevolver capAndBallRevolver)
             {
-                if (this.m_isStateToggled)
+                if (capAndBallRevolver.m_isStateToggled)
                 {
-                    int num = this.PrevChamber;
-                    if (this.IsAccessTwoChambersBack)
-                        num = this.PrevChamber2;
-                    for (int index = 0; index < this._capCylinder.Chambers.Length; ++index)
+                    int num = capAndBallRevolver.PrevChamber;
+                    if (capAndBallRevolver.IsAccessTwoChambersBack)
+                        num = capAndBallRevolver.PrevChamber2;
+                    for (int index = 0; index < capAndBallRevolver._capCylinder.Chambers.Length; ++index)
                     {
-                        this._capCylinder.Chambers[index].IsAccessible = index == num;
-                        this._capCylinder.CapNipples[index].IsAccessible = index == num;
+                        capAndBallRevolver._capCylinder.Chambers[index].IsAccessible = index == num;
+                        capAndBallRevolver._capCylinder.CapNipples[index].IsAccessible = index == num;
 
-                        if (_lastChamber == this.CurChamber)
+                        if (capAndBallRevolver._lastChamber == capAndBallRevolver.CurChamber)
                         {
-                            if (!this.IsAccessTwoChambersBack)
+                            if (!capAndBallRevolver.IsAccessTwoChambersBack)
                             {
-                                this._capCylinder.Chambers[index].IsAccessible = index == this.PrevChamber2;
-                                this._capCylinder.CapNipples[index].IsAccessible = index == this.PrevChamber2;
+                                capAndBallRevolver._capCylinder.Chambers[index].IsAccessible = index == capAndBallRevolver.PrevChamber2;
+                                capAndBallRevolver._capCylinder.CapNipples[index].IsAccessible = index == capAndBallRevolver.PrevChamber2;
                             }
                             else
                             {
-                                this._capCylinder.Chambers[index].IsAccessible = index == this.PrevChamber3;
-                                this._capCylinder.CapNipples[index].IsAccessible = index == this.PrevChamber3;
+                                capAndBallRevolver._capCylinder.Chambers[index].IsAccessible = index == capAndBallRevolver.PrevChamber3;
+                                capAndBallRevolver._capCylinder.CapNipples[index].IsAccessible = index == capAndBallRevolver.PrevChamber3;
                             }
                         }
                     }
-                    if (this.DoesHalfCockHalfRotCylinder)
+                    if (capAndBallRevolver.DoesHalfCockHalfRotCylinder)
                     {
-                        int cylinder = (this.CurChamber + 1) % this._capCylinder.NumChambers;
-                        this._capCylinder.transform.localRotation = Quaternion.Slerp(this._capCylinder.GetLocalRotationFromCylinder(this.CurChamber), this._capCylinder.GetLocalRotationFromCylinder(cylinder), 0.5f);
+                        int cylinder = (capAndBallRevolver.CurChamber + 1) % capAndBallRevolver._capCylinder.NumChambers;
+                        capAndBallRevolver._capCylinder.transform.localRotation = Quaternion.Slerp(capAndBallRevolver._capCylinder.GetLocalRotationFromCylinder(capAndBallRevolver.CurChamber), capAndBallRevolver._capCylinder.GetLocalRotationFromCylinder(cylinder), 0.5f);
 
-                        if (_lastChamber == this.CurChamber) this._capCylinder.transform.localRotation = Quaternion.Slerp(this._capCylinder.GetLocalRotationFromCylinder(this.CurChamber), this._capCylinder.GetLocalRotationFromCylinder(cylinder), 0f);
+                        if (capAndBallRevolver._lastChamber == capAndBallRevolver.CurChamber) capAndBallRevolver._capCylinder.transform.localRotation = Quaternion.Slerp(capAndBallRevolver._capCylinder.GetLocalRotationFromCylinder(capAndBallRevolver.CurChamber), capAndBallRevolver._capCylinder.GetLocalRotationFromCylinder(cylinder), 0f);
                     }
                     else
                     {
-                        int cylinder = (this.CurChamber + 1) % this._capCylinder.NumChambers;
-                        this._capCylinder.transform.localRotation = this._capCylinder.GetLocalRotationFromCylinder(this.CurChamber);
-                        if (_lastChamber == this.CurChamber) this._capCylinder.transform.localRotation = Quaternion.Slerp(this._capCylinder.GetLocalRotationFromCylinder(this.CurChamber), this._capCylinder.GetLocalRotationFromCylinder(cylinder), 0.5f);
+                        int cylinder = (capAndBallRevolver.CurChamber + 1) % capAndBallRevolver._capCylinder.NumChambers;
+                        capAndBallRevolver._capCylinder.transform.localRotation = capAndBallRevolver._capCylinder.GetLocalRotationFromCylinder(capAndBallRevolver.CurChamber);
+                        if (capAndBallRevolver._lastChamber == capAndBallRevolver.CurChamber) capAndBallRevolver._capCylinder.transform.localRotation = Quaternion.Slerp(capAndBallRevolver._capCylinder.GetLocalRotationFromCylinder(capAndBallRevolver.CurChamber), capAndBallRevolver._capCylinder.GetLocalRotationFromCylinder(cylinder), 0.5f);
                     }
-                    if (this.DoesCylinderTranslateForward)
-                        this._capCylinder.transform.localPosition = this.CylinderBackPos;
+                    if (capAndBallRevolver.DoesCylinderTranslateForward)
+                        capAndBallRevolver._capCylinder.transform.localPosition = capAndBallRevolver.CylinderBackPos;
                     
                 }
                 else
                 {
-                    for (int index = 0; index < this._capCylinder.Chambers.Length; ++index)
+                    for (int index = 0; index < capAndBallRevolver._capCylinder.Chambers.Length; ++index)
                     {
-                        this._capCylinder.Chambers[index].IsAccessible = false;
-                        this._capCylinder.CapNipples[index].IsAccessible = false;
+                        capAndBallRevolver._capCylinder.Chambers[index].IsAccessible = false;
+                        capAndBallRevolver._capCylinder.CapNipples[index].IsAccessible = false;
                     }
-                    this.m_tarChamberLerp = !this.m_isHammerCocking ? 0.0f : this.m_hammerCockLerp;
-                    this.m_curChamberLerp = Mathf.Lerp(this.m_curChamberLerp, this.m_tarChamberLerp, Time.deltaTime * 16f);
-                    int cylinder = (this.CurChamber + 1) % this._capCylinder.NumChambers;
-                    this._capCylinder.transform.localRotation = Quaternion.Slerp(this._capCylinder.GetLocalRotationFromCylinder(this.CurChamber), this._capCylinder.GetLocalRotationFromCylinder(cylinder), this.m_curChamberLerp);
+                    capAndBallRevolver.m_tarChamberLerp = !capAndBallRevolver.m_isHammerCocking ? 0.0f : capAndBallRevolver.m_hammerCockLerp;
+                    capAndBallRevolver.m_curChamberLerp = Mathf.Lerp(capAndBallRevolver.m_curChamberLerp, capAndBallRevolver.m_tarChamberLerp, Time.deltaTime * 16f);
+                    int cylinder = (capAndBallRevolver.CurChamber + 1) % capAndBallRevolver._capCylinder.NumChambers;
+                    capAndBallRevolver._capCylinder.transform.localRotation = Quaternion.Slerp(capAndBallRevolver._capCylinder.GetLocalRotationFromCylinder(capAndBallRevolver.CurChamber), capAndBallRevolver._capCylinder.GetLocalRotationFromCylinder(cylinder), capAndBallRevolver.m_curChamberLerp);
 
-                    if (this.DoesCylinderTranslateForward)
-                        this._capCylinder.transform.localPosition = Vector3.Lerp(this.CylinderBackPos, this.CylinderFrontPos, this.m_hammerCockLerp);
+                    if (capAndBallRevolver.DoesCylinderTranslateForward)
+                        capAndBallRevolver._capCylinder.transform.localPosition = Vector3.Lerp(capAndBallRevolver.CylinderBackPos, capAndBallRevolver.CylinderFrontPos, capAndBallRevolver.m_hammerCockLerp);
 
 
                     return;
@@ -196,9 +202,9 @@ namespace OpenScripts2
             else orig(self);
         }
 
-        private void SingleActionRevolver_EjectPrevCylinder(On.FistVR.SingleActionRevolver.orig_EjectPrevCylinder orig, SingleActionRevolver self)
+        static private void SingleActionRevolver_EjectPrevCylinder(On.FistVR.SingleActionRevolver.orig_EjectPrevCylinder orig, SingleActionRevolver self)
         {
-            if (self == this)
+            if (self is CapAndBallRevolver capAndBallRevolver)
             {
                 /*if (!this.m_isStateToggled)
                     return;
@@ -216,33 +222,33 @@ namespace OpenScripts2
             }
         }
 
-        private void SingleActionRevolver_Fire(On.FistVR.SingleActionRevolver.orig_Fire orig, SingleActionRevolver self)
+        static private void SingleActionRevolver_Fire(On.FistVR.SingleActionRevolver.orig_Fire orig, SingleActionRevolver self)
         {
-            if (self == this)
+            if (self is CapAndBallRevolver capAndBallRevolver)
             {
                 //Debug.Log("new fire");
-                this.PlayAudioEvent(FirearmAudioEventType.HammerHit);
+                capAndBallRevolver.PlayAudioEvent(FirearmAudioEventType.HammerHit);
 
-                bool capFired = _capCylinder.CapNipples[this.CurChamber].Fire();
+                bool capFired = capAndBallRevolver._capCylinder.CapNipples[capAndBallRevolver.CurChamber].Fire();
 
                 if (capFired)
                 {
-                    this.PlayAudioEvent(FirearmAudioEventType.Shots_LowPressure);
+                    capAndBallRevolver.PlayAudioEvent(FirearmAudioEventType.Shots_LowPressure);
                 }
 
-                if (!capFired || !_capCylinder.GetChamberRammed(this.CurChamber) || !_capCylinder.Chambers[this.CurChamber].Fire())
+                if (!capFired || !capAndBallRevolver._capCylinder.GetChamberRammed(capAndBallRevolver.CurChamber) || !capAndBallRevolver._capCylinder.Chambers[capAndBallRevolver.CurChamber].Fire())
                     return;
 
-                FVRFireArmChamber chamber = _capCylinder.Chambers[this.CurChamber];
-                this.Fire(chamber, this.GetMuzzle(), true);
-                this.FireMuzzleSmoke();
-                this.Recoil(this.IsTwoHandStabilized(), (Object)this.AltGrip != (Object)null, this.IsShoulderStabilized());
-                this.PlayAudioGunShot(chamber.GetRound(), GM.CurrentPlayerBody.GetCurrentSoundEnvironment());
+                FVRFireArmChamber chamber = capAndBallRevolver._capCylinder.Chambers[capAndBallRevolver.CurChamber];
+                capAndBallRevolver.Fire(chamber, capAndBallRevolver.GetMuzzle(), true);
+                capAndBallRevolver.FireMuzzleSmoke();
+                capAndBallRevolver.Recoil(capAndBallRevolver.IsTwoHandStabilized(), capAndBallRevolver.AltGrip != null, capAndBallRevolver.IsShoulderStabilized());
+                capAndBallRevolver.PlayAudioGunShot(chamber.GetRound(), GM.CurrentPlayerBody.GetCurrentSoundEnvironment());
 
                 if (GM.CurrentSceneSettings.IsAmmoInfinite && GM.CurrentPlayerBody.IsInfiniteAmmo)
                 {
                     chamber.IsSpent = false;
-                    _capCylinder.CapNipples[this.CurChamber].IsSpent = false;
+                    capAndBallRevolver._capCylinder.CapNipples[capAndBallRevolver.CurChamber].IsSpent = false;
 
                     chamber.UpdateProxyDisplay();
                 }
@@ -250,7 +256,7 @@ namespace OpenScripts2
                 {
                     chamber.SetRound(null);
 
-                    _capCylinder.RamChamber(this.CurChamber, true);
+                    capAndBallRevolver._capCylinder.RamChamber(capAndBallRevolver.CurChamber, true);
                 }
             }
             else orig(self);

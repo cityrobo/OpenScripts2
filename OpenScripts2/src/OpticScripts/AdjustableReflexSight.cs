@@ -60,7 +60,6 @@ namespace OpenScripts2
         private FVRViveHand _hand;
         private int _currentMenu = 0;
 
-        private bool _zeroOnlyMode = false;
         private const string NameOfTextureVariable = "_RedDotTex";
         private const string NameOfColorVariable = "_DotColor";
         private string NameOfDistanceVariable = "_RedDotDist";
@@ -85,7 +84,6 @@ namespace OpenScripts2
 
             if (ReticleTextures.Length <= 1) 
             { 
-                _zeroOnlyMode = true;
                 _currentMenu = 1;
             }
 
@@ -232,9 +230,6 @@ namespace OpenScripts2
                         ShowNextMenu();
                         return;
                     }
-                    break;
-                default:
-                    _currentMenu = 0;
                     break;
             }
             UpdateScreen();

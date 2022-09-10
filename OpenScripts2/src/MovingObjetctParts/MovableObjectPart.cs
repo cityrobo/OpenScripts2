@@ -18,7 +18,7 @@ namespace OpenScripts2
         }
 		public Mode MovementMode;
 
-		public OpenScripts2_BasePlugin.Axis axis;
+		public OpenScripts2_BasePlugin.Axis MovementAxis;
 
 		public Transform Root;
 		public Transform ObjectToMove;
@@ -44,6 +44,7 @@ namespace OpenScripts2
 		private Vector3 _origPos;
 
 		private Vector3 _lastHandPlane;
+		private Vector3 _lastHandPos;
 
 		private bool _debug = false;
 
@@ -55,21 +56,20 @@ namespace OpenScripts2
 		public override void BeginInteraction(FVRViveHand hand)
 		{
 			base.BeginInteraction(hand);
-			switch (axis)
+			switch (MovementAxis)
 			{
 				case OpenScripts2_BasePlugin.Axis.X:
-					this._lastHandPlane = Vector3.ProjectOnPlane(this.m_hand.transform.up, Root.right);
+					_lastHandPlane = Vector3.ProjectOnPlane(hand.transform.up, Root.right);
 					break;
 				case OpenScripts2_BasePlugin.Axis.Y:
-					this._lastHandPlane = Vector3.ProjectOnPlane(this.m_hand.transform.up, Root.forward);
+					_lastHandPlane = Vector3.ProjectOnPlane(hand.transform.up, Root.forward);
 					break;
 				case OpenScripts2_BasePlugin.Axis.Z:
-					this._lastHandPlane = Vector3.ProjectOnPlane(this.m_hand.transform.forward, -Root.up);
-					break;
-				default:
+					_lastHandPlane = Vector3.ProjectOnPlane(hand.transform.forward, -Root.up);
 					break;
 			}
-			
+
+			if (MovementMode == Mode.Translation) _lastHandPos = m_handPos;
 		}
 
 		public override void UpdateInteraction(FVRViveHand hand)
@@ -86,73 +86,78 @@ namespace OpenScripts2
                 case Mode.Folding:
                     FoldingMode(hand);
                     break;
-                default:
-                    break;
             }
+			_lastHandPos = m_handPos;
         }
 
 		public void TranslationMode(FVRViveHand hand)
         {
+			Vector3 transformedHandPos = Root.InverseTransformPoint(m_handPos);
+			Vector3 lasttransformedHandPos = Root.InverseTransformPoint(_lastHandPos);
+
+			Vector3 deltaPos = transformedHandPos - lasttransformedHandPos;
+
+			float deltaValue = deltaPos.GetAxis(MovementAxis);
+			float curValue = ObjectToMove.localPosition.GetAxis(MovementAxis);
+
+			float nextValue = Mathf.Clamp(curValue + deltaValue, LowerLimit, UpperLimit);
+			/*
 			Vector3 posVector;
-			switch (axis)
+			switch (MovementAxis)
             {
                 case OpenScripts2_BasePlugin.Axis.X:
-					posVector = GetClosestValidPoint(new Vector3(LowerLimit,0f,0f), new Vector3(UpperLimit, 0f, 0f), Root.InverseTransformPoint(base.m_handPos));
+					posVector = GetClosestValidPoint(new Vector3(LowerLimit,0f,0f), new Vector3(UpperLimit, 0f, 0f), Root.InverseTransformPoint(m_handPos));
 					_posFloat = posVector.x;
 					ObjectToMove.localPosition = new Vector3(_posFloat, _origPos.y, _origPos.z);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Y:
-					posVector = GetClosestValidPoint(new Vector3(0f, LowerLimit, 0f), new Vector3(0f, UpperLimit, 0f), Root.InverseTransformPoint(base.m_handPos));
+					posVector = GetClosestValidPoint(new Vector3(0f, LowerLimit, 0f), new Vector3(0f, UpperLimit, 0f), Root.InverseTransformPoint(m_handPos));
 					_posFloat = posVector.y;
 					ObjectToMove.localPosition = new Vector3(_origPos.x, _posFloat, _origPos.z);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Z:
-					posVector = GetClosestValidPoint(new Vector3(0f, 0f, LowerLimit), new Vector3(0f, 0f, UpperLimit), Root.InverseTransformPoint(base.m_handPos));
+					posVector = GetClosestValidPoint(new Vector3(0f, 0f, LowerLimit), new Vector3(0f, 0f, UpperLimit), Root.InverseTransformPoint(m_handPos));
 					_posFloat = posVector.z;
 					ObjectToMove.localPosition = new Vector3(_origPos.x, _origPos.y, _posFloat);
 					break;
-                default:
-                    break;
             }
+			*/
+			ObjectToMove.ModifyLocalPositionAxis(MovementAxis, nextValue);
 
-			float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
+            float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
 			CheckSound(lerp);
-
 		}
 
 		public void RotationMode(FVRViveHand hand)
 		{
-			Vector3 lhs; 
+			Vector3 lhs = Vector3.zero; 
 			Vector3 rhs;
 			
-			switch (axis)
+			switch (MovementAxis)
             {
                 case OpenScripts2_BasePlugin.Axis.X:
-					lhs = Vector3.ProjectOnPlane(this.m_hand.transform.up, -base.transform.right);
-					rhs = Vector3.ProjectOnPlane(this._lastHandPlane, -base.transform.right);
-					_posFloat = Mathf.Atan2(Vector3.Dot(-base.transform.right, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
+					lhs = Vector3.ProjectOnPlane(m_hand.transform.up, -transform.right);
+					rhs = Vector3.ProjectOnPlane(_lastHandPlane, -transform.right);
+					_posFloat = Mathf.Atan2(Vector3.Dot(-transform.right, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
 
-					this.ObjectToMove.localEulerAngles = new Vector3(_posFloat, 0f, 0f);
+					ObjectToMove.localEulerAngles = new Vector3(_posFloat, 0f, 0f);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Y:
-					lhs = Vector3.ProjectOnPlane(this.m_hand.transform.forward, base.transform.up);
-					rhs = Vector3.ProjectOnPlane(this._lastHandPlane, -base.transform.up);
-					_posFloat = Mathf.Atan2(Vector3.Dot(-base.transform.up, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
+					lhs = Vector3.ProjectOnPlane(m_hand.transform.forward, transform.up);
+					rhs = Vector3.ProjectOnPlane(_lastHandPlane, -transform.up);
+					_posFloat = Mathf.Atan2(Vector3.Dot(-transform.up, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
 
-					this.ObjectToMove.localEulerAngles = new Vector3(0f, _posFloat, 0f);
+					ObjectToMove.localEulerAngles = new Vector3(0f, _posFloat, 0f);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Z:
-					lhs = Vector3.ProjectOnPlane(this.m_hand.transform.up, -base.transform.forward);
-					rhs = Vector3.ProjectOnPlane(this._lastHandPlane, -base.transform.forward);
-					_posFloat = Mathf.Atan2(Vector3.Dot(-base.transform.forward, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
+					lhs = Vector3.ProjectOnPlane(m_hand.transform.up, -transform.forward);
+					rhs = Vector3.ProjectOnPlane(_lastHandPlane, -transform.forward);
+					_posFloat = Mathf.Atan2(Vector3.Dot(-transform.forward, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
 
-					this.ObjectToMove.localEulerAngles = new Vector3(0f, 0f, _posFloat);
-					break;
-                default:
-					lhs = Vector3.ProjectOnPlane(this.m_hand.transform.up, -base.transform.right);
+					ObjectToMove.localEulerAngles = new Vector3(0f, 0f, _posFloat);
 					break;
             }
-			this._lastHandPlane = lhs;
+			_lastHandPlane = lhs;
 
 
 			float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
@@ -162,25 +167,25 @@ namespace OpenScripts2
 
 		private void FoldingMode(FVRViveHand hand)
 		{
-			Vector3 vector = base.m_handPos - this.Root.position;
+			Vector3 vector = m_handPos - Root.position;
 			Vector3 lhs = new Vector3();
 			
-			switch (axis)
+			switch (MovementAxis)
 			{
 				case OpenScripts2_BasePlugin.Axis.X:
-					lhs = -this.Root.transform.forward;
-					vector = Vector3.ProjectOnPlane(vector, this.Root.right).normalized;
-					_posFloat = Mathf.Atan2(Vector3.Dot(this.Root.right, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
+					lhs = -Root.transform.forward;
+					vector = Vector3.ProjectOnPlane(vector, Root.right).normalized;
+					_posFloat = Mathf.Atan2(Vector3.Dot(Root.right, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
 					break;
 				case OpenScripts2_BasePlugin.Axis.Y:
-					lhs = -this.Root.transform.forward;
-					vector = Vector3.ProjectOnPlane(vector, this.Root.up).normalized;
-					_posFloat = Mathf.Atan2(Vector3.Dot(this.Root.up, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
+					lhs = -Root.transform.forward;
+					vector = Vector3.ProjectOnPlane(vector, Root.up).normalized;
+					_posFloat = Mathf.Atan2(Vector3.Dot(Root.up, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
 					break;
 				case OpenScripts2_BasePlugin.Axis.Z:
-					lhs = this.Root.transform.up;
-					vector = Vector3.ProjectOnPlane(vector, this.Root.forward).normalized;
-					_posFloat = Mathf.Atan2(Vector3.Dot(this.Root.forward, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
+					lhs = Root.transform.up;
+					vector = Vector3.ProjectOnPlane(vector, Root.forward).normalized;
+					_posFloat = Mathf.Atan2(Vector3.Dot(Root.forward, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
 					break;
 				default:
 					break;
@@ -188,12 +193,10 @@ namespace OpenScripts2
 
             if (_debug)
             {
-				Popcron.Gizmos.Line(this.Root.position, base.m_handPos, Color.magenta);
-				Popcron.Gizmos.Line(this.Root.position, lhs, Color.green);
-				Popcron.Gizmos.Line(this.Root.position, vector, Color.red);
-				Popcron.Gizmos.Line(this.Root.position, Vector3.Cross(lhs, vector), Color.blue);
-
-				
+				Popcron.Gizmos.Line(Root.position, m_handPos, Color.magenta);
+				Popcron.Gizmos.Line(Root.position, lhs, Color.green);
+				Popcron.Gizmos.Line(Root.position, vector, Color.red);
+				Popcron.Gizmos.Line(Root.position, Vector3.Cross(lhs, vector), Color.blue);
 			}
 
 			if (Mathf.Abs(_posFloat - LowerLimit) < 5f)
@@ -206,7 +209,7 @@ namespace OpenScripts2
 			}
 			if (_posFloat >= LowerLimit && _posFloat <= UpperLimit)
 			{
-				switch (axis)
+				switch (MovementAxis)
 				{
 					case OpenScripts2_BasePlugin.Axis.X:
 						ObjectToMove.localEulerAngles = new Vector3(_posFloat, 0f, 0f);

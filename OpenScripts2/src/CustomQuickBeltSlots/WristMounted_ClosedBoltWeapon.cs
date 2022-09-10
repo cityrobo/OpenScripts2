@@ -13,16 +13,6 @@ namespace OpenScripts2
         public ClosedBoltWeapon closedBoltWeapon;
         public bool RequiresEmptyHand = false;
 
-        public void Start()
-        {
-            Hook();
-        }
-
-		public void OnDestroy()
-        {
-            Unhook();
-		}
-
         public void Update()
         {
             if (closedBoltWeapon.m_quickbeltSlot != null)
@@ -38,16 +28,6 @@ namespace OpenScripts2
                     closedBoltWeapon.UpdateInputAndAnimate(wristQBSlot.Hand);
                 }
             }
-        }
-
-        void Unhook()
-        {
-            
-        }
-
-        void Hook()
-        {
-            
         }
     }
 }

@@ -106,8 +106,12 @@ namespace OpenScripts2
         private float _zoomFactor;
         private float _lastZoomLerp;
 
+        private Material _scopeLensMaterial;
+
         public void Start()
         {
+            _scopeLensMaterial = ScopeLens.material;
+
             if (TextScreenRoot != null) _hasZoomText = true;
             else _hasZoomText = false;
 
@@ -117,11 +121,11 @@ namespace OpenScripts2
             _renderTexture = ScopeCamera.targetTexture;
             _renderTexture = RenderTexture.Instantiate(_renderTexture);
             ScopeCamera.targetTexture = _renderTexture;
-            ScopeLens.material.mainTexture = _renderTexture;
+            _scopeLensMaterial.mainTexture = _renderTexture;
 
             if (ZoomIncreasesReticleMagnification)
             {
-                _baseReticleSize = ScopeLens.material.GetFloat("_ReticleScale");
+                _baseReticleSize = _scopeLensMaterial.GetFloat("_ReticleScale");
             }
 
             SetZoom();
@@ -134,10 +138,10 @@ namespace OpenScripts2
             }
             else if (!IsIntegrated)
             {
-                _attachment = this.gameObject.GetComponent<FVRFireArmAttachment>();
+                _attachment = gameObject.GetComponent<FVRFireArmAttachment>();
             }
 
-            if (!IsIntegrated && _attachment == null) this.LogWarning("Attachment not found. Scope zeroing disabled!");
+            if (!IsIntegrated && _attachment == null) LogWarning("Attachment not found. Scope zeroing disabled!");
 
             UpdateMenu();
 
@@ -174,6 +178,7 @@ namespace OpenScripts2
         public void OnDestroy()
         {
             Destroy(_renderTexture);
+            Destroy(_scopeLensMaterial);
         }
 #if !DEBUG
         public void Update()
@@ -244,7 +249,7 @@ namespace OpenScripts2
 
             if (ZoomIncreasesReticleMagnification)
             {
-                ScopeLens.material.SetFloat("_ReticleScale", _baseReticleSize * _zoomFactor/MinZoom);
+                _scopeLensMaterial.SetFloat("_ReticleScale", _baseReticleSize * _zoomFactor/MinZoom);
             }
         }
 
@@ -388,29 +393,29 @@ namespace OpenScripts2
         public void Zero()
         {
 #if!Debug
-            if (IsIntegrated || (this._attachment != null && this._attachment.curMount != null && this._attachment.curMount.Parent != null && this._attachment.curMount.Parent is FVRFireArm))
+            if (IsIntegrated || (_attachment != null && _attachment.curMount != null && _attachment.curMount.Parent != null && _attachment.curMount.Parent is FVRFireArm))
             {
-                if (!IsIntegrated) FireArm = this._attachment.curMount.Parent as FVRFireArm;
+                if (!IsIntegrated) FireArm = _attachment.curMount.Parent as FVRFireArm;
 
-                if (IsIntegrated && FireArm == null) this.LogError("ScopeShaderZoom: FireArm not set on integrated Scope! Can't zero sight!");
+                if (IsIntegrated && FireArm == null) LogError("ScopeShaderZoom: FireArm not set on integrated Scope! Can't zero sight!");
 
                 FireArmRoundType roundType = FireArm.RoundType;
-                float zeroDistance = this.ZeroDistances[this.ZeroDistanceIndex];
+                float zeroDistance = ZeroDistances[ZeroDistanceIndex];
                 float num = 0.0f;
                 if (AM.SRoundDisplayDataDic.ContainsKey(roundType))
                     num = AM.SRoundDisplayDataDic[roundType].BulletDropCurve.Evaluate(zeroDistance * (1f / 1000f));
                 Vector3 p = FireArm.MuzzlePos.position + FireArm.GetMuzzle().forward * zeroDistance + FireArm.GetMuzzle().up * num;
-                Vector3 vector3_1 = Vector3.ProjectOnPlane(p - this.transform.forward, this.transform.right);
-                Vector3 vector3_2 = Quaternion.AngleAxis(this._elevationStep /60f, this.transform.right) * vector3_1;
-                Vector3 forward = Quaternion.AngleAxis(this._windageStep / 60f, this.transform.up) * vector3_2;
+                Vector3 vector3_1 = Vector3.ProjectOnPlane(p - transform.forward, transform.right);
+                Vector3 vector3_2 = Quaternion.AngleAxis(_elevationStep /60f, transform.right) * vector3_1;
+                Vector3 forward = Quaternion.AngleAxis(_windageStep / 60f, transform.up) * vector3_2;
 
 
-                Vector3 projected_p = Vector3.ProjectOnPlane(p, this.transform.right) + Vector3.Dot(this.transform.position, this.transform.right) * this.transform.right;
+                Vector3 projected_p = Vector3.ProjectOnPlane(p, transform.right) + Vector3.Dot(transform.position, transform.right) * transform.right;
 
-                this.ScopeCamera.transform.LookAt(projected_p, this.transform.up);
-                this.ScopeCamera.transform.localEulerAngles += new Vector3(-this._elevationStep / 60f, this._windageStep / 60f, 0);
+                ScopeCamera.transform.LookAt(projected_p, transform.up);
+                ScopeCamera.transform.localEulerAngles += new Vector3(-_elevationStep / 60f, _windageStep / 60f, 0);
             }
-            else this.ScopeCamera.transform.localRotation = Quaternion.identity;
+            else ScopeCamera.transform.localRotation = Quaternion.identity;
 #endif
         }
 
@@ -431,8 +436,8 @@ namespace OpenScripts2
 
         private void ChangeReticle()
         {
-            ScopeLens.material.SetColor("_ReticleColor", ReticleColors[CurrentReticle]);
-            ScopeLens.material.SetTexture("_ReticleTex", Reticles[CurrentReticle]);
+            _scopeLensMaterial.SetColor("_ReticleColor", ReticleColors[CurrentReticle]);
+            _scopeLensMaterial.SetTexture("_ReticleTex", Reticles[CurrentReticle]);
         }
     }
 }

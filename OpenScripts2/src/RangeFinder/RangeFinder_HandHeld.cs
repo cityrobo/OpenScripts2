@@ -19,28 +19,28 @@ namespace OpenScripts2
 
         public void Start()
         {
-            Attachment = this.gameObject.GetComponent<FVRFireArmAttachment>();
+            Attachment = gameObject.GetComponent<FVRFireArmAttachment>();
         }
         public void Update()
         {
             FVRViveHand hand = Attachment.m_hand;
             if (hand != null && Attachment.curMount == null)
             {
-                if (hand.Input.TriggerDown && !_lockControls) StartCoroutine("MeasureOnce");
-                else if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes,Vector2.up) < 45f && !_lockControls) ToggleMeasure();
+                if (hand.Input.TriggerDown && !_lockControls) StartCoroutine(MeasureOnce());
+                else if (TouchpadDirPressed(hand, Vector2.up) && !_lockControls) ToggleMeasure();
                 else if (hand.Input.TouchpadUp && _lockControls) _lockControls = false;
             }
             else if (Attachment.curMount != null)
             {
                 if (Attachment.AttachmentInterface.m_hand != null)
                 {
-                    if (Attachment.AttachmentInterface.m_hand.Input.TouchpadDown && Vector2.Angle(Attachment.AttachmentInterface.m_hand.Input.TouchpadAxes, Vector2.up) < 45f) ToggleMeasure();
-                    else if (Attachment.AttachmentInterface.m_hand.Input.TouchpadDown && Vector2.Angle(Attachment.AttachmentInterface.m_hand.Input.TouchpadAxes, Vector2.down) < 45f) _lockControls = true;
+                    if (TouchpadDirPressed(Attachment.AttachmentInterface.m_hand,Vector2.up)) ToggleMeasure();
+                    else if (TouchpadDirPressed( Attachment.AttachmentInterface.m_hand, Vector2.down)) _lockControls = true;
                 }
             }
         }
 
-        public IEnumerator MeasureOnce()
+        private IEnumerator MeasureOnce()
         {
             if (!_isOn)
             {
@@ -62,8 +62,6 @@ namespace OpenScripts2
                 case true:
                     LaserSystem.SetActive(false);
                     _isOn = false;
-                    break;
-                default:
                     break;
             }
         }

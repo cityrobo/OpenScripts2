@@ -79,12 +79,12 @@ namespace OpenScripts2
                 case GrappleGun w:
                     return w.Chambers[w.m_curChamber];
                 default:
-                    if (fireArm.FChambers.Count > 0) return fireArm.FChambers[0];
+                    if (fireArm.GetChambers().Count > 0) return fireArm.GetChambers()[0];
                     else return null;
             }
         }
 
-        public static Vector3 GetDirVector(Axis axis)
+        public static Vector3 GetVectorFromAxis(Axis axis)
         {
             switch (axis)
             {
@@ -94,14 +94,18 @@ namespace OpenScripts2
                     return Vector3.up;
                 case Axis.Z:
                     return Vector3.forward;
-                default:
-                    return Vector3.zero;
             }
+            return Vector3.zero;
         }
 
-        public static Quaternion GetTargetQuaternion(float value, Axis axis)
+        public static bool TouchpadDirPressed(FVRViveHand hand , Vector2 dir)
         {
-            return Quaternion.AngleAxis(value, GetDirVector(axis));
+            return hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, dir) < 45f;
+        }
+
+        public static Quaternion GetTargetQuaternionFromAxis(float value, Axis axis)
+        {
+            return Quaternion.AngleAxis(value, GetVectorFromAxis(axis));
         }
 
         public void Log(string message)

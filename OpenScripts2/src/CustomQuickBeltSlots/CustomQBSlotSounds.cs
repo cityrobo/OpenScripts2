@@ -17,7 +17,9 @@ namespace OpenScripts2
 		private FVRQuickBeltSlot _slot;
 		private bool _slotHasItem = false;
         private bool _isHooked = false;
-		public void Start()
+
+#if !DEBUG
+        public void Start()
         {
 			_slot = gameObject.GetComponent<FVRQuickBeltSlot>();
             _slotHasItem = false;
@@ -67,5 +69,6 @@ namespace OpenScripts2
             }
             return temp;
         }
+#endif
     }
 }

@@ -17,9 +17,6 @@ namespace OpenScripts2
         [Header("Enable to show Objects instead:")]
         public bool ShowOnAttach = false;
 
-        public void Awake()
-        {
-        }
         public void Update()
         {
 

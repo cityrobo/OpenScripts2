@@ -22,6 +22,7 @@ namespace Cityrobo
 		[Tooltip("Should the Launcher automatically align the object in the slot so it points forward?")]
 		public bool AutoAlignZAxis = true;
 
+		/*
         public void Start()
         {
 			if (GM.CurrentPlayerBody != null)
@@ -37,6 +38,7 @@ namespace Cityrobo
 				this.DeRegisterQuickbeltSlot();
 			}
 		}
+		
 
 		public void RegisterQuickbeltSlot()
 		{
@@ -53,8 +55,9 @@ namespace Cityrobo
 				GM.CurrentPlayerBody.QuickbeltSlots.Remove(this);
 			}
 		}
+		*/
 
-		void LateUpdate()
+		public  void LateUpdate()
         {
 			if (!AllowHarnessing && CurObject != null && CurObject.m_isHardnessed)
             {
@@ -72,25 +75,25 @@ namespace Cityrobo
         {
 			if (CurObject == null) return false;
 
-			FVRPhysicalObject physObject;
+			FVRPhysicalObject physicalObject;
 
 			if (CurObject.m_isSpawnLock || CurObject.m_isHardnessed)
             {
-				physObject = DuplicateFromSpawnLock(CurObject).GetComponent<FVRPhysicalObject>();
+				physicalObject = DuplicateFromSpawnLock(CurObject).GetComponent<FVRPhysicalObject>();
 			}
 			else
             {
-				physObject = CurObject;
+				physicalObject = CurObject;
 				CurObject.SetQuickBeltSlot(null);
 			}
 
-			physObject.RootRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-			physObject.transform.SetParent(null);
-			physObject.transform.position = point;
-			physObject.transform.rotation = this.transform.rotation;
-			physObject.RootRigidbody.velocity = this.transform.forward * speed;
+			physicalObject.RootRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+			physicalObject.transform.SetParent(null);
+			physicalObject.transform.position = point;
+			physicalObject.transform.rotation = this.transform.rotation;
+			physicalObject.RootRigidbody.velocity = this.transform.forward * speed;
 
-			switch (physObject)
+			switch (physicalObject)
             {
 				case PinnedGrenade g:
 					if (AutoArmGrenades) PrimeGrenade(g);
@@ -108,22 +111,22 @@ namespace Cityrobo
             return true;
         }
 
-		void PrimeGrenade(PinnedGrenade grenade)
+		private void PrimeGrenade(PinnedGrenade grenade)
         {
 			grenade.ReleaseLever();
         }
 
-		void PrimeGrenade(FVRCappedGrenade grenade)
+		private void PrimeGrenade(FVRCappedGrenade grenade)
         {
 			grenade.m_IsFuseActive = true;
 		}
 
-		void FireRound(FVRFireArmRound round)
+		private void FireRound(FVRFireArmRound round)
         {
 			round.Splode(1f, false, true);
         }
 
-		GameObject DuplicateFromSpawnLock(FVRPhysicalObject physicalObject)
+		private GameObject DuplicateFromSpawnLock(FVRPhysicalObject physicalObject)
         {
 			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(physicalObject.ObjectWrapper.GetGameObject(), physicalObject.Transform.position, physicalObject.Transform.rotation);
 			FVRPhysicalObject component = gameObject.GetComponent<FVRPhysicalObject>();
@@ -144,12 +147,12 @@ namespace Cityrobo
 			return gameObject;
 		}
 
-		void AlignHeldObject()
+		private void AlignHeldObject()
         {
-			if (this.CurObject != null && this.CurObject.transform.forward != this.transform.forward)
+			if (CurObject != null && CurObject.transform.forward != transform.forward)
 			{
-				Quaternion objectRot = this.CurObject.transform.localRotation;
-				this.PoseOverride.transform.localRotation = Quaternion.Inverse(objectRot);
+				Quaternion objectRot = CurObject.transform.localRotation;
+				PoseOverride.transform.localRotation = Quaternion.Inverse(objectRot);
 			}
 		}
 	}

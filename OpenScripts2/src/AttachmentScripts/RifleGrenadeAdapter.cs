@@ -35,8 +35,8 @@ namespace Cityrobo
         {
             base.Awake();
 
-            _origMuzzlePos = this.Muzzle.localPosition;
-			_origMuzzleRot = this.Muzzle.localRotation;
+            _origMuzzlePos = Muzzle.localPosition;
+			_origMuzzleRot = Muzzle.localRotation;
         }
 
         public override void FVRUpdate()
@@ -45,8 +45,8 @@ namespace Cityrobo
 
 			if (GrenadeChamber.IsFull)
             {
-				this.Muzzle.position = Vector3.down * 3 + this.transform.TransformPoint(_origMuzzlePos);
-				this.Muzzle.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
+				Muzzle.position = Vector3.down * 3 + transform.TransformPoint(_origMuzzlePos);
+				Muzzle.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
 
 				if (!_recoilProfileSet && _fireArm != null && OverrideRecoilProfile != null)
                 {
@@ -80,8 +80,8 @@ namespace Cityrobo
 					_recoilProfileSet = false;
 				}
 
-				this.Muzzle.localPosition = _origMuzzlePos;
-				this.Muzzle.localRotation = _origMuzzleRot;
+				Muzzle.localPosition = _origMuzzlePos;
+				Muzzle.localRotation = _origMuzzleRot;
 			}
         }
 

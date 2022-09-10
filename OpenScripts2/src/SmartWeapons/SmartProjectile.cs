@@ -44,7 +44,6 @@ namespace OpenScripts2
             public float BulletSwaySpeed = 0.5f;
         }
 
-
         private float _turnedAngle = 0f;
         private Vector3 _curTarget;
         private Vector2 _currentInaccuracy = Vector2.zero;

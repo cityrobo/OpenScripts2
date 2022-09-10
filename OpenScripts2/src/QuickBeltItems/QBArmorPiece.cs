@@ -23,44 +23,44 @@ namespace OpenScripts2
 		private int _attachmentCountOnQBSlotEnter;
 		public override void SetQuickBeltSlot(FVRQuickBeltSlot slot)
 		{
-			if (slot != null && !base.IsHeld)
+			if (slot != null && !IsHeld)
 			{
-				if (this.AttachmentsList.Count > 0)
+				if (AttachmentsList.Count > 0)
 				{
-					for (int i = 0; i < this.AttachmentsList.Count; i++)
+					for (int i = 0; i < AttachmentsList.Count; i++)
 					{
-						if (this.AttachmentsList[i] != null)
+						if (AttachmentsList[i] != null)
 						{
-							this.AttachmentsList[i].SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
+							AttachmentsList[i].SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
 						}
 					}
 
 					_attachmentCountOnQBSlotEnter = AttachmentsList.Count;
 				}
 			}
-			else if (this.AttachmentsList.Count > 0)
+			else if (AttachmentsList.Count > 0)
 			{
-				for (int j = 0; j < this.AttachmentsList.Count; j++)
+				for (int j = 0; j < AttachmentsList.Count; j++)
 				{
-					if (this.AttachmentsList[j] != null)
+					if (AttachmentsList[j] != null)
 					{
-						this.AttachmentsList[j].SetAllCollidersToLayer(false, SubAttachmentLayerNameOutsideQBSlot);
+						AttachmentsList[j].SetAllCollidersToLayer(false, SubAttachmentLayerNameOutsideQBSlot);
 					}
 				}
 				_attachmentCountOnQBSlotEnter = AttachmentsList.Count;
 			}
-			if (this.m_quickbeltSlot != null && slot != this.m_quickbeltSlot)
+			if (m_quickbeltSlot != null && slot != m_quickbeltSlot)
 			{
-				this.m_quickbeltSlot.HeldObject = null;
-				this.m_quickbeltSlot.CurObject = null;
-				this.m_quickbeltSlot.IsKeepingTrackWithHead = false;
+				m_quickbeltSlot.HeldObject = null;
+				m_quickbeltSlot.CurObject = null;
+				m_quickbeltSlot.IsKeepingTrackWithHead = false;
 			}
-			if (slot != null && !base.IsHeld)
+			if (slot != null && !IsHeld)
 			{
-				base.SetAllCollidersToLayer(false, MainItemLayerNameInsideQBSlot);
+				SetAllCollidersToLayer(false, MainItemLayerNameInsideQBSlot);
 				slot.HeldObject = this;
 				slot.CurObject = this;
-				slot.IsKeepingTrackWithHead = this.DoesQuickbeltSlotFollowHead;
+				slot.IsKeepingTrackWithHead = DoesQuickbeltSlotFollowHead;
 
                 if (IsDisabledInQB != null)
                 {
@@ -74,7 +74,7 @@ namespace OpenScripts2
 			}
 			else
 			{
-				base.SetAllCollidersToLayer(false, MainItemLayerNameOutsideQBSlot);
+				SetAllCollidersToLayer(false, MainItemLayerNameOutsideQBSlot);
 
 				if (IsDisabledInQB != null)
 				{
@@ -86,7 +86,7 @@ namespace OpenScripts2
 					IsEnabledInQB.SetActive(false);
 				}
 			}
-			this.m_quickbeltSlot = slot;
+			m_quickbeltSlot = slot;
 		}
 
 		public override void FVRUpdate()
@@ -95,13 +95,13 @@ namespace OpenScripts2
 
 			if (m_quickbeltSlot != null)
 			{
-				if (this.AttachmentsList.Count > _attachmentCountOnQBSlotEnter)
+				if (AttachmentsList.Count > _attachmentCountOnQBSlotEnter)
 				{
-					if (this.AttachmentsList[_attachmentCountOnQBSlotEnter] != null)
+					if (AttachmentsList[_attachmentCountOnQBSlotEnter] != null)
 					{
-						this.AttachmentsList[_attachmentCountOnQBSlotEnter].SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
+						AttachmentsList[_attachmentCountOnQBSlotEnter].SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
 					}
-					_attachmentCountOnQBSlotEnter = this.AttachmentsList.Count;
+					_attachmentCountOnQBSlotEnter = AttachmentsList.Count;
 				}
 			}
 		}

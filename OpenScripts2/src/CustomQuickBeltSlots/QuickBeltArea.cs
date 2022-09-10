@@ -114,14 +114,12 @@ namespace OpenScripts2
 
             if (ItemLimit != 0)
             {
-                if (_quickBeltSlots.Count >= ItemLimit) this.IsSelectable = false;
-                else this.IsSelectable = true;
+                IsSelectable = _quickBeltSlots.Count >= ItemLimit ? false : true;
             }
 
             if (UsesAdvancedSizeMode)
             {
-                if (_currentLoad >= TotalCapacity) this.IsSelectable = false;
-                else this.IsSelectable = true;
+                IsSelectable = _currentLoad >= TotalCapacity ? false : true;
             }
         }
         public void CreateNewQBSlotPos(FVRPhysicalObject physicalObject)

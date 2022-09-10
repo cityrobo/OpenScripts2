@@ -14,13 +14,7 @@ namespace OpenScripts2
         [Header("RSC-MagazineFollower Config")]
         public TubeFedShotgun FireArm;
         public GameObject MagazineReloadTrigger;
-        // public GameObject magazineGrabTrigger;
         public Transform Follower;
-
-        /*
-        [Tooltip("Index number the safety position is at (starts at 0!).")]
-        public int safetyIndex;
-        */
 
         public OpenScripts2_BasePlugin.Axis RotationalAxis;
         public float RotSpeed = 100f;
@@ -55,8 +49,6 @@ namespace OpenScripts2
                     _open = false;
                     FireArm.PlayAudioEvent(FirearmAudioEventType.BreachClose);
                     break;
-                default:
-                    break;
             }
 
             if (_open)
@@ -67,12 +59,9 @@ namespace OpenScripts2
             else if (!_open)
             {
                 MagazineReloadTrigger.SetActive(false);
-                //magazineGrabTrigger.SetActive(false);
-                //Debug.Log("magazine inactive");
 
                 if (FireArm.Magazine == null)
                 {
-                    //Debug.Log("magazine no inserted");
                     StopAllCoroutines();
                     StartCoroutine(SetFollowerRot(RotationalAngles[RotationalAngles.Length-1]));
                 }
@@ -119,10 +108,9 @@ namespace OpenScripts2
         IEnumerator SetFollowerRot(float rot)
         {
             bool rotDone = false;
-            //lastRot = rot;
             _lastRot = rot;
 
-            Quaternion targetRotation = OpenScripts2_BasePlugin.GetTargetQuaternion(rot, RotationalAxis);
+            Quaternion targetRotation = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(rot, RotationalAxis);
             /*
             switch (RotationalAxis)
             {
@@ -149,8 +137,6 @@ namespace OpenScripts2
             if (_open)
             {
                 MagazineReloadTrigger.SetActive(true);
-                //magazineGrabTrigger.SetActive(true);
-                //Debug.Log("magazine active");
             }
         }
 #endif

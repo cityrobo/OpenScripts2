@@ -34,7 +34,7 @@ namespace OpenScripts2
         private bool _isMoving = false;
         private bool _isActive = false;
 
-        public override void Start()
+        public override void Awake()
         {
             base.Start();
 
@@ -65,7 +65,7 @@ namespace OpenScripts2
             }
         }
 
-        void CalculatePositions()
+        private void CalculatePositions()
         {
             switch (translationType)
             {
@@ -83,10 +83,6 @@ namespace OpenScripts2
                         case OpenScripts2_BasePlugin.Axis.Z:
                             _startPos = new Vector3(CutoffLever.localPosition.x, CutoffLever.localPosition.y, StartLimit);
                             _stopPos = new Vector3(CutoffLever.localPosition.x, CutoffLever.localPosition.y, StopLimit);
-                            break;
-                        default:
-                            _startPos = new Vector3();
-                            _stopPos = new Vector3();
                             break;
                     }
                     CutoffLever.localPosition = _startPos;
@@ -106,10 +102,6 @@ namespace OpenScripts2
                             _startRot = Quaternion.Euler(CutoffLever.localEulerAngles.x, CutoffLever.localEulerAngles.y, StartLimit);
                             _stopRot = Quaternion.Euler(CutoffLever.localEulerAngles.x, CutoffLever.localEulerAngles.y, StopLimit);
                             break;
-                        default:
-                            _startRot = Quaternion.identity;
-                            _stopRot = Quaternion.identity;
-                            break;
                     }
                     CutoffLever.localRotation = _startRot;
                     break;
@@ -119,7 +111,7 @@ namespace OpenScripts2
             }
         }
 
-        IEnumerator Activate_Translation()
+        private IEnumerator Activate_Translation()
         {
             _isMoving = true;
 
@@ -135,7 +127,7 @@ namespace OpenScripts2
             _isMoving = false;
         }
 
-        IEnumerator Activate_Rotation()
+        private IEnumerator Activate_Rotation()
         {
             _isMoving = true;
 
@@ -151,16 +143,9 @@ namespace OpenScripts2
             _isMoving = false;
         }
 
-        void Activate_Magazine()
+        private void Activate_Magazine()
         {
-            if (_isActive)
-            {
-                FireArm.Magazine.IsExtractable = false;
-            }
-            else
-            {
-                FireArm.Magazine.IsExtractable = true;
-            }
+            FireArm.Magazine.IsExtractable = _isActive ? false : true;
         }
     }
 }

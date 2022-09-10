@@ -53,8 +53,6 @@ namespace OpenScripts2
                     _open = false;
                     FireArm.PlayAudioEvent(FirearmAudioEventType.BreachClose);
                     break;
-                default:
-                    break;
             }
 
             if (_open)
@@ -66,11 +64,9 @@ namespace OpenScripts2
             {
                 MagazineWell.SetActive(false);
                 MagazineGrabTrigger.SetActive(false);
-                //Debug.Log("magazine inactive");
 
                 if (FireArm.Magazine == null)
                 {
-                    //Debug.Log("magazine no inserted");
                     StopAllCoroutines();
                     StartCoroutine(SetFollowerRot(RotationalAngles[RotationalAngles.Length-1]));
                 }
@@ -117,11 +113,10 @@ namespace OpenScripts2
         IEnumerator SetFollowerRot(float rot)
         {
             bool rotDone = false;
-            //lastRot = rot;
             _lastRot = rot;
 
-            Quaternion targetRotation = OpenScripts2_BasePlugin.GetTargetQuaternion(rot, RotationalAxis);
-
+            Quaternion targetRotation = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(rot, RotationalAxis);
+            /*
             switch (RotationalAxis)
             {
                 case OpenScripts2_BasePlugin.Axis.X:
@@ -137,7 +132,7 @@ namespace OpenScripts2
                     targetRotation = Quaternion.Euler(0, 0, 0);
                     break;
             }
-
+            */
             while (!rotDone)
             {
                 Follower.localRotation = Quaternion.RotateTowards(Follower.localRotation, targetRotation, RotSpeed * Time.deltaTime);
@@ -148,7 +143,6 @@ namespace OpenScripts2
             {
                 MagazineWell.SetActive(true);
                 MagazineGrabTrigger.SetActive(true);
-                //Debug.Log("magazine active");
             }
         }
 #endif

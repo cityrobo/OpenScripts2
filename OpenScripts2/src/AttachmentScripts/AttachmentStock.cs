@@ -15,12 +15,12 @@ namespace OpenScripts2
 
 		public override bool HasStockPos()
 		{
-			return this.HasActiveShoulderStock;
+			return HasActiveShoulderStock;
 		}
 
 		public override Transform GetStockPos()
 		{
-			return this.StockPos;
+			return StockPos;
 		}
 	}
 }
