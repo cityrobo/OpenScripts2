@@ -97,8 +97,8 @@ namespace OpenScripts2
 
 			Vector3 deltaPos = transformedHandPos - lasttransformedHandPos;
 
-			float deltaValue = deltaPos.GetAxis(MovementAxis);
-			float curValue = ObjectToMove.localPosition.GetAxis(MovementAxis);
+			float deltaValue = deltaPos.GetAxisValue(MovementAxis);
+			float curValue = ObjectToMove.localPosition.GetAxisValue(MovementAxis);
 
 			float nextValue = Mathf.Clamp(curValue + deltaValue, LowerLimit, UpperLimit);
 			/*
@@ -122,7 +122,7 @@ namespace OpenScripts2
 					break;
             }
 			*/
-			ObjectToMove.ModifyLocalPositionAxis(MovementAxis, nextValue);
+			ObjectToMove.ModifyLocalPositionAxisValue(MovementAxis, nextValue);
 
             float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
 			CheckSound(lerp);

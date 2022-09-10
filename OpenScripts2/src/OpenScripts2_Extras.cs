@@ -280,38 +280,38 @@ namespace UnityEngine
             }
         }
 
-        public static float GetAxis(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis)
+        public static float GetAxisValue(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis)
         {
             return vector[(int)axis];
         }
 
-        public static void ModifyAxis(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, float value)
+        public static void ModifyAxisValue(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             vector[(int)axis] = value;
         }
 
-        public static void ModifyPositionAxis(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
+        public static void ModifyPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newPos = transform.position;
             newPos[(int)axis] = value;
             transform.localPosition = newPos;
         }
 
-        public static void ModifyLocalPositionAxis(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
+        public static void ModifyLocalPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newPos = transform.localPosition;
             newPos[(int)axis] = value;
             transform.localPosition = newPos;
         }
 
-        public static void ModifyRotationAxis(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
+        public static void ModifyRotationAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newRot = transform.rotation.eulerAngles;
             newRot[(int)axis] = value;
             transform.rotation = Quaternion.Euler(newRot);
         }
 
-        public static void ModifyLocalRotationAxis(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
+        public static void ModifyLocalRotationAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newRot = transform.localRotation.eulerAngles;
             newRot[(int)axis] = value;
@@ -326,6 +326,11 @@ namespace UnityEngine
         public static Quaternion InverseTransformRotation(this Transform transform, Quaternion rot)
         {
             return Quaternion.Inverse(transform.rotation) * rot;
+        }
+
+        public static Quaternion Subtract(this Quaternion a, Quaternion b)
+        {
+            return a * Quaternion.Inverse(b);
         }
     }
 }

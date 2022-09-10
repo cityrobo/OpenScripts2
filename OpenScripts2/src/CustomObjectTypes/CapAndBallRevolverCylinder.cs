@@ -42,9 +42,9 @@ namespace OpenScripts2
 
             if (value)
             {
-                Chambers[chamber].transform.ModifyLocalPositionAxis(OpenScripts2_BasePlugin.Axis.Z, RammedCartridgePosition);
+                Chambers[chamber].transform.ModifyLocalPositionAxisValue(OpenScripts2_BasePlugin.Axis.Z, RammedCartridgePosition);
             }
-            else Chambers[chamber].transform.ModifyLocalPositionAxis(OpenScripts2_BasePlugin.Axis.Z, RammedCartridgePosition);
+            else Chambers[chamber].transform.ModifyLocalPositionAxisValue(OpenScripts2_BasePlugin.Axis.Z, RammedCartridgePosition);
         }
 
         public void RamChamber(int chamber, float lerp) 
@@ -55,7 +55,7 @@ namespace OpenScripts2
                 Vector3 lerpPos = Vector3.Lerp(new Vector3(Chambers[chamber].transform.localPosition.x, Chambers[chamber].transform.localPosition.y, UnrammedCartridgePosition), new Vector3(Chambers[chamber].transform.localPosition.x, Chambers[chamber].transform.localPosition.y, RammedCartridgePosition), lerp);
                 Chambers[chamber].transform.localPosition = lerpPos;
                 */
-                Chambers[chamber].transform.ModifyLocalPositionAxis(OpenScripts2_BasePlugin.Axis.Z, lerp);
+                Chambers[chamber].transform.ModifyLocalPositionAxisValue(OpenScripts2_BasePlugin.Axis.Z, lerp);
 
                 _lastLerp[chamber] = lerp;
                 if (lerp == 1f)

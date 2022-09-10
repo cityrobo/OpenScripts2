@@ -80,7 +80,7 @@ namespace OpenScripts2
             if (ReticleTextures.Length != 0) ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
             ReticleMesh.material.SetFloat(NameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
 
-            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxis(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
+            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
 
             if (ReticleTextures.Length <= 1) 
             { 
@@ -183,7 +183,7 @@ namespace OpenScripts2
 
             ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
             if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) ReticleMesh.material.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
-            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxis(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
+            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
 
             UpdateBrightness();
             UpdateScreen();
@@ -195,7 +195,7 @@ namespace OpenScripts2
 
             ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
             if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) ReticleMesh.material.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
-            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxis(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
+            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
 
             UpdateBrightness();
             UpdateScreen();

@@ -102,7 +102,7 @@ namespace OpenScripts2
                     switch (transformType)
                     {
                         case TransformType.Movement:
-                            FireSelector.transform.ModifyLocalPositionAxis(TransformAxis, FireSelectorInPrimaryMode);
+                            FireSelector.transform.ModifyLocalPositionAxisValue(TransformAxis, FireSelectorInPrimaryMode);
                             /*
                             switch (TransformAxis)
                             {
@@ -121,7 +121,7 @@ namespace OpenScripts2
                             */
                             break;
                         case TransformType.Rotation:
-                            FireSelector.transform.ModifyLocalRotationAxis(TransformAxis, FireSelectorInPrimaryMode);
+                            FireSelector.transform.ModifyLocalRotationAxisValue(TransformAxis, FireSelectorInPrimaryMode);
                             /*
                             switch (TransformAxis)
                             {
@@ -148,10 +148,10 @@ namespace OpenScripts2
                     switch (transformType)
                     {
                         case TransformType.Movement:
-                            FireSelector.transform.ModifyLocalPositionAxis(TransformAxis, FireSelectorInSecondaryMode);
+                            FireSelector.transform.ModifyLocalPositionAxisValue(TransformAxis, FireSelectorInSecondaryMode);
                             break;
                         case TransformType.Rotation:
-                            FireSelector.transform.ModifyLocalRotationAxis(TransformAxis, FireSelectorInSecondaryMode);
+                            FireSelector.transform.ModifyLocalRotationAxisValue(TransformAxis, FireSelectorInSecondaryMode);
                             break;
                         default:
                             break;

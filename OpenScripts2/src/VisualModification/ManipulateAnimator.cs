@@ -19,15 +19,36 @@ namespace OpenScripts2
         public Axis Direction;
         public bool IsRotation;
 
+        private float _curAngle;
+        private float _deltaAngle;
+        private Quaternion _curRot;
+        private Quaternion _lastRot;
+        private Quaternion _deltaRot;
+
         public void Awake()
         {
+            _curRot = ObservedObject.transform.localRotation;
+            _lastRot = ObservedObject.transform.localRotation;
         }
         public void Update()
         {
             float pos;
             if (!IsRotation) pos = Mathf.InverseLerp(Start, End, ObservedObject.transform.localPosition[(int)Direction]);
-            else pos = Mathf.InverseLerp(Start, End, ObservedObject.transform.localEulerAngles[(int)Direction]);
-            Animator.Play(AnimationNodeName, 0, pos);
+            else GetRotPos(out pos);
+            Animator.Play(AnimationNodeName, -1, pos);
+        }
+
+        private void GetRotPos(out float pos)
+        {
+            _curRot = ObservedObject.transform.localRotation;
+            _deltaRot = _curRot.Subtract(_lastRot);
+            Vector3 axis;
+            _deltaRot.ToAngleAxis(out _deltaAngle, out axis);
+
+            _curAngle += _deltaAngle * axis.GetAxisValue(Direction);
+            _lastRot = _curRot;
+
+            pos = Mathf.InverseLerp(Start, End, _curAngle);
         }
     }
 }
