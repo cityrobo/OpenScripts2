@@ -147,8 +147,8 @@ namespace OpenScripts2
         public float FailureAccuracyMultiplier = 1000f;
         [Tooltip("Causes bolt rearwards speed to become a positive number, therefor the firearm won't cycle correctly")]
         public bool CausesStoppage = true;
-        [Tooltip("Just some random high number to offset the averaging affect of the different FirearmHeatingEffect components.")]
-        public float StoppageSpeed = 1000f;
+        [Tooltip("Just some random high negative number to offset the averaging affect of the different FirearmHeatingEffect components and invert the bolt speed.")]
+        public float StoppageSpeed = -1000f;
         public AudioEvent ExplosionSound;
         [Tooltip("DEBUG VALUE for in editor testing! Actual value determined by in game config. Can Explosion revert?")]
         public bool CanRecoverFromExplosion = true;
@@ -228,7 +228,7 @@ namespace OpenScripts2
 
             if (ParticleSystem != null) ChangeParticleEmissionRate(0f);
 
-            if (SoundEffect != null) 
+            if (SoundEffectSource != null && SoundEffect != null)
             {
                 SoundEffectSource.loop = true;
                 SoundEffectSource.clip = SoundEffect;

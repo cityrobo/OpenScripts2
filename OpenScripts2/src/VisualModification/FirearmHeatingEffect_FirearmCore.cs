@@ -71,7 +71,7 @@ namespace OpenScripts2
                 _averageBoltRearwardSpeedMultiplier = 0f;
                 _averageBoltSpringStiffnessMultiplier = 0f;
                 
-                int BoltBool = 0;
+                int NumBoltSpeedMultipliers = 0;
                 foreach (FirearmHeatingEffect effect in FirearmHeatingEffects)
                 {
                     if (effect.DoesHeatAffectBoltSpeed)
@@ -79,14 +79,14 @@ namespace OpenScripts2
                         _averageBoltForwardSpeedMultiplier += effect.CurrentBoltForwardSpeedMultiplier;
                         _averageBoltRearwardSpeedMultiplier += effect.CurrentBoltRearwardSpeedMultiplier;
                         _averageBoltSpringStiffnessMultiplier += effect.CurrentBoltSpringMultiplier;
-                        BoltBool++;
+                        NumBoltSpeedMultipliers++;
                     }
                 }
-                if (BoltBool != 0)
+                if (NumBoltSpeedMultipliers != 0)
                 {
-                    _averageBoltForwardSpeedMultiplier /= BoltBool;
-                    _averageBoltRearwardSpeedMultiplier /= BoltBool;
-                    _averageBoltSpringStiffnessMultiplier /= BoltBool;
+                    _averageBoltForwardSpeedMultiplier /= NumBoltSpeedMultipliers;
+                    _averageBoltRearwardSpeedMultiplier /= NumBoltSpeedMultipliers;
+                    _averageBoltSpringStiffnessMultiplier /= NumBoltSpeedMultipliers;
                     switch (FireArm)
                     {
                         case ClosedBoltWeapon w:

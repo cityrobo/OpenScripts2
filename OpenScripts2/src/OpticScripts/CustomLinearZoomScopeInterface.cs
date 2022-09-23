@@ -5,24 +5,30 @@ using FistVR;
 
 namespace OpenScripts2
 {
-    public class ScopeShaderZoom : OpenScripts2_BasePlugin
+    public class CustomLinearZoomScopeInterface : FVRFireArmAttachmentInterface
     {
-        public FVRInteractiveObject AttachmentInterface;
+        [Header("Custom Linear Zoom Scope Config")]
         public MeshRenderer ScopeLens;
         public Camera ScopeCamera;
-        public int CurrentZoomIndex = 0;
-        public List<float> ZoomFactor;
+        
+        [Header("Zoom Settings")]
+        public float MinZoom = 1f;
+        public float MaxZoom = 6f;
 
+        [Tooltip("Between 0f and 1f. 0f is MinZoom while 1f is MaxZoom.")]
+        public float ZoomLerp = 0f;
+        //public List<float> ZoomFactor;
+        [Tooltip("If true, Reticle will scale with increasing zoom level.")]
         public bool ZoomIncreasesReticleMagnification = false;
 
-        [Header("If you want a Screen above the scope that shows the current Settings, use these:")]
+        [Header("Text Screen Settings")]
         public GameObject TextScreenRoot;
         public Text ZoomTextField;
         public Text ZeroTextField;
         public Text ElevationTextField;
         public Text WindageTextField;
-        [Tooltip("The existence of this text enables the reticle change functionality")]
-        public Text ReticleTextField;
+        [Tooltip("The existence of this text enables the reticle change functionality.")]
+        public Text ReticleText;
 
         public GameObject TextFrame;
 
@@ -32,6 +38,7 @@ namespace OpenScripts2
         public string WindagePrefix = "Windage: ";
         public string ReticlePrefix = "Reticle: ";
 
+        [Header("Zeroing System Settings")]
         public int ZeroDistanceIndex = 0;
         public List<float> ZeroDistances = new List<float>()
         {
@@ -50,41 +57,35 @@ namespace OpenScripts2
           900f,
           1000f
         };
-
         public float ElevationIncreasePerClick = 0.25f;
         public float WindageIncreasePerClick = 0.25f;
-        [Header("Optimization Setting. Set to false when done testing for vanilla scope like behavior of showing a black picture when not attached to gun.")]
-        public bool ActiveWithoutMount = true;
 
-        [Header("Rotating Scope Bit")]
-        public bool HasRotatingBit = false;
-        public Transform RotatingBit;
-
-        public Axis RotationalAxis;
-
-        [Tooltip("Needs to be same length as zoom levels or it will break!")]
-        public float[] RotationAngles;
-
-        [Header("Integrated Scope Settings")]
-        public bool IsIntegrated = false;
-        public FVRFireArm FireArm = null;
-        [Header("Reticle Change Settings")]
+        [Header("Reticle Change System Settings")]
         [Tooltip("All reticle textures. Default reticle is first entry.")]
-        public List<Texture2D> ReticleTextures;
+        public List<Texture2D> Reticles;
         [Tooltip("Colors of all reticles. Default reticle name is first entry.")]
         [ColorUsage(true, true, float.MaxValue, float.MaxValue, 0f, 0f)]
         public List<Color> ReticleColors;
         [Tooltip("Names of all reticles. Default reticle name is first entry.")]
         public string[] ReticleNames;
 
-        public int CurrentSelectedReticleIndex = 0;
+        public int CurrentReticle = 0;
 
-        [Tooltip("This enables the very specialized reticle change system.")]
-        public bool DoesEachZoomFactorHaveOwnReticle = false;
-        [Tooltip("Starts with default reticle, than all default reticle variants for the following zoom levels. Next entries are additional reticles and their according zoom levels, all ordered by zoom level and grouped by reticle type.")]
-        public List<Texture2D> ReticlesPerZoomLevel;
+        [Header("Rotating Scope Bit Monitoring Settings")]
+        [Tooltip("Will Monitor this part and adjust the Zoom Lerp accordingly.")]
+        public Transform RotatingBit;
 
-        private List<float> _correspondingCameraFOV;
+        public OpenScripts2_BasePlugin.Axis Axis;
+
+        public float MinRotation;
+        public float MaxRotation;
+
+        [Header("Integrated Scope Settings")]
+        public bool IsIntegrated = false;
+        public FVRFireArm FireArm = null;
+
+        [Header("Optimization Setting. Set to false when done testing for vanilla scope like behavior of showing a black picture when not attached to gun.")]
+        public bool ActiveWithoutMount = true;
 
         private bool _hasZoomText;
         private RenderTexture _renderTexture;
@@ -99,23 +100,24 @@ namespace OpenScripts2
 
         private float _baseReticleSize;
 
+        private float _zoomFactor;
+        private float _lastZoomLerp;
+
         private Material _scopeLensMaterial;
 
-        public void Start()
+        public override void Start()
         {
-            _correspondingCameraFOV = new List<float>();
+            base.Start();
             _scopeLensMaterial = ScopeLens.material;
 
             if (TextScreenRoot != null) _hasZoomText = true;
             else _hasZoomText = false;
 
-            for (int i = 0; i < ZoomFactor.Count; i++)
-            {
-                float zoomValue = 53.6f * Mathf.Pow(ZoomFactor[i], -0.9364f) - 0.3666f;
-                _correspondingCameraFOV.Add(zoomValue);
-            }
 
-            _renderTexture = Instantiate(ScopeCamera.targetTexture);
+            _zoomFactor = Mathf.Lerp(MinZoom, MaxZoom, ZoomLerp);
+
+            _renderTexture = ScopeCamera.targetTexture;
+            _renderTexture = Instantiate(_renderTexture);
             ScopeCamera.targetTexture = _renderTexture;
             _scopeLensMaterial.mainTexture = _renderTexture;
 
@@ -126,26 +128,26 @@ namespace OpenScripts2
 
             SetZoom();
 
-            FVRFireArmAttachmentInterface attachmentInterface = AttachmentInterface as FVRFireArmAttachmentInterface;
-
-            if (!IsIntegrated && attachmentInterface != null)
+            if (!IsIntegrated)
             {
-                _attachment = attachmentInterface.Attachment;
+                _attachment = Attachment;
             }
             else if (!IsIntegrated)
             {
                 _attachment = gameObject.GetComponent<FVRFireArmAttachment>();
             }
 
-            if (!IsIntegrated && _attachment == null) LogWarning("Attachment not found. Scope zeroing disabled!");
+            if (!IsIntegrated && _attachment == null) OpenScripts2_BepInExPlugin.LogWarning(this,"Attachment not found. Scope zeroing disabled!");
 
             UpdateMenu();
 
             ScopeEnabled(ActiveWithoutMount);
 
-            //camera.gameObject.SetActive(activeWithoutMount);
-
-            if (IsIntegrated) Zero();
+            if (!_initialZero && IsIntegrated)
+            {
+                Zero();
+                _initialZero = true;
+            }
 
             if (ZoomTextField == null) 
             { 
@@ -165,34 +167,36 @@ namespace OpenScripts2
                 }
             }
 
-            if ((ReticleTextField != null || DoesEachZoomFactorHaveOwnReticle))
+            if ((ReticleText != null))
             {
-                if (CurrentSelectedReticleIndex >= ReticleTextures.Count) CurrentSelectedReticleIndex = ReticleTextures.Count - 1;
+                if (CurrentReticle >= Reticles.Count) CurrentReticle = Reticles.Count - 1;
                 ChangeReticle();
             }
+
+            if (RotatingBit != null) SetZoomLerp();
+            _lastZoomLerp = ZoomLerp;
         }
-        public void OnDestroy()
+        public override void OnDestroy()
         {
             Destroy(_renderTexture);
             Destroy(_scopeLensMaterial);
+            base.OnDestroy();
         }
-#if !DEBUG
-        public void Update()
+
+        public override void UpdateInteraction(FVRViveHand hand)
         {
-            FVRViveHand hand = AttachmentInterface.m_hand;
+            base.UpdateInteraction(hand);
             if (_hasZoomText && hand != null)
             {
                 if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.up) < 45f) NextMenu();
-                else if (_currentMenu == 0 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) PreviousZoom();
-                else if (_currentMenu == 0 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) NextZoom();
-                else if (_currentMenu == 1 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) PreviousZero();
-                else if (_currentMenu == 1 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) NextZero();
-                else if (_currentMenu == 2 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) DecreaseElevationAdjustment();
-                else if (_currentMenu == 2 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) IncreaseElevationAdjustment();
-                else if (_currentMenu == 3 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) DecreaseWindageAdjustment();
-                else if (_currentMenu == 3 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) IncreaseWindageAdjustment();
-                else if (_currentMenu == 4 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) PreviousReticle();
-                else if (_currentMenu == 4 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) NextReticle();
+                else if (_currentMenu == 0 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) PreviousZeroRange();
+                else if (_currentMenu == 0 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) NextZeroRange();
+                else if (_currentMenu == 1 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) DecreaseElevationAdjustment();
+                else if (_currentMenu == 1 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) IncreaseElevationAdjustment();
+                else if (_currentMenu == 2 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) DecreaseWindageAdjustment();
+                else if (_currentMenu == 2 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) IncreaseWindageAdjustment();
+                else if (_currentMenu == 3 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f) PreviousReticleTexture();
+                else if (_currentMenu == 3 && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f) NextReticleTexture();
 
                 TextScreenRoot.gameObject.SetActive(true);
             }
@@ -204,71 +208,67 @@ namespace OpenScripts2
                 else if (_attachment != null && _attachment.curMount == null) ScopeEnabled(false);
                 else ScopeEnabled(true);
             }
+        }
+        public override void FVRUpdate()
+        {
+            base.FVRUpdate();
 
-            if (!_initialZero && _attachment != null && _attachment.curMount != null)
+            if (RotatingBit != null) SetZoomLerp();
+            if (_lastZoomLerp != ZoomLerp)
+            {
+                SetZoom();
+                _lastZoomLerp = ZoomLerp;
+            }
+        }
+
+        public override void OnAttach()
+        {
+            base.OnAttach();
+
+            if (!_initialZero && _attachment != null)
             {
                 Zero();
                 _initialZero = true;
             }
-            else if (_initialZero && _attachment != null && _attachment.curMount == null)
+
+            ScopeEnabled(true);
+        }
+        public override void OnDetach()
+        {
+            base.OnDetach();
+
+            if (_initialZero && _attachment != null)
             {
                 Zero();
                 _initialZero = false;
             }
-            else if (!_initialZero && IsIntegrated)
-            {
-                Zero();
-                _initialZero = true;
-            }
-        }
-#endif
-        public void NextZoom()
-        {
-            if (CurrentZoomIndex >= ZoomFactor.Count - 1) return;
-            CurrentZoomIndex++;
-            SetZoom();
-            if (DoesEachZoomFactorHaveOwnReticle) ChangeReticle();
-            UpdateMenu();
+
+            ScopeEnabled(false);
         }
 
-        public void PreviousZoom()
+        public void SetZoomLerp()
         {
-            if (CurrentZoomIndex <= 0) return;
-            CurrentZoomIndex--;
-            SetZoom();
-            if (DoesEachZoomFactorHaveOwnReticle) ChangeReticle();
-            UpdateMenu();
+            Vector3 currentRotatingBitEulers = RotatingBit.localEulerAngles;
+            float currentRotatingBitRot = currentRotatingBitEulers[(int)Axis];
+
+            ZoomLerp = Mathf.InverseLerp(MinRotation, MaxRotation, currentRotatingBitRot);
         }
 
         public void SetZoom()
         {
-            ScopeCamera.fieldOfView = _correspondingCameraFOV[CurrentZoomIndex];
+            _zoomFactor = Mathf.Lerp(MinZoom, MaxZoom, ZoomLerp);
+
+            float cameraFOV = 53.6f * Mathf.Pow(_zoomFactor, -0.9364f) - 0.3666f;
+
+            ScopeCamera.fieldOfView = cameraFOV;
 
             if (ZoomIncreasesReticleMagnification)
             {
-                _scopeLensMaterial.SetFloat("_ReticleScale", _baseReticleSize * ZoomFactor[CurrentZoomIndex]/ZoomFactor[0]);
-            }
-
-            if (HasRotatingBit)
-            {
-                Vector3 origRot = RotatingBit.localEulerAngles;
-
-                switch (RotationalAxis)
-                {
-                    case Axis.X:
-                        RotatingBit.localEulerAngles = new Vector3(RotationAngles[CurrentZoomIndex], origRot.y, origRot.z);
-                        break;
-                    case Axis.Y:
-                        RotatingBit.localEulerAngles = new Vector3(origRot.x, RotationAngles[CurrentZoomIndex], origRot.z);
-                        break;
-                    case Axis.Z:
-                        RotatingBit.localEulerAngles = new Vector3(origRot.x, origRot.y, RotationAngles[CurrentZoomIndex]);
-                        break;
-                }
+                _scopeLensMaterial.SetFloat("_ReticleScale", _baseReticleSize * _zoomFactor/MinZoom);
             }
         }
 
-        public void NextZero()
+        public void NextZeroRange()
         {
             if (ZeroDistanceIndex >= ZeroDistances.Count - 1) return;
             ZeroDistanceIndex++;
@@ -276,7 +276,7 @@ namespace OpenScripts2
             UpdateMenu();
         }
 
-        public void PreviousZero()
+        public void PreviousZeroRange()
         {
             if (ZeroDistanceIndex <= 0) return;
             ZeroDistanceIndex--;
@@ -310,18 +310,18 @@ namespace OpenScripts2
             UpdateMenu();
         }
 
-        public void NextReticle()
+        public void NextReticleTexture()
         {
-            CurrentSelectedReticleIndex++;
-            if (CurrentSelectedReticleIndex >= ReticleTextures.Count) CurrentSelectedReticleIndex = 0;
+            CurrentReticle++;
+            if (CurrentReticle >= Reticles.Count) CurrentReticle = 0;
             ChangeReticle();
             UpdateMenu();
         }
 
-        public void PreviousReticle()
+        public void PreviousReticleTexture()
         {
-            CurrentSelectedReticleIndex--;
-            if (CurrentSelectedReticleIndex <= 0) CurrentSelectedReticleIndex = ReticleTextures.Count - 1;
+            CurrentReticle--;
+            if (CurrentReticle <= 0) CurrentReticle = Reticles.Count - 1;
             ChangeReticle();
             UpdateMenu();
         }
@@ -331,40 +331,33 @@ namespace OpenScripts2
                 return;
             _currentMenu++;
 
-            if (_currentMenu >= 5) _currentMenu = 0;
+            if (_currentMenu >= 4) _currentMenu = 0;
 
             switch (_currentMenu)
             {
                 case 0:
-                    if (ZoomTextField == null)
-                    {
-                        NextMenu();
-                        return;
-                    }
-                    break;
-                case 1:
                     if (ZeroTextField == null)
                     {
                         NextMenu();
                         return;
                     }
                     break;
-                case 2:
+                case 1:
                     if (ElevationTextField == null)
                     {
                         NextMenu();
                         return;
                     }
                     break;
-                case 3:
+                case 2:
                     if (WindageTextField == null)
                     {
                         NextMenu();
                         return;
                     }
                     break;
-                case 4:
-                    if (ReticleTextField == null)
+                case 3:
+                    if (ReticleText == null)
                     {
                         NextMenu();
                         return;
@@ -397,56 +390,44 @@ namespace OpenScripts2
                         TextFrame.transform.position = WindageTextField.transform.position;
                         break;
                     case 4:
-                        if (ReticleTextField == null) break;
-                        TextFrame.transform.position = ReticleTextField.transform.position;
-                        break;
-                    default:
+                        if (ReticleText == null) break;
+                        TextFrame.transform.position = ReticleText.transform.position;
                         break;
                 }
 
-            if (ZoomTextField != null) ZoomTextField.text = ZoomPrefix + ZoomFactor[CurrentZoomIndex] + "x";
+            if (ZoomTextField != null) ZoomTextField.text = ZoomPrefix + _zoomFactor + "x";
             if (ZeroTextField != null) ZeroTextField.text = ZeroPrefix + ZeroDistances[ZeroDistanceIndex] + "m";
             if (ElevationTextField != null) ElevationTextField.text = ElevationPrefix + _elevationStep + " MOA";
             if (WindageTextField != null) WindageTextField.text = WindagePrefix + _windageStep + " MOA";
-            if (ReticleTextField != null) ReticleTextField.text = ReticlePrefix + ReticleNames[CurrentSelectedReticleIndex];
+            if (ReticleText != null) ReticleText.text = ReticlePrefix + ReticleNames[CurrentReticle];
         }
+
         public void Zero()
         {
-#if!Debug
             if (IsIntegrated || (_attachment != null && _attachment.curMount != null && _attachment.curMount.Parent != null && _attachment.curMount.Parent is FVRFireArm))
             {
                 if (!IsIntegrated) FireArm = _attachment.curMount.Parent as FVRFireArm;
 
-                if (IsIntegrated && FireArm == null) LogError("ScopeShaderZoom: FireArm not set on integrated Scope! Can't zero sight!");
+                if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogError(this,"ScopeShaderZoom: FireArm not set on integrated Scope! Can't zero sight!");
 
                 FireArmRoundType roundType = FireArm.RoundType;
                 float zeroDistance = ZeroDistances[ZeroDistanceIndex];
                 float num = 0.0f;
                 if (AM.SRoundDisplayDataDic.ContainsKey(roundType))
-                {
                     num = AM.SRoundDisplayDataDic[roundType].BulletDropCurve.Evaluate(zeroDistance * (1f / 1000f));
-                }
                 Vector3 p = FireArm.MuzzlePos.position + FireArm.GetMuzzle().forward * zeroDistance + FireArm.GetMuzzle().up * num;
-                Vector3 vector3_1 = Vector3.ProjectOnPlane(p - transform.forward, transform.right);
-                Vector3 vector3_2 = Quaternion.AngleAxis(_elevationStep /60f, transform.right) * vector3_1;
-                Vector3 forward = Quaternion.AngleAxis(_windageStep / 60f, transform.up) * vector3_2;
 
-                //Vector3 projected_p = Vector3.ProjectOnPlane(p, this.transform.right) + Vector3.Dot(this.transform.position, this.transform.right) * this.transform.right;
+                //Vector3 vector3_1 = Vector3.ProjectOnPlane(p - transform.forward, transform.right);
+                //Vector3 vector3_2 = Quaternion.AngleAxis(_elevationStep /60f, transform.right) * vector3_1;
+                //Vector3 forward = Quaternion.AngleAxis(_windageStep / 60f, transform.up) * vector3_2;
+                //Vector3 projected_p = Vector3.ProjectOnPlane(p, transform.right) + Vector3.Dot(transform.position, transform.right) * transform.right;
+
                 Vector3 projected_p = Vector3Utils.ProjectOnPlaneThroughPoint(p, transform.position, transform.right);
-                //this.TargetAimer.rotation = Quaternion.LookRotation(forward, this.transform.up);
-                //this.camera.transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(forward - camera.transform.position, camera.transform.right), camera.transform.up);// PointTowards(p);
 
                 ScopeCamera.transform.LookAt(projected_p, transform.up);
                 ScopeCamera.transform.localEulerAngles += new Vector3(-_elevationStep / 60f, _windageStep / 60f, 0);
-
-                //this.camera.transform.Rotate(new Vector3(-this.ElevationStep / 60f, this.WindageStep / 60f, 0));
-
-                //this.camera.transform.LookAt(forward);
-
-                //this.ScopeCam.ScopeCamera.transform.rotation = Quaternion.LookRotation(forward, this.transform.up);
             }
             else ScopeCamera.transform.localRotation = Quaternion.identity;
-#endif
         }
 
         public void ScopeEnabled(bool state)
@@ -460,23 +441,14 @@ namespace OpenScripts2
                 ScopeCamera.gameObject.SetActive(false);
                 RenderTexture.active = _renderTexture;
                 GL.Clear(false, true, Color.black);
-                RenderTexture.active = (RenderTexture) null;
+                RenderTexture.active = null;
             }
         }
 
         private void ChangeReticle()
         {
-            if (!DoesEachZoomFactorHaveOwnReticle)
-            {
-                _scopeLensMaterial.SetColor("_ReticleColor", ReticleColors[CurrentSelectedReticleIndex]);
-                _scopeLensMaterial.SetTexture("_ReticleTex", ReticleTextures[CurrentSelectedReticleIndex]);
-            }
-            else
-            {
-                _scopeLensMaterial.SetColor("_ReticleColor", ReticleColors[CurrentSelectedReticleIndex]);
-                _scopeLensMaterial.SetTexture("_ReticleTex", ReticlesPerZoomLevel[CurrentZoomIndex + CurrentSelectedReticleIndex * ZoomFactor.Count]);
-            }
+            _scopeLensMaterial.SetColor("_ReticleColor", ReticleColors[CurrentReticle]);
+            _scopeLensMaterial.SetTexture("_ReticleTex", Reticles[CurrentReticle]);
         }
     }
 }
-

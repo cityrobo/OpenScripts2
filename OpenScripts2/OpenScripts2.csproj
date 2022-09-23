@@ -120,7 +120,7 @@
     <Compile Include="src\OpenScripts2_Extras.cs" />
     <Compile Include="src\OpenScripts2_BasePlugin.cs" />
     <Compile Include="src\OpenScripts2_BepInExPlugin.cs" />
-    <Compile Include="src\OpticScripts\AdjustableReflexSight.cs" />
+    <Compile Include="src\OpticScripts\CustomReflexSightInterface.cs" />
     <Compile Include="src\MagazineScripts\AttachableMagazine.cs" />
     <Compile Include="src\AttachmentScripts\AttachmentMountParentToThis.cs" />
     <Compile Include="src\AttachmentScripts\AttachmentStock.cs" />
@@ -135,6 +135,8 @@
     <Compile Include="src\MagazineScripts\ForceMagazineMountingToMagMountPos.cs" />
     <Compile Include="src\FirearmControl\HandDependentPoseOverride.cs" />
     <Compile Include="src\MovingObjetctParts\HingeForegrip.cs" />
+    <Compile Include="src\OpticScripts\ReflexSightButton.cs" />
+    <Compile Include="src\OpticScripts\ScopeButton.cs" />
     <Compile Include="src\OpticScripts\VanillaScopeMaterialCreator.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidanceSystem.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidedProjectile.cs" />
@@ -178,8 +180,8 @@
     <Compile Include="src\MagazineScripts\RSC_MagazineFollower.cs" />
     <Compile Include="src\MagazineScripts\RSC_MagazineFollower_BoltAction.cs" />
     <Compile Include="src\MagazineScripts\RSC_MagazineFollower_TubeFedShotgun.cs" />
-    <Compile Include="src\OpticScripts\ScopeShaderLinearZoom.cs" />
-    <Compile Include="src\OpticScripts\ScopeShaderZoom.cs" />
+    <Compile Include="src\OpticScripts\CustomLinearZoomScopeInterface.cs" />
+    <Compile Include="src\OpticScripts\CustomScopeInterface.cs" />
     <Compile Include="src\CustomObjectTypes\SwitchBlade.cs" />
     <Compile Include="src\AttachmentScripts\RoundClassChangerAttachment.cs" />
     <Compile Include="src\CustomQuickBeltSlots\WristItem.cs" />

@@ -6,11 +6,8 @@ using System.Collections.Generic;
 
 namespace OpenScripts2
 {
-    public class AdjustableReflexSight : OpenScripts2_BasePlugin
+    public class CustomReflexSightInterface : FVRFireArmAttachmentInterface
     {
-        public FVRFireArmAttachment Attachment;
-        [Tooltip("This can be an AttachmentInterface or a standalone FVRInteractiveObject set to \"is simple interact\" ")]
-        public FVRInteractiveObject ReflexSightInterface;
         public MeshRenderer ReticleMesh;
 
         [Header("Reticle Settings")]
@@ -48,7 +45,7 @@ namespace OpenScripts2
         [Header("Moving Switch Settings")]
         [Tooltip("Switch that moves with the selected texture")]
         public Transform SwitchObject;
-        public Axis SwitchAxis;
+        public OpenScripts2_BasePlugin.Axis SwitchAxis;
         public float[] SwitchPositions;
 
         [Header("Brightness Settings")]
@@ -56,8 +53,8 @@ namespace OpenScripts2
         public int CurrentBrightnessIndex = 3;
         public float[] HDRBrightnessLevels = new float[] { 0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f, 2.5f, 3f };
         public float[] BrightnessAlphaLevels = new float[] { 0.25f, 0.5f, 0.75f, 1f, 1f, 1f, 1f, 1f, 1f, 1f };
+        public string[] BrightnessTexts = new string[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", };
 
-        private FVRViveHand _hand;
         private int _currentMenu = 0;
 
         private const string NameOfTextureVariable = "_RedDotTex";
@@ -73,8 +70,9 @@ namespace OpenScripts2
         private Vector3 _leftEyePosition;
         private Vector3 _rightEye;
         private bool _disableOcclusionCulling = false;
-        public void Start()
+        public override void Start()
         {
+            base.Start();
             if (CurrentSelectedReticle >= ReticleTextures.Length) CurrentSelectedReticle = 0;
             if (CurrentZeroDistance >= ZeroDistances.Length) CurrentZeroDistance = 0;
             if (ReticleTextures.Length != 0) ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
@@ -103,51 +101,50 @@ namespace OpenScripts2
 
             if (LensCollider == null) _disableOcclusionCulling = true;
         }
-#if !DEBUG
-        public void Update()
+
+        public override void UpdateInteraction(FVRViveHand hand)
         {
-            if (!ReflexSightInterface.IsSimpleInteract)
+            base.UpdateInteraction(hand);
+            if (hand != null)
             {
-                _hand = ReflexSightInterface.m_hand;
-                if (_hand != null)
+                if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.left) < 45f)
                 {
-                    if (_hand.Input.TouchpadDown && Vector2.Angle(_hand.Input.TouchpadAxes, Vector2.left) < 45f)
+                    switch (_currentMenu)
                     {
-                        switch (_currentMenu)
-                        {
-                            case 0:
-                                UsePreviousTexture();
-                                break;
-                            case 1:
-                                UsePreviousZeroDistance();
-                                break;
-                            case 2:
-                                UsePreviousBrightness();
-                                break;
-                            default:
-                                break;
-                        }
+                        case 0:
+                            PreviousReticleTexture();
+                            break;
+                        case 1:
+                            PreviousZeroDistance();
+                            break;
+                        case 2:
+                            PreviousBrightnessSetting();
+                            break;
                     }
-                    else if (_hand.Input.TouchpadDown && Vector2.Angle(_hand.Input.TouchpadAxes, Vector2.right) < 45f)
-                    {
-                        switch (_currentMenu)
-                        {
-                            case 0:
-                                UseNextTexture();
-                                break;
-                            case 1:
-                                UseNextZeroDistance();
-                                break;
-                            case 2:
-                                UseNextBrightness();
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    else if (_hand.Input.TouchpadDown && Vector2.Angle(_hand.Input.TouchpadAxes, Vector2.up) < 45f) ShowNextMenu();
                 }
+                else if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.right) < 45f)
+                {
+                    switch (_currentMenu)
+                    {
+                        case 0:
+                            NextReticleTexture();
+                            break;
+                        case 1:
+                            NextZeroDistance();
+                            break;
+                        case 2:
+                            NextBrightnessSetting();
+                            break;
+                    }
+                }
+                else if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.up) < 45f) ShowNextMenu();
             }
+        }
+
+        public override void FVRUpdate()
+        {
+            base.FVRUpdate();
+
             if (!IsIntegrated && Attachment.curMount != null && !_isAttached)
             {
                 _isAttached = true;
@@ -176,8 +173,8 @@ namespace OpenScripts2
 
             if (!_disableOcclusionCulling && (IsIntegrated || _isAttached)) CheckReticleVisibility();
         }
-#endif
-        public void UseNextTexture()
+
+        public void NextReticleTexture()
         {
             CurrentSelectedReticle = (CurrentSelectedReticle + 1) % ReticleTextures.Length;
 
@@ -189,7 +186,7 @@ namespace OpenScripts2
             UpdateScreen();
         }
 
-        public void UsePreviousTexture()
+        public void PreviousReticleTexture()
         {
             CurrentSelectedReticle = (CurrentSelectedReticle + ReticleTextures.Length - 1) % ReticleTextures.Length;
 
@@ -250,7 +247,7 @@ namespace OpenScripts2
             else if (BrightnessTextScreen != null && _currentMenu == 2)
             {
                 if (TextFrame != null) TextFrame.localPosition = BrightnessTextScreen.transform.localPosition;
-                BrightnessTextScreen.text = BrightnessTextPrefix + HDRBrightnessLevels[CurrentBrightnessIndex];
+                BrightnessTextScreen.text = BrightnessTextPrefix + BrightnessTexts[CurrentBrightnessIndex];
             }
         }
 
@@ -258,10 +255,10 @@ namespace OpenScripts2
         {
             if (ReticleTextScreen != null) ReticleTextScreen.text = ReticleTestPrefix + ReticleText[CurrentSelectedReticle];
             if (ZeroTextScreen != null) ZeroTextScreen.text = ZeroTextPrefix + ZeroDistances[CurrentZeroDistance] + "m";
-            if (BrightnessTextScreen != null) BrightnessTextScreen.text = BrightnessTextPrefix + HDRBrightnessLevels[CurrentBrightnessIndex];
+            if (BrightnessTextScreen != null) BrightnessTextScreen.text = BrightnessTextPrefix + BrightnessTexts[CurrentBrightnessIndex];
         }
 
-        public void UseNextZeroDistance()
+        public void NextZeroDistance()
         {
             if (CurrentZeroDistance < ZeroDistances.Length - 1) CurrentZeroDistance++;
             ReticleMesh.material.SetFloat(NameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
@@ -269,7 +266,7 @@ namespace OpenScripts2
             UpdateScreen();
         }
 
-        public void UsePreviousZeroDistance()
+        public void PreviousZeroDistance()
         {
             if (CurrentZeroDistance > 0) CurrentZeroDistance--;
             ReticleMesh.material.SetFloat(NameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
@@ -277,14 +274,14 @@ namespace OpenScripts2
             UpdateScreen();
         }
 
-        public void UseNextBrightness()
+        public void NextBrightnessSetting()
         {
             if (CurrentBrightnessIndex < HDRBrightnessLevels.Length - 1) CurrentBrightnessIndex++;
 
             UpdateBrightness();
             UpdateScreen();
         }
-        public void UsePreviousBrightness()
+        public void PreviousBrightnessSetting()
         {
             if (CurrentBrightnessIndex > 0) CurrentBrightnessIndex--;
 
@@ -297,7 +294,7 @@ namespace OpenScripts2
 
             if (ReticleColors == null || ReticleColors.Length == 0)
             {
-                LogError("Trying to change brightness but reference color array is empty!");
+                OpenScripts2_BepInExPlugin.LogError(this,"Trying to change brightness but reference color array is empty!");
                 return;
             }
             Color currentReticleColor;
@@ -307,7 +304,7 @@ namespace OpenScripts2
             }
             catch (System.Exception)
             {
-                LogError("Trying to change brightness but reference color array is empty at selected texture index!");
+                OpenScripts2_BepInExPlugin.LogError(this, "Trying to change brightness but reference color array is empty at selected texture index!");
                 return;
             }
             Color color = new Color(currentReticleColor.r * factor, currentReticleColor.g * factor, currentReticleColor.b * factor, currentReticleColor.a);
@@ -323,9 +320,9 @@ namespace OpenScripts2
             if (LensCollider != null)
             {
                 // Right Eye Occlusion Test
-                float distance = Vector3.Distance(this.gameObject.transform.position, GM.CurrentPlayerBody.Head.position) + 0.2f;
-                Vector3 direction = _muzzlePos.position + this.transform.forward * ZeroDistances[CurrentZeroDistance] - _rightEye;
-                bool angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, this.transform.forward) < 45f;
+                float distance = Vector3.Distance(gameObject.transform.position, GM.CurrentPlayerBody.Head.position) + 0.2f;
+                Vector3 direction = _muzzlePos.position + transform.forward * ZeroDistances[CurrentZeroDistance] - _rightEye;
+                bool angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, transform.forward) < 45f;
                 if (angleGood)
                 {
                     Ray ray = new Ray(_rightEye,direction);
@@ -340,8 +337,8 @@ namespace OpenScripts2
                 if (!scopeHit)
                 {
                     // Left Eye Occlusion Test
-                    direction = _muzzlePos.position + this.transform.forward * ZeroDistances[CurrentZeroDistance] - _leftEyePosition;
-                    angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, this.transform.forward) < 45f;
+                    direction = _muzzlePos.position + transform.forward * ZeroDistances[CurrentZeroDistance] - _leftEyePosition;
+                    angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, transform.forward) < 45f;
                     if (angleGood)
                     {
                         Ray ray = new Ray(_leftEyePosition, direction);
@@ -358,7 +355,7 @@ namespace OpenScripts2
             }
             else
             {
-                LogWarning("No usable colliders for reticle occlusion found! If you are a modmaker, please add colliders or a lens collider, or disable occlusion culling with the checkbox!\n Disabling Occlusion culling now!");
+                OpenScripts2_BepInExPlugin.LogWarning(this, "No usable colliders for reticle occlusion found! If you are a modmaker, please add colliders or a lens collider, or disable occlusion culling with the checkbox!\n Disabling Occlusion culling now!");
                 _disableOcclusionCulling = true;
             }
         }
