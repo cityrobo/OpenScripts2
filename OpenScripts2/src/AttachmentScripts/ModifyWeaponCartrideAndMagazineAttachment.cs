@@ -40,11 +40,11 @@ namespace OpenScripts2
         public AudioEvent Shots_Suppressed;
         public AudioEvent Shots_LowPressure;
 
-        public Vector3 RelativeMagPos;
-        public Quaternion RelativeMagRot;
+        private Vector3 _relativeMagPos;
+        private Quaternion _relativeMagRot;
 
-        public Vector3 RelativeMagEjectPos;
-        public Quaternion RelativeMagEjectRot;
+        private Vector3 _relativeMagEjectPos;
+        private Quaternion _relativeMagEjectRot;
 
         private Vector3 _origMagPos;
         private Quaternion _origMagRot;
@@ -77,17 +77,21 @@ namespace OpenScripts2
                     _origMagType = _fireArm.MagazineType;
                     if (MagMountPos != null)
                     {
+                        CalculateRelativeMagMountPos(_fireArm);
                         _origMagPos = _fireArm.MagazineMountPos.localPosition;
                         _origMagRot = _fireArm.MagazineMountPos.localRotation;
 
+                        _fireArm.MagazineMountPos.localPosition = _relativeMagPos;
+                        _fireArm.MagazineMountPos.localRotation = _relativeMagRot;
+                    }
+                    if (MagEjectPos != null)
+                    {
+                        CalculateRelativeMagEjectPos(_fireArm);
                         _origMagEjectPos = _fireArm.MagazineEjectPos.localPosition;
                         _origMagEjectRot = _fireArm.MagazineEjectPos.localRotation;
 
-                        _fireArm.MagazineMountPos.localPosition = RelativeMagPos;
-                        _fireArm.MagazineMountPos.localRotation = RelativeMagRot;
-
-                        _fireArm.MagazineEjectPos.localPosition = RelativeMagEjectPos;
-                        _fireArm.MagazineEjectPos.localRotation = RelativeMagEjectRot;
+                        _fireArm.MagazineEjectPos.localPosition = _relativeMagEjectPos;
+                        _fireArm.MagazineEjectPos.localRotation = _relativeMagEjectRot;
                     }
                     _fireArm.MagazineType = MagType;
                 }
@@ -191,7 +195,7 @@ namespace OpenScripts2
             }
         }
 
-        [ContextMenu("Calculate relative magazine transforms")]
+        /*[ContextMenu("Calculate relative magazine transforms")]
         public void CalculateRelativeMagPos()
         {
             RelativeMagPos = TemporaryFirearm.transform.InverseTransformPoint(MagMountPos.position);
@@ -201,6 +205,18 @@ namespace OpenScripts2
             RelativeMagEjectPos = TemporaryFirearm.transform.InverseTransformPoint(MagEjectPos.position);
             //RelativeMagEjectRot = Quaternion.Inverse(TemporaryFirearm.transform.rotation) * MagEjectPos.rotation;
             RelativeMagEjectRot = TemporaryFirearm.transform.InverseTransformRotation(MagEjectPos.rotation);
+        }*/
+
+        public void CalculateRelativeMagMountPos(FVRFireArm fireArm)
+        {
+            _relativeMagPos = fireArm.transform.InverseTransformPoint(MagMountPos.position);
+            _relativeMagRot = fireArm.transform.InverseTransformRotation(MagMountPos.rotation);
+        }
+
+        public void CalculateRelativeMagEjectPos(FVRFireArm fireArm)
+        {
+            _relativeMagEjectPos = fireArm.transform.InverseTransformPoint(MagEjectPos.position);
+            _relativeMagEjectRot = fireArm.transform.InverseTransformRotation(MagEjectPos.rotation);
         }
     }
 }
