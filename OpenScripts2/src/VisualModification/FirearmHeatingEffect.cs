@@ -190,8 +190,10 @@ namespace OpenScripts2
         private bool _isAttached = false;
 
         private bool _soundEnabled = false;
-        private bool _canExplode = false;
+        private bool _canExplode = true;
         private bool _hasPartExploded = false;
+
+        private bool _canChangeAccuracy = true;
 
         private float _origInternalMechanicalMOA = 0f;
 
@@ -206,6 +208,7 @@ namespace OpenScripts2
 			Hook();
 #if !DEBUG
             _canExplode = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.Value;
+            _canChangeAccuracy = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChanceAccuracy.Value;
             CanRecoverFromExplosion = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.Value;
             RevertHeatThreshold = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.Value;
 #endif
@@ -407,7 +410,7 @@ namespace OpenScripts2
             }
 
             // Accuracy
-            if (DoesHeatAffectAccuracy && FireArm != null && !_hasPartExploded)
+            if (_canChangeAccuracy && DoesHeatAffectAccuracy && FireArm != null && !_hasPartExploded)
             {
                 ChangeAccuracy();
             }
