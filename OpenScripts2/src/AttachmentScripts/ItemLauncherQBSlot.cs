@@ -128,7 +128,7 @@ namespace Cityrobo
 
 		private GameObject DuplicateFromSpawnLock(FVRPhysicalObject physicalObject)
         {
-			GameObject gameObject = Instantiate<GameObject>(physicalObject.ObjectWrapper.GetGameObject(), physicalObject.Transform.position, physicalObject.Transform.rotation);
+			GameObject gameObject = Instantiate(physicalObject.ObjectWrapper.GetGameObject(), physicalObject.Transform.position, physicalObject.Transform.rotation);
 			FVRPhysicalObject component = gameObject.GetComponent<FVRPhysicalObject>();
 			component.SetQuickBeltSlot(null);
 			if (physicalObject.MP.IsMeleeWeapon && component.MP.IsThrownDisposable)

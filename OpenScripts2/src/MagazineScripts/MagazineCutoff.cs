@@ -19,8 +19,8 @@ namespace OpenScripts2
         public float StopLimit;
         public float Speed;
 
-        public OpenScripts2_BasePlugin.TransformType translationType;
-        public OpenScripts2_BasePlugin.Axis axis;
+        public OpenScripts2_BasePlugin.TransformType MovementType;
+        public OpenScripts2_BasePlugin.Axis Axis;
 
         [Header("Sound")]
         public AudioEvent Sounds;
@@ -31,8 +31,12 @@ namespace OpenScripts2
         private Quaternion _startRot;
         private Quaternion _stopRot;
 
-        private bool _isMoving = false;
-        private bool _isActive = false;
+        private bool _MagazineCuttoffActive = false;
+
+        private FVRFireArmMagazine _mag;
+
+        private Quaternion _targetRotation;
+        private Vector3 _targetPosition;
 
         public override void Awake()
         {
@@ -40,24 +44,24 @@ namespace OpenScripts2
 
             IsSimpleInteract = true;
             CalculatePositions();
+
+            _mag = FireArm.Magazine;
         }
 
         public override void SimpleInteraction(FVRViveHand hand)
         {
             base.SimpleInteraction(hand);
 
-            _isActive = !_isActive;
+            _MagazineCuttoffActive = !_MagazineCuttoffActive;
 
             SM.PlayGenericSound(Sounds, CutoffLever.position);
-            switch (translationType)
+            switch (MovementType)
             {
                 case OpenScripts2_BasePlugin.TransformType.Movement:
-                    if (_isMoving) StopAllCoroutines();
-                    StartCoroutine(Activate_Translation());
+                    _targetPosition = _MagazineCuttoffActive ? _stopPos : _startPos;
                     break;
                 case OpenScripts2_BasePlugin.TransformType.Rotation:
-                    if (_isMoving) StopAllCoroutines();
-                    StartCoroutine(Activate_Rotation());
+                    _targetRotation = _MagazineCuttoffActive ? _stopRot : _startRot;
                     break;
                 default:
                     OpenScripts2_BepInExPlugin.LogWarning(this, "Scale not supported!");
@@ -65,12 +69,47 @@ namespace OpenScripts2
             }
         }
 
+        public override void FVRUpdate()
+        {
+            base.FVRUpdate();
+
+            if (_MagazineCuttoffActive && _mag != null)
+            {
+                if (_mag.FireArm == FireArm)
+                {
+                    _mag.IsExtractable = false;
+                }
+                else
+                {
+                    _mag.IsExtractable = true;
+                    _mag = null;
+                }
+            }
+            else if (!_MagazineCuttoffActive && _mag != null)
+            {
+                _mag.IsExtractable = true;
+            }
+
+            _mag = FireArm.Magazine;
+
+
+            if (MovementType == OpenScripts2_BasePlugin.TransformType.Rotation && CutoffLever.localRotation != _targetRotation)
+            {
+                CutoffLever.localRotation = Quaternion.RotateTowards(CutoffLever.localRotation, _targetRotation, Speed * Time.deltaTime);
+            }
+            else if (MovementType == OpenScripts2_BasePlugin.TransformType.Movement && CutoffLever.localPosition != _targetPosition)
+            {
+                CutoffLever.localPosition = Vector3.MoveTowards(CutoffLever.localPosition, _targetPosition, Speed * Time.deltaTime);
+            }
+        }
+
+
         private void CalculatePositions()
         {
-            switch (translationType)
+            switch (MovementType)
             {
                 case OpenScripts2_BasePlugin.TransformType.Movement:
-                    switch (axis)
+                    switch (Axis)
                     {
                         case OpenScripts2_BasePlugin.Axis.X:
                             _startPos = new Vector3(StartLimit, CutoffLever.localPosition.y, CutoffLever.localPosition.z);
@@ -88,7 +127,7 @@ namespace OpenScripts2
                     CutoffLever.localPosition = _startPos;
                     break;
                 case OpenScripts2_BasePlugin.TransformType.Rotation:
-                    switch (axis)
+                    switch (Axis)
                     {
                         case OpenScripts2_BasePlugin.Axis.X:
                             _startRot = Quaternion.Euler(StartLimit, CutoffLever.localEulerAngles.y, CutoffLever.localEulerAngles.z);
@@ -109,43 +148,6 @@ namespace OpenScripts2
                     OpenScripts2_BepInExPlugin.LogWarning(this, "Scale not supported!");
                     break;
             }
-        }
-
-        private IEnumerator Activate_Translation()
-        {
-            _isMoving = true;
-
-            Vector3 target = _isActive ? _stopPos : _startPos;
-
-            while (CutoffLever.localPosition != target)
-            {
-                CutoffLever.localPosition = Vector3.MoveTowards(CutoffLever.localPosition, target, Speed * Time.deltaTime);
-                yield return null;
-            }
-
-            Activate_Magazine();
-            _isMoving = false;
-        }
-
-        private IEnumerator Activate_Rotation()
-        {
-            _isMoving = true;
-
-            Quaternion target = _isActive ? _stopRot : _startRot;
-
-            while (CutoffLever.localRotation != target)
-            {
-                CutoffLever.localRotation = Quaternion.RotateTowards(CutoffLever.localRotation, target, Speed * Time.deltaTime);
-                yield return null;
-            }
-
-            Activate_Magazine();
-            _isMoving = false;
-        }
-
-        private void Activate_Magazine()
-        {
-            FireArm.Magazine.IsExtractable = _isActive ? false : true;
         }
     }
 }

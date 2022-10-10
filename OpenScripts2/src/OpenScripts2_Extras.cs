@@ -95,6 +95,22 @@ namespace OpenScripts2
             Vector3 AV = value - a;
             return Mathf.Clamp01(Vector3.Dot(AV, AB) / Vector3.Dot(AB, AB));
         }
+
+        public static float InverseLerpUnclamped(Vector3 a, Vector3 b, Vector3 value)
+        {
+            /*
+            float lerpx = Mathf.InverseLerp(a.x, b.x, value.x);
+            float lerpy = Mathf.InverseLerp(a.y, b.y, value.y);
+            float lerpz = Mathf.InverseLerp(a.z, b.z, value.z);
+
+            Vector3 lerp = new Vector3(lerpx, lerpy, lerpz);
+            return lerp.magnitude;
+            */
+
+            Vector3 AB = b - a;
+            Vector3 AV = value - a;
+            return Vector3.Dot(AV, AB) / Vector3.Dot(AB, AB);
+        }
     }
 }
 
@@ -285,9 +301,10 @@ namespace UnityEngine
             return vector[(int)axis];
         }
 
-        public static void ModifyAxisValue(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, float value)
+        public static Vector3 ModifyAxisValue(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             vector[(int)axis] = value;
+            return vector;
         }
 
         public static void ModifyPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)

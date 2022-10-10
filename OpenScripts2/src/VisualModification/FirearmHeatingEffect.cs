@@ -194,6 +194,7 @@ namespace OpenScripts2
         private bool _hasPartExploded = false;
 
         private bool _canChangeAccuracy = true;
+        private bool _canCookOff = true;
 
         private float _origInternalMechanicalMOA = 0f;
 
@@ -208,7 +209,8 @@ namespace OpenScripts2
 			Hook();
 #if !DEBUG
             _canExplode = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.Value;
-            _canChangeAccuracy = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChanceAccuracy.Value;
+            _canChangeAccuracy = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeAccuracy.Value;
+            _canCookOff = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanCookOff.Value;
             CanRecoverFromExplosion = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.Value;
             RevertHeatThreshold = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.Value;
 #endif
@@ -449,7 +451,7 @@ namespace OpenScripts2
 
                 CurrentBoltRearwardSpeedMultiplier = StoppageSpeed;
             }
-            else if (_hasPartExploded && _canExplode && Heat <= RevertHeatThreshold)
+            else if (_hasPartExploded && CanRecoverFromExplosion && Heat <= RevertHeatThreshold)
             {
                 _hasPartExploded = false;
                 if (MeshRenderer.gameObject == this.gameObject) MeshRenderer.enabled = true;
@@ -509,6 +511,9 @@ namespace OpenScripts2
             OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.SettingChanged -= SettingsChanged;
             OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.SettingChanged -= SettingsChanged;
             OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.SettingChanged -= SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeFirerate.SettingChanged -= SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeAccuracy.SettingChanged -= SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanCookOff.SettingChanged -= SettingsChanged;
 #endif
         }
 
@@ -519,6 +524,9 @@ namespace OpenScripts2
             OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.SettingChanged += SettingsChanged;
             OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.SettingChanged += SettingsChanged;
             OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.SettingChanged += SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeFirerate.SettingChanged += SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeAccuracy.SettingChanged += SettingsChanged;
+            OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanCookOff.SettingChanged += SettingsChanged;
 #endif
         }
 
@@ -551,7 +559,7 @@ namespace OpenScripts2
             while (DoesHeatCauseCookoff)
             {
                 float rand = UnityEngine.Random.Range(0f, 1f);
-                if (Heat > CookoffHeatThreshold)
+                if (_canCookOff && Heat > CookoffHeatThreshold)
                 {
                     float inverseLerp;
                     if (CookoffChanceStartsAtZero) inverseLerp = Mathf.InverseLerp(CookoffHeatThreshold, 1f, Heat);

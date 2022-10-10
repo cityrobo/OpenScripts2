@@ -137,9 +137,9 @@ namespace OpenScripts2
                 if (RecoilProfileStocked != null) _fireArm.RecoilProfileStocked = RecoilProfileStocked;
                 if (AccuracyClass != 0) _fireArm.AccuracyClass = AccuracyClass;
 
-                if (Shots_Main != null) _fireArm.AudioClipSet.Shots_Main = Shots_Main;
-                if (Shots_Suppressed != null) _fireArm.AudioClipSet.Shots_Suppressed = Shots_Suppressed;
-                if (Shots_LowPressure != null) _fireArm.AudioClipSet.Shots_LowPressure = Shots_LowPressure;
+                if (Shots_Main.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Main = Shots_Main;
+                if (Shots_Suppressed.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Suppressed = Shots_Suppressed;
+                if (Shots_LowPressure.Clips.Count != 0) _fireArm.AudioClipSet.Shots_LowPressure = Shots_LowPressure;
             }
             else if (Attachment.curMount == null && _fireArm != null)
             {

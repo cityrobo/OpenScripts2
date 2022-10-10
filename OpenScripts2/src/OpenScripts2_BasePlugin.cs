@@ -108,6 +108,28 @@ namespace OpenScripts2
             return Quaternion.AngleAxis(value, GetVectorFromAxis(axis));
         }
 
+        public static FVRViveHand GetLeftHand()
+        {
+            FVRViveHand[] FVRViveHands = GM.CurrentMovementManager.Hands;
+            if (FVRViveHands[0].IsThisTheRightHand) return FVRViveHands[1];
+            else return FVRViveHands[0];
+        }
+        public static FVRViveHand GetRightHand()
+        {
+            FVRViveHand[] FVRViveHands = GM.CurrentMovementManager.Hands;
+            if (FVRViveHands[0].IsThisTheRightHand) return FVRViveHands[0];
+            else return FVRViveHands[1];
+        }
+
+        public static Vector3 GetClosestValidPointUnclamped(Vector3 vA, Vector3 vB, Vector3 vPoint)
+        {
+            Vector3 rhs = vPoint - vA;
+            Vector3 normalized = (vB - vA).normalized;
+            float num2 = Vector3.Dot(normalized, rhs);
+            Vector3 b = normalized * num2;
+            return vA + b;
+        }
+
         public void Log(string message)
         {
             OpenScripts2_BepInExPlugin.Instance.Logging.LogMessage($"{gameObject.name} {GetType()}: {message}");
