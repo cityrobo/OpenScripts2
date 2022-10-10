@@ -42,17 +42,17 @@
       <HintPath>..\packages\HarmonyX.2.10.0\lib\net35\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.104.0-r.0\lib\net35\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.105.4\lib\net35\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.104.0-r.0\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.105.4\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-    <Reference Include="BepInEx, Version=5.4.21.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BepInEx.BaseLib.5.4.21\lib\net35\BepInEx.dll</HintPath>
+    <Reference Include="BepInEx, Version=5.4.17.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\BepInEx.BaseLib.5.4.17\lib\net35\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="MMHOOK_Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\H3VR\profiles\Creating Mods Stratum\BepInEx\plugins\MMHOOK\MMHOOK_Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\MMHOOK_Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil, Version=0.10.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.dll</HintPath>
@@ -91,23 +91,27 @@
       <HintPath>..\packages\UnityEngine.5.6.1\lib\net35\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.104.0-r.0\lib\net35\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.105.4\lib\net35\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="Valve.Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.104.0-r.0\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.105.4\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\AdditionalBarrel\AdditionalBarrel.cs" />
+    <Compile Include="src\FirearmControl\AdditionalBarrel.cs" />
+    <Compile Include="src\AttachmentScripts\AttachmentPicatinnyRailForwardStop.cs" />
+    <Compile Include="src\AttachmentScripts\AttachmentMountPicatinnyRail.cs" />
     <Compile Include="src\AttachmentScripts\ItemLauncherAttachment.cs" />
     <Compile Include="src\AttachmentScripts\ItemLauncherQBSlot.cs" />
     <Compile Include="src\AttachmentScripts\RifleGrenadeAdapter.cs" />
+    <Compile Include="src\FirearmControl\ChargeTriggerPower.cs" />
     <Compile Include="src\FirearmControl\ChargeTrigger.cs" />
     <Compile Include="src\FirearmControl\ClosedBoltEjectionSideChanger.cs" />
     <Compile Include="src\FirearmControl\ForceVirtualStock.cs" />
     <Compile Include="src\CustomQuickBeltSlots\QuickBeltArea.cs" />
     <Compile Include="src\CustomQuickBeltSlots\QuickBeltAreaCollisionDetector.cs" />
     <Compile Include="src\FirearmControl\ForcedBurst.cs" />
+    <Compile Include="src\FirearmControl\AttachableBreakActionSafety.cs" />
     <Compile Include="src\FirearmControl\HandgunSpin.cs" />
     <Compile Include="src\FirearmControl\RevolverFireNChambersBack.cs" />
     <Compile Include="src\MagazineScripts\AutomaticStripperClip.cs" />
@@ -115,12 +119,12 @@
     <Compile Include="src\MountedGuns\AttachableGunControls_OpenBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_ClosedBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_OpenBolt.cs" />
+    <Compile Include="src\MovingObjetctParts\AutomaticallyMovingPart.cs" />
     <Compile Include="src\MovingObjetctParts\PrecisionTranslatingPart.cs" />
     <Compile Include="src\MovingObjetctParts\RigidbodyJiggleBones.cs" />
     <Compile Include="src\OpenScripts2_Extras.cs" />
     <Compile Include="src\OpenScripts2_BasePlugin.cs" />
     <Compile Include="src\OpenScripts2_BepInExPlugin.cs" />
-    <Compile Include="src\OpticScripts\CustomReflexSightInterface.cs" />
     <Compile Include="src\MagazineScripts\AttachableMagazine.cs" />
     <Compile Include="src\AttachmentScripts\AttachmentMountParentToThis.cs" />
     <Compile Include="src\AttachmentScripts\AttachmentStock.cs" />
@@ -135,6 +139,9 @@
     <Compile Include="src\MagazineScripts\ForceMagazineMountingToMagMountPos.cs" />
     <Compile Include="src\FirearmControl\HandDependentPoseOverride.cs" />
     <Compile Include="src\MovingObjetctParts\HingeForegrip.cs" />
+    <Compile Include="src\OpticScripts\CustomLinearZoomScopeInterface.cs" />
+    <Compile Include="src\OpticScripts\CustomReflexSightInterface.cs" />
+    <Compile Include="src\OpticScripts\CustomScopeInterface.cs" />
     <Compile Include="src\OpticScripts\ReflexSightButton.cs" />
     <Compile Include="src\OpticScripts\ScopeButton.cs" />
     <Compile Include="src\OpticScripts\VanillaScopeMaterialCreator.cs" />
@@ -156,6 +163,7 @@
     <Compile Include="src\MagazineScripts\MagazinePoseCycler.cs" />
     <Compile Include="src\MagazineScripts\MagazineSafety.cs" />
     <Compile Include="src\AttachmentScripts\ManipulateObjectAttachmentProxy.cs" />
+    <Compile Include="src\VisualModification\ManipulateFireArmRoundProxy.cs" />
     <Compile Include="src\VisualModification\ManipulateAnimator.cs" />
     <Compile Include="src\VisualModification\ManipulateBlendShape.cs" />
     <Compile Include="src\CustomObjectTypes\MeatBeatScanner.cs" />
@@ -180,13 +188,12 @@
     <Compile Include="src\MagazineScripts\RSC_MagazineFollower.cs" />
     <Compile Include="src\MagazineScripts\RSC_MagazineFollower_BoltAction.cs" />
     <Compile Include="src\MagazineScripts\RSC_MagazineFollower_TubeFedShotgun.cs" />
-    <Compile Include="src\OpticScripts\CustomLinearZoomScopeInterface.cs" />
-    <Compile Include="src\OpticScripts\CustomScopeInterface.cs" />
     <Compile Include="src\CustomObjectTypes\SwitchBlade.cs" />
     <Compile Include="src\AttachmentScripts\RoundClassChangerAttachment.cs" />
     <Compile Include="src\CustomQuickBeltSlots\WristItem.cs" />
     <Compile Include="src\CustomQuickBeltSlots\WristMounted_ClosedBoltWeapon.cs" />
     <Compile Include="src\CustomQuickBeltSlots\WristQBSlot.cs" />
+    <Compile Include="src\VisualModification\MuzzleEffectController.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="nuget.config" />

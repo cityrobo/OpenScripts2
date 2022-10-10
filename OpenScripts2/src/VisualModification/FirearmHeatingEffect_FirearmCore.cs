@@ -82,7 +82,7 @@ namespace OpenScripts2
                         NumBoltSpeedMultipliers++;
                     }
                 }
-                if (NumBoltSpeedMultipliers != 0)
+                if (OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeFirerate.Value && NumBoltSpeedMultipliers != 0)
                 {
                     _averageBoltForwardSpeedMultiplier /= NumBoltSpeedMultipliers;
                     _averageBoltRearwardSpeedMultiplier /= NumBoltSpeedMultipliers;
@@ -107,6 +107,12 @@ namespace OpenScripts2
                         default:
                             break;
                     }
+                }
+                else
+                {
+                    _averageBoltForwardSpeedMultiplier = 1f;
+                    _averageBoltRearwardSpeedMultiplier = 1f;
+                    _averageBoltSpringStiffnessMultiplier = 1f;
                 }
             }
         }

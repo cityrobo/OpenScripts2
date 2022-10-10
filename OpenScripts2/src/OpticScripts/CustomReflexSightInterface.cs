@@ -174,36 +174,12 @@ namespace OpenScripts2
             if (!_disableOcclusionCulling && (IsIntegrated || _isAttached)) CheckReticleVisibility();
         }
 
-        public void NextReticleTexture()
-        {
-            CurrentSelectedReticle = (CurrentSelectedReticle + 1) % ReticleTextures.Length;
-
-            ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
-            if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) ReticleMesh.material.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
-            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
-
-            UpdateBrightness();
-            UpdateScreen();
-        }
-
-        public void PreviousReticleTexture()
-        {
-            CurrentSelectedReticle = (CurrentSelectedReticle + ReticleTextures.Length - 1) % ReticleTextures.Length;
-
-            ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
-            if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) ReticleMesh.material.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
-            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
-
-            UpdateBrightness();
-            UpdateScreen();
-        }
-
         private void ShowNextMenu() 
         {
             if (ReticleTextScreen == null && ZeroTextScreen == null && BrightnessTextScreen == null) return;
             _currentMenu++;
 
-            if (_currentMenu > 3) _currentMenu = 0;
+            if (_currentMenu > 2) _currentMenu = 0;
 
             switch (_currentMenu)
             {
@@ -231,6 +207,12 @@ namespace OpenScripts2
             }
             UpdateScreen();
         }
+        private void StartScreen()
+        {
+            if (ReticleTextScreen != null) ReticleTextScreen.text = ReticleTestPrefix + ReticleText[CurrentSelectedReticle];
+            if (ZeroTextScreen != null) ZeroTextScreen.text = ZeroTextPrefix + ZeroDistances[CurrentZeroDistance] + "m";
+            if (BrightnessTextScreen != null) BrightnessTextScreen.text = BrightnessTextPrefix + BrightnessTexts[CurrentBrightnessIndex];
+        }
 
         private void UpdateScreen()
         {
@@ -250,12 +232,28 @@ namespace OpenScripts2
                 BrightnessTextScreen.text = BrightnessTextPrefix + BrightnessTexts[CurrentBrightnessIndex];
             }
         }
-
-        private void StartScreen()
+        public void NextReticleTexture()
         {
-            if (ReticleTextScreen != null) ReticleTextScreen.text = ReticleTestPrefix + ReticleText[CurrentSelectedReticle];
-            if (ZeroTextScreen != null) ZeroTextScreen.text = ZeroTextPrefix + ZeroDistances[CurrentZeroDistance] + "m";
-            if (BrightnessTextScreen != null) BrightnessTextScreen.text = BrightnessTextPrefix + BrightnessTexts[CurrentBrightnessIndex];
+            CurrentSelectedReticle = (CurrentSelectedReticle + 1) % ReticleTextures.Length;
+
+            ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
+            if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) ReticleMesh.material.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
+            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
+
+            if (BrightnessTextScreen != null) UpdateBrightness();
+            UpdateScreen();
+        }
+
+        public void PreviousReticleTexture()
+        {
+            CurrentSelectedReticle = (CurrentSelectedReticle + ReticleTextures.Length - 1) % ReticleTextures.Length;
+
+            ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
+            if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) ReticleMesh.material.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
+            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
+
+            if (BrightnessTextScreen != null) UpdateBrightness();
+            UpdateScreen();
         }
 
         public void NextZeroDistance()

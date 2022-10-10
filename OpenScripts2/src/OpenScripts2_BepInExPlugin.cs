@@ -14,6 +14,9 @@ namespace OpenScripts2
         public static ConfigEntry<bool> FirearmHeatingEffect_CanExplode;
         public static ConfigEntry<bool> FirearmHeatingEffect_CanRecover;
         public static ConfigEntry<float> FirearmHeatingEffect_RecoverThreshold;
+        public static ConfigEntry<bool> FirearmHeatingEffect_CanChangeFirerate;
+        public static ConfigEntry<bool> FirearmHeatingEffect_CanChangeAccuracy;
+        public static ConfigEntry<bool> FirearmHeatingEffect_CanCookOff;
 
         public BepInEx.Logging.ManualLogSource Logging
         {
@@ -29,6 +32,9 @@ namespace OpenScripts2
             FirearmHeatingEffect_CanExplode = Config.Bind("Firearm Heating Effect", "Part can explode", true, "If true, and the part is setup to do so, the parts with heating effects can explode.");
             FirearmHeatingEffect_CanRecover = Config.Bind("Firearm Heating Effect", "Part can recover", false, "If true, parts can recover from being exploded.");
             FirearmHeatingEffect_RecoverThreshold = Config.Bind("Firearm Heating Effect", "Recover heat threshold", 0f, new ConfigDescription("Defines the heat value, at which the part will recover from being exploded", new AcceptableValueRange<float>(0, 1)));
+            FirearmHeatingEffect_CanChangeFirerate = Config.Bind("Firearm Heating Effect", "Gun can change firerate", true, "If true, enables firearm firerate changes based on heat.");
+            FirearmHeatingEffect_CanChangeAccuracy = Config.Bind("Firearm Heating Effect", "Gun can change accuracy", true, "If true, enables firearm accuracy changes based on heat.");
+            FirearmHeatingEffect_CanCookOff = Config.Bind("Firearm Heating Effect", "Gun can cook off", true, "If true, enables firearm cookoff chance based on heat.");
         }
 
         public static void Log(MonoBehaviour plugin, string message)
