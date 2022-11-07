@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using FistVR;
 
-namespace Cityrobo
+namespace OpenScripts2
 {
 	public class RevolverFireNChambersBack : MonoBehaviour
 	{

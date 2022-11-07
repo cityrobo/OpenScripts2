@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using OpenScripts2;
 
-namespace Cityrobo
+namespace OpenScripts2
 {
     public class ItemLauncherAttachment : MuzzleDevice
     {

@@ -6,7 +6,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Cityrobo
+namespace OpenScripts2
 {
     public class RifleGrenadeAdapter : MuzzleDevice
     {
