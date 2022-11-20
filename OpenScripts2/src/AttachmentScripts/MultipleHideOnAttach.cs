@@ -21,7 +21,7 @@ namespace OpenScripts2
         public void Awake()
         {
             attachmentMount.HasHoverDisablePiece = true;
-            if (attachmentMount.DisableOnHover == null)
+            if (attachmentMount.DisableOnHover == null || ObjectToHideOrShow.Contains(attachmentMount.DisableOnHover))
             {
                 attachmentMount.DisableOnHover = new GameObject("MultipleHideOnAttach_Proxy");
             }
