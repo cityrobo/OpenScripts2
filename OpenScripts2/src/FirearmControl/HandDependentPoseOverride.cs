@@ -22,7 +22,7 @@ namespace OpenScripts2
 #if !DEBUG
         static HandDependentPoseOverride()
         {
-            On.FistVR.FVRPhysicalObject.BeginInteraction += FVRPhysicalObject_BeginInteraction2;
+            On.FistVR.FVRPhysicalObject.BeginInteraction += FVRPhysicalObject_BeginInteraction;
         }
 
         public void Start()
@@ -30,18 +30,14 @@ namespace OpenScripts2
             if (LeftPoseOverride_Touch != null && RightPoseOverride_Touch != null) _hasPoseOverride_Touch = true;
 
             _existingHandDependentPoseOverride.Add(PhysicalObject, this);
-
-            //Hook();
         }
 
         public void OnDestroy()
         {
             _existingHandDependentPoseOverride.Remove(PhysicalObject);
-
-            //Unhook();
         }
 
-        private static void FVRPhysicalObject_BeginInteraction2(On.FistVR.FVRPhysicalObject.orig_BeginInteraction orig, FVRPhysicalObject self, FVRViveHand hand)
+        private static void FVRPhysicalObject_BeginInteraction(On.FistVR.FVRPhysicalObject.orig_BeginInteraction orig, FVRPhysicalObject self, FVRViveHand hand)
         {
             HandDependentPoseOverride handDependentPoseOverride = null;
 
@@ -61,51 +57,6 @@ namespace OpenScripts2
 
             orig(self, hand);
         }
-
-        void Unhook()
-        {
-            On.FistVR.FVRPhysicalObject.BeginInteraction -= FVRPhysicalObject_BeginInteraction;
-        }
-        void Hook()
-        {
-            On.FistVR.FVRPhysicalObject.BeginInteraction += FVRPhysicalObject_BeginInteraction;
-        }
-
-        private void FVRPhysicalObject_BeginInteraction(On.FistVR.FVRPhysicalObject.orig_BeginInteraction orig, FVRPhysicalObject self, FVRViveHand hand)
-        {
-            if (self == PhysicalObject)
-            {
-                if (!hand.IsThisTheRightHand)
-                {
-                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && _hasPoseOverride_Touch) self.PoseOverride = LeftPoseOverride_Touch;
-                    else PhysicalObject.PoseOverride = LeftPoseOverride;
-                }
-                else
-                {
-                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && _hasPoseOverride_Touch) self.PoseOverride = RightPoseOverride_Touch;
-                    else PhysicalObject.PoseOverride = RightPoseOverride;
-                }
-            }
-
-            orig(self, hand);
-        }
 #endif
-        //void Update()
-        //{
-        //    FVRViveHand hand = PhysicalObject.m_hand;
-        //    if (hand != null)
-        //    {
-        //        if (!hand.IsThisTheRightHand)
-        //        {
-        //            if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && _hasPoseOverride_Touch) PhysicalObject.PoseOverride = LeftPoseOverride_Touch;
-        //            else PhysicalObject.PoseOverride = LeftPoseOverride;
-        //        }
-        //        else
-        //        {
-        //            if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && _hasPoseOverride_Touch) PhysicalObject.PoseOverride = RightPoseOverride_Touch;
-        //            else PhysicalObject.PoseOverride = RightPoseOverride;
-        //        }
-        //    }
-        //}
     }
 }
