@@ -21,7 +21,8 @@ namespace OpenScripts2
 
         private bool _offsetCalculated = false;
 
-        private static Dictionary<FVRPhysicalObject, MagazinePoseCycler> _existingMagazinePoseCyclers = new();
+        private static readonly Dictionary<FVRPhysicalObject, MagazinePoseCycler> _existingMagazinePoseCyclers = new();
+        private static readonly Dictionary<string, int> _changedMagazines = new();
 
 #if!DEBUG
         static MagazinePoseCycler()
@@ -35,6 +36,8 @@ namespace OpenScripts2
             _poseIndex = AlternatePoseOverrides.Count - 1;
 
             _existingMagazinePoseCyclers.Add(Magazine,this);
+
+            _poseIndex = _changedMagazines.ContainsKey(Magazine.ObjectWrapper.ItemID) ? _changedMagazines[Magazine.ObjectWrapper.ItemID] : 0;
         }
 
         public void OnDestroy()
@@ -61,6 +64,15 @@ namespace OpenScripts2
             if (_poseIndex >= AlternatePoseOverrides.Count) _poseIndex = 0;
 
             UpdatePose();
+
+            if (_changedMagazines.ContainsKey(Magazine.ObjectWrapper.ItemID))
+            {
+                _changedMagazines[Magazine.ObjectWrapper.ItemID] = _poseIndex;
+            }
+            else
+            {
+                _changedMagazines.Add(Magazine.ObjectWrapper.ItemID, _poseIndex);
+            }
         }
 
         private void UpdatePose()

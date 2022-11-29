@@ -29,6 +29,8 @@ namespace OpenScripts2
         {
             _curRot = ObservedObject.transform.localRotation;
             _lastRot = ObservedObject.transform.localRotation;
+
+            Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         }
         public void Update()
         {

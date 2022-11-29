@@ -90,7 +90,7 @@ namespace OpenScripts2
                     f.HeatAffectsDetailWeight = EditorGUILayout.Toggle("Does Heat affects Detail Weight?", f.HeatAffectsDetailWeight);
                     if (f.HeatAffectsDetailWeight)
                     {
-                        f.DetailExponent = EditorGUILayout.FloatField(new GUIContent("Detail Exponent", "Same as the normal HeatExponent, but for the detail weight."), f.DetailExponent);
+                        f.DetailExponent = EditorGUILayout.FloatField(new GUIContent("Detail Exponent", "Same as the normal Heat Exponent, but for the detail weight."), f.DetailExponent);
                         f.DetailUsesAdvancedCurve = EditorGUILayout.Toggle(new GUIContent("Does Detail use Advanced Curve?", "Enables emission weight AnimationCurve system."), f.DetailUsesAdvancedCurve);
                         if (f.DetailUsesAdvancedCurve)
                         {
@@ -105,7 +105,7 @@ namespace OpenScripts2
                     if (f.ParticleSystem != null)
                     {
                         f.MaxEmissionRate = EditorGUILayout.FloatField(new GUIContent("Max Emission Rate"), f.MaxEmissionRate);
-                        f.ParticleHeatExponent = EditorGUILayout.FloatField(new GUIContent("Particle Heat Exponent", "Same as the normal HeatExponent, but for the particle emission rate."), f.ParticleHeatExponent);
+                        f.ParticleHeatExponent = EditorGUILayout.FloatField(new GUIContent("Particle Heat Exponent", "Same as the normal Heat Exponent, but for the particle emission rate."), f.ParticleHeatExponent);
                         f.ParticleHeatThreshold = EditorGUILayout.FloatField(new GUIContent("Particle Heat Threshold", "Heat level at which particles start appearing."), f.ParticleHeatThreshold);
                         f.ParticleEmissionRateStartsAtZero = EditorGUILayout.Toggle(new GUIContent("Particle Emission Rate starts at Zero", "If checked, the particle emission rate starts at 0 when hitting the threshold and hits the max when heat is 1, else it starts emitting using the threshold heat value as a reference, aka the heat level it gets enabled at."), f.ParticleEmissionRateStartsAtZero);
                         f.ParticlesUsesAdvancedCurve = EditorGUILayout.Toggle(new GUIContent("Do Particles use Advanced Curve?", "Enables particle rate AnimationCurve system."), f.ParticlesUsesAdvancedCurve);
@@ -126,7 +126,7 @@ namespace OpenScripts2
                         if (f.SoundEffect != null)
                         {
                             f.MaxVolume = EditorGUILayout.Slider(new GUIContent("Max Volume"), f.MaxVolume, 0f, 1f);
-                            f.SoundHeatExponent = EditorGUILayout.FloatField(new GUIContent("Sound Heat Exponent", "Same as the normal HeatExponent, but for the sound volume."), f.SoundHeatExponent);
+                            f.SoundHeatExponent = EditorGUILayout.FloatField(new GUIContent("Sound Heat Exponent", "Same as the normal Heat Exponent, but for the sound volume."), f.SoundHeatExponent);
                             f.SoundHeatThreshold = EditorGUILayout.FloatField(new GUIContent("Sound Heat Threshold", "Heat level at which audio starts."), f.SoundHeatThreshold);
                             f.SoundVolumeStartsAtZero = EditorGUILayout.Toggle(new GUIContent("Sound Volume Starts at Zero", "If checked, the sound volume starts at 0 when hitting the threshold and hits the max when heat is 1, else the volume is using the threshold heat value as a reference, aka the heat level it gets enabled at."), f.SoundVolumeStartsAtZero);
                             f.SoundUsesAdvancedCurve = EditorGUILayout.Toggle(new GUIContent("Does Sound Volume use Advanced Curve?", "Enables sound volume AnimationCurve system."), f.SoundUsesAdvancedCurve);
@@ -144,7 +144,7 @@ namespace OpenScripts2
                     if (f.DoesHeatAffectAccuracy)
                     {
                         f.MaximumMOAMultiplier = EditorGUILayout.FloatField(new GUIContent("Maximum MOA Multiplier"), f.MaximumMOAMultiplier);
-                        f.AccuracyHeatExponent = EditorGUILayout.FloatField(new GUIContent("Accuracy Heat Exponent", "Same as the normal HeatExponent, but for the MOA multiplier."), f.AccuracyHeatExponent);
+                        f.AccuracyHeatExponent = EditorGUILayout.FloatField(new GUIContent("Accuracy Heat Exponent", "Same as the normal Heat Exponent, but for the MOA multiplier."), f.AccuracyHeatExponent);
                         f.AccuracyUsesAdvancedCurve = EditorGUILayout.Toggle(new GUIContent("Does Accuracy use Advanced Curve?", "Enables MOA multiplier AnimationCurve system."), f.AccuracyUsesAdvancedCurve);
                         if (f.AccuracyUsesAdvancedCurve)
                         {
@@ -161,7 +161,7 @@ namespace OpenScripts2
                         f.MaxBoltForwardSpeedMultiplier = EditorGUILayout.FloatField(new GUIContent("Maximum Bolt Forward Speed Multiplier"), f.MaxBoltForwardSpeedMultiplier);
                         f.MaxBoltRearwardSpeedMultiplier = EditorGUILayout.FloatField(new GUIContent("Maximum Bolt Rearward Speed Multiplier"), f.MaxBoltRearwardSpeedMultiplier);
                         f.MaxBoltSpringStiffnessesMultiplier = EditorGUILayout.FloatField(new GUIContent("Maximum Bolt Spring Stiffness Multiplier"), f.MaxBoltSpringStiffnessesMultiplier);
-                        f.BoltSpeedHeatExponent = EditorGUILayout.FloatField(new GUIContent("Bolt Speed Heat Exponent", "Same as the normal HeatExponent, but for the bolt speed system."), f.BoltSpeedHeatExponent);
+                        f.BoltSpeedHeatExponent = EditorGUILayout.FloatField(new GUIContent("Bolt Speed Heat Exponent", "Same as the normal Heat Exponent, but for the bolt speed system."), f.BoltSpeedHeatExponent);
                         f.BoltSpeedUsesAdvancedCurve = EditorGUILayout.Toggle(new GUIContent("Does Bolt Speed use Advanced Curves?", "Enables bolt speed AnimationCurve system."), f.BoltSpeedUsesAdvancedCurve);
                         if (f.BoltSpeedUsesAdvancedCurve)
                         {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Linq;
 using System.Text;
 using BepInEx;
@@ -98,7 +99,7 @@ namespace OpenScripts2
             return Vector3.zero;
         }
 
-        public static bool TouchpadDirPressed(FVRViveHand hand , Vector2 dir)
+        public static bool TouchpadDirPressed(FVRViveHand hand, Vector2 dir)
         {
             return hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, dir) < 45f;
         }
@@ -129,6 +130,31 @@ namespace OpenScripts2
             Vector3 b = normalized * num2;
             return vA + b;
         }
+
+
+        public static Action GetBaseAction(Type BaseClass, string MethodName, MonoBehaviour self)
+        {
+            var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
+
+            return (Action) Activator.CreateInstance(typeof(Action), self, pointer);
+        }
+
+        public static Action<T> GetBaseAction<T>(Type BaseClass, string MethodName, MonoBehaviour self)
+        {
+            var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
+
+            return (Action<T>)Activator.CreateInstance(typeof(Action<T>), self, pointer);
+        }
+
+
+
+        public static Func<T> GetBaseFunc<T>(Type BaseClass, string MethodName, MonoBehaviour self)
+        {
+            var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
+
+            return (Func<T>)Activator.CreateInstance(typeof(Func<T>), self, pointer);
+        }
+
 
         public void Log(string message)
         {

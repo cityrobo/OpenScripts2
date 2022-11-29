@@ -11,13 +11,16 @@ namespace OpenScripts2
 {
     public class SmartWeapon : OpenScripts2_BasePlugin
     {
+        [Header("SmartWeapon Config")]
         public FVRFireArm FireArm;
 		public MeshRenderer ReticleMesh;
 		public bool DisableReticleWithoutTarget = true;
 		public float EngageRange = 15f;
 		[Range(1f,179f)]
-		public float EngageAngle = 45f;
-		public float PrecisionAngle = 5f;
+        [Tooltip("FOV of the Targeting Cone.")]
+        public float EngageAngle = 45f;
+        [Tooltip("FOV of the Precision Targeting Cone. The Precision Cone only targets Sosig Heads.")]
+        public float PrecisionAngle = 5f;
 
 		public LayerMask LatchingMask;
 		public LayerMask BlockingMask;
@@ -27,6 +30,10 @@ namespace OpenScripts2
 
 		[Tooltip("Use this if you want the last target to stay locked on for a certain period. Good for shooting around corners!")]
 		public float LastTargetTimeout = 1f;
+
+		[Header("Misc")]
+		[Tooltip("Object that will be turned on when a target has been locked on.")]
+		public GameObject TargetLockedIndicator;
 
 		[HideInInspector]
 		public bool WasManuallyAdded = false;
@@ -68,68 +75,66 @@ namespace OpenScripts2
 
         private static void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
         {
-			SmartWeapon smartWeapon;
+            if (_existingSmartWeapon.TryGetValue(self, out SmartWeapon smartWeapon))
+            {
+                if (doBuzz && self.m_hand != null)
+                {
+                    self.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
+                    if (self.AltGrip != null && self.AltGrip.m_hand != null)
+                    {
+                        self.AltGrip.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
+                    }
+                }
+                GM.CurrentSceneSettings.OnShotFired(self);
+                if (self.IsSuppressed())
+                {
+                    GM.CurrentPlayerBody.VisibleEvent(0.1f);
+                }
+                else
+                {
+                    GM.CurrentPlayerBody.VisibleEvent(2f);
+                }
+                float chamberVelMult = AM.GetChamberVelMult(chamber.RoundType, Vector3.Distance(chamber.transform.position, muzzle.position));
+                float num = self.GetCombinedFixedDrop(self.AccuracyClass) * 0.0166667f;
+                Vector2 vector = self.GetCombinedFixedDrift(self.AccuracyClass) * 0.0166667f;
+                for (int i = 0; i < chamber.GetRound().NumProjectiles; i++)
+                {
+                    float d = chamber.GetRound().ProjectileSpread + self.m_internalMechanicalMOA + self.GetCombinedMuzzleDeviceAccuracy();
+                    if (chamber.GetRound().BallisticProjectilePrefab != null)
+                    {
+                        Vector3 b = muzzle.forward * 0.005f;
+                        GameObject gameObject = Instantiate(chamber.GetRound().BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
+                        Vector2 vector2 = (UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle) * 0.33333334f * d;
+                        gameObject.transform.Rotate(new Vector3(vector2.x + vector.y + num, vector2.y + vector.x, 0f));
+                        BallisticProjectile component = gameObject.GetComponent<BallisticProjectile>();
 
-			if (_existingSmartWeapon.TryGetValue(self, out smartWeapon))
-			{
-				if (doBuzz && self.m_hand != null)
-				{
-					self.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
-					if (self.AltGrip != null && self.AltGrip.m_hand != null)
-					{
-						self.AltGrip.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
-					}
-				}
-				GM.CurrentSceneSettings.OnShotFired(self);
-				if (self.IsSuppressed())
-				{
-					GM.CurrentPlayerBody.VisibleEvent(0.1f);
-				}
-				else
-				{
-					GM.CurrentPlayerBody.VisibleEvent(2f);
-				}
-				float chamberVelMult = AM.GetChamberVelMult(chamber.RoundType, Vector3.Distance(chamber.transform.position, muzzle.position));
-				float num = self.GetCombinedFixedDrop(self.AccuracyClass) * 0.0166667f;
-				Vector2 vector = self.GetCombinedFixedDrift(self.AccuracyClass) * 0.0166667f;
-				for (int i = 0; i < chamber.GetRound().NumProjectiles; i++)
-				{
-					float d = chamber.GetRound().ProjectileSpread + self.m_internalMechanicalMOA + self.GetCombinedMuzzleDeviceAccuracy();
-					if (chamber.GetRound().BallisticProjectilePrefab != null)
-					{
-						Vector3 b = muzzle.forward * 0.005f;
-						GameObject gameObject = Instantiate(chamber.GetRound().BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
-						Vector2 vector2 = (UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle) * 0.33333334f * d;
-						gameObject.transform.Rotate(new Vector3(vector2.x + vector.y + num, vector2.y + vector.x, 0f));
-						BallisticProjectile component = gameObject.GetComponent<BallisticProjectile>();
+                        float baseVelocity = component.MuzzleVelocityBase * chamber.ChamberVelocityMultiplier * velMult * chamberVelMult;
+                        component.Fire(baseVelocity * smartWeapon.BulletVelocityModifier, gameObject.transform.forward, self, true);
 
-						float baseVelocity = component.MuzzleVelocityBase * chamber.ChamberVelocityMultiplier * velMult * chamberVelMult;
-						component.Fire(baseVelocity * smartWeapon.BulletVelocityModifier, gameObject.transform.forward, self, true);
-
-						SmartProjectile smartProjectile = gameObject.GetComponent<SmartProjectile>();
-						if (smartProjectile == null && smartWeapon.WasManuallyAdded)
-						{
-							smartProjectile = gameObject.AddComponent<SmartProjectile>();
-							smartProjectile.Projectile = component;
-							smartProjectile.ConfigureFromData(smartWeapon.ProjectileData);
-						}
-						if (smartProjectile != null)
+                        SmartProjectile smartProjectile = gameObject.GetComponent<SmartProjectile>();
+                        if (smartProjectile == null && smartWeapon.WasManuallyAdded)
                         {
-							smartProjectile.TargetLink = smartWeapon._lastTarget;
+                            smartProjectile = gameObject.AddComponent<SmartProjectile>();
+                            smartProjectile.Projectile = component;
+                            smartProjectile.ConfigureFromData(smartWeapon.ProjectileData);
                         }
-						if (rangeOverride > 0f)
-						{
-							component.ForceSetMaxDist(rangeOverride);
-						}
+                        if (smartProjectile != null)
+                        {
+                            smartProjectile.TargetLink = smartWeapon._lastTarget;
+                        }
+                        if (rangeOverride > 0f)
+                        {
+                            component.ForceSetMaxDist(rangeOverride);
+                        }
                         if (smartWeapon.BulletVelocityModifier != 1f)
                         {
-							component.Mass = (Mathf.Pow(baseVelocity, 2f) * component.Mass) / Mathf.Pow(baseVelocity * smartWeapon.BulletVelocityModifier, 2f);
-						}
-						
-					}
-				}
-			}
-			else orig(self, chamber, muzzle, doBuzz, velMult, rangeOverride);
+                            component.Mass = (Mathf.Pow(baseVelocity, 2f) * component.Mass) / Mathf.Pow(baseVelocity * smartWeapon.BulletVelocityModifier, 2f);
+                        }
+
+                    }
+                }
+            }
+            else orig(self, chamber, muzzle, doBuzz, velMult, rangeOverride);
         }
 
         public void Update()
@@ -141,7 +146,11 @@ namespace OpenScripts2
 				if (_target != null)
                 {
 					//Debug.Log(target);
-					if (_timeoutStarted && LastTargetTimeout != 0f) StopCoroutine("LastTargetTimeoutCoroutine");
+					if (_timeoutStarted && LastTargetTimeout != 0f)
+					{
+						StopCoroutine("LastTargetTimeoutCoroutine");
+						_timeoutStarted = false;
+					}
 					_lastTarget = _target;
 				}
 				else
@@ -151,8 +160,14 @@ namespace OpenScripts2
 						StopCoroutine("LastTargetTimeoutCoroutine");
 						StartCoroutine("LastTargetTimeoutCoroutine");
 					}
-
 					if (DisableReticleWithoutTarget && ReticleMesh != null) ReticleMesh.gameObject.SetActive(false);
+
+					if (_lastTarget != null && (Vector3.Distance(transform.position, _lastTarget.transform.position) > EngageRange || _lastTarget.S.BodyState == Sosig.SosigBodyState.Dead))
+					{
+                        StopCoroutine("LastTargetTimeoutCoroutine");
+						_timeoutStarted = false;
+						_lastTarget = null;
+                    }
 				}
 
 				if (_lastTarget != null && ReticleMesh != null)
@@ -160,13 +175,15 @@ namespace OpenScripts2
 					ReticleMesh.transform.LookAt(_lastTarget.transform.position);
 					ReticleMesh.material.SetFloat(_nameOfDistanceVariable, Vector3.Distance(_lastTarget.transform.position, ReticleMesh.transform.position));
 					if (DisableReticleWithoutTarget) ReticleMesh.gameObject.SetActive(true);
+					TargetLockedIndicator?.gameObject.SetActive(true);
 				}
 				else if (_lastTarget == null && ReticleMesh != null)
                 {
 					ReticleMesh.transform.localRotation = Quaternion.identity;
 
 					if (DisableReticleWithoutTarget) ReticleMesh.gameObject.SetActive(false);
-				}
+                    TargetLockedIndicator?.gameObject.SetActive(false);
+                }
 
 				if (DoesRandomRotationOfBarrelForCinematicBulletTrails)
                 {
@@ -177,6 +194,15 @@ namespace OpenScripts2
 					FireArm.CurrentMuzzle.localEulerAngles = randRot;
 				}
 			}
+			else
+			{
+                StopCoroutine("LastTargetTimeoutCoroutine");
+                _lastTarget = null;
+
+                ReticleMesh.transform.localRotation = Quaternion.identity;
+                if (DisableReticleWithoutTarget) ReticleMesh.gameObject.SetActive(false);
+                TargetLockedIndicator?.gameObject.SetActive(false);
+            }
         }
 
 		private IEnumerator LastTargetTimeoutCoroutine()
@@ -184,6 +210,7 @@ namespace OpenScripts2
 			_timeoutStarted = true;
 			yield return new WaitForSeconds(LastTargetTimeout);
 			_lastTarget = null;
+			_timeoutStarted = false;
         }
 
 		private SosigLink FindTarget()
@@ -199,20 +226,20 @@ namespace OpenScripts2
 				}
 			}
 			SosigLink targetSosigLink = null;
-			SosigLink tempSosigLink = null;
+			SosigLink tempSosigLink;
 			float minAngle = EngageAngle;
 			for (int j = 0; j < rigidbodyList.Count; j++)
 			{
-				SosigLink component = rigidbodyList[j].GetComponent<SosigLink>();
+				SosigLink sosigLinkComponent = rigidbodyList[j].GetComponent<SosigLink>();
 
-				if (component != null && component.S.BodyState != Sosig.SosigBodyState.Dead)
+				if (sosigLinkComponent != null && sosigLinkComponent.S.BodyState != Sosig.SosigBodyState.Dead)
 				{
-					if (true || component.S.E.IFFCode == 1)
+					if (true || sosigLinkComponent.S.E.IFFCode == 1)
 					{
 						Vector3 from = rigidbodyList[j].transform.position - FireArm.CurrentMuzzle.position;
 						float angle = Vector3.Angle(from, _origMuzzlePos.transform.forward);
 
-						Sosig s = component.S;
+						Sosig s = sosigLinkComponent.S;
 						if (angle <= PrecisionAngle) tempSosigLink = s.Links[0];
 						else tempSosigLink = s.Links[1];
 

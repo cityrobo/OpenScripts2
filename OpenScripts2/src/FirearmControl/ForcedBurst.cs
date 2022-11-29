@@ -47,10 +47,12 @@ namespace OpenScripts2
                     case ClosedBoltWeapon w:
                         //HookClosedBolt();
                         _isHooked = true;
+                        _existingForceBurst.Add(FireArm, this);
                         break;
                     case Handgun w:
                         //HookHandgun();
                         _isHooked = true;
+                        _existingForceBurst.Add(FireArm, this);
                         break;
                     default:
                         LogWarning($"Firearm type not supported ({FireArm.GetType()})!");
@@ -66,10 +68,12 @@ namespace OpenScripts2
                     case ClosedBoltWeapon w:
                         //UnhookClosedBolt();
                         _isHooked = false;
+                        _existingForceBurst.Remove(FireArm);
                         break;
                     case Handgun w:
                         //UnhookHandgun();
                         _isHooked = false;
+                        _existingForceBurst.Remove(FireArm);
                         break;
                     default:
                         break;
@@ -103,13 +107,13 @@ namespace OpenScripts2
                 {
                     forcedBurst._isBurstFiring = false;
                 }
-                else if (forcedBurst._shouldCoolDown && !forcedBurst._isCoolingDown) forcedBurst.StartCoroutine(forcedBurst.Cooldown());
+                else if (forcedBurst.CooldownPeriod > 0f && forcedBurst._shouldCoolDown && !forcedBurst._isCoolingDown) forcedBurst.StartCoroutine(forcedBurst.Cooldown());
             }
         }
 
         private static void ClosedBoltWeapon_DropHammer(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
-            ForcedBurst forcedBurst = null;
+            ForcedBurst forcedBurst;
             if (_existingForceBurst.TryGetValue(self, out forcedBurst) && (forcedBurst._shouldCoolDown || forcedBurst._isCoolingDown)) return;
 
             orig(self);
@@ -169,7 +173,7 @@ namespace OpenScripts2
                 {
                     forcedBurst._isBurstFiring = false;
                 }
-                else if (forcedBurst._shouldCoolDown && !forcedBurst._isCoolingDown) forcedBurst.StartCoroutine(forcedBurst.Cooldown());
+                else if (forcedBurst.CooldownPeriod > 0f && forcedBurst._shouldCoolDown && !forcedBurst._isCoolingDown) forcedBurst.StartCoroutine(forcedBurst.Cooldown());
             }
         }
 

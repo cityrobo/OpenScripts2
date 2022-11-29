@@ -25,6 +25,7 @@ namespace OpenScripts2
 
 		public float LowerLimit = 0f;
 		public float UpperLimit = 0f;
+		public bool SnapsToEndStops = true;
 		public float LimitWiggleRoom = 0.02f;
 
 		public AudioEvent CloseSounds;
@@ -40,11 +41,12 @@ namespace OpenScripts2
 		private State _state;
 		private State _lastState;
 
-		private float _posFloat;
+		private float _currentPositionValue;
 		private Vector3 _origPos;
 
 		private Vector3 _lastHandPlane;
 		private Vector3 _lastHandPos;
+		private Quaternion _lastHandRot;
 
 		private bool _debug = false;
 
@@ -69,7 +71,8 @@ namespace OpenScripts2
 					break;
 			}
 
-			if (MovementMode == Mode.Translation) _lastHandPos = m_handPos;
+			if (MovementMode == Mode.Translation) _lastHandPos = m_handPos; 
+			else if (MovementMode == Mode.Rotation) _lastHandRot = m_handRot;
 		}
 
 		public override void UpdateInteraction(FVRViveHand hand)
@@ -78,7 +81,7 @@ namespace OpenScripts2
             switch (MovementMode)
             {
                 case Mode.Translation:
-					TranslationMode(hand);
+					TranslationMode();
                     break;
                 case Mode.Rotation:
 					RotationMode(hand);
@@ -90,7 +93,7 @@ namespace OpenScripts2
 			_lastHandPos = m_handPos;
         }
 
-		public void TranslationMode(FVRViveHand hand)
+		public void TranslationMode()
         {
 			Vector3 transformedHandPos = Root.InverseTransformPoint(m_handPos);
 			Vector3 lasttransformedHandPos = Root.InverseTransformPoint(_lastHandPos);
@@ -100,31 +103,40 @@ namespace OpenScripts2
 			float deltaValue = deltaPos.GetAxisValue(MovementAxis);
 			float curValue = ObjectToMove.localPosition.GetAxisValue(MovementAxis);
 
-			float nextValue = Mathf.Clamp(curValue + deltaValue, LowerLimit, UpperLimit);
+			_currentPositionValue = Mathf.Clamp(curValue + deltaValue, LowerLimit, UpperLimit);
+
+			if (SnapsToEndStops && Mathf.Abs(_currentPositionValue - LowerLimit) < LimitWiggleRoom)
+            {
+				_currentPositionValue = LowerLimit;
+            }
+			else if (SnapsToEndStops && Mathf.Abs(_currentPositionValue - UpperLimit) < LimitWiggleRoom)
+            {
+				_currentPositionValue = UpperLimit;
+            }
 			/*
 			Vector3 posVector;
 			switch (MovementAxis)
             {
                 case OpenScripts2_BasePlugin.Axis.X:
 					posVector = GetClosestValidPoint(new Vector3(LowerLimit,0f,0f), new Vector3(UpperLimit, 0f, 0f), Root.InverseTransformPoint(m_handPos));
-					_posFloat = posVector.x;
-					ObjectToMove.localPosition = new Vector3(_posFloat, _origPos.y, _origPos.z);
+					_currentPositionValue = posVector.x;
+					ObjectToMove.localPosition = new Vector3(_currentPositionValue, _origPos.y, _origPos.z);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Y:
 					posVector = GetClosestValidPoint(new Vector3(0f, LowerLimit, 0f), new Vector3(0f, UpperLimit, 0f), Root.InverseTransformPoint(m_handPos));
-					_posFloat = posVector.y;
-					ObjectToMove.localPosition = new Vector3(_origPos.x, _posFloat, _origPos.z);
+					_currentPositionValue = posVector.y;
+					ObjectToMove.localPosition = new Vector3(_origPos.x, _currentPositionValue, _origPos.z);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Z:
 					posVector = GetClosestValidPoint(new Vector3(0f, 0f, LowerLimit), new Vector3(0f, 0f, UpperLimit), Root.InverseTransformPoint(m_handPos));
-					_posFloat = posVector.z;
-					ObjectToMove.localPosition = new Vector3(_origPos.x, _origPos.y, _posFloat);
+					_currentPositionValue = posVector.z;
+					ObjectToMove.localPosition = new Vector3(_origPos.x, _origPos.y, _currentPositionValue);
 					break;
             }
 			*/
-			ObjectToMove.ModifyLocalPositionAxisValue(MovementAxis, nextValue);
+			ObjectToMove.ModifyLocalPositionAxisValue(MovementAxis, _currentPositionValue);
 
-            float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
+            float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _currentPositionValue);
 			CheckSound(lerp);
 		}
 
@@ -138,31 +150,187 @@ namespace OpenScripts2
                 case OpenScripts2_BasePlugin.Axis.X:
 					lhs = Vector3.ProjectOnPlane(m_hand.transform.up, -transform.right);
 					rhs = Vector3.ProjectOnPlane(_lastHandPlane, -transform.right);
-					_posFloat = Mathf.Atan2(Vector3.Dot(-transform.right, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
+					_currentPositionValue = Mathf.Atan2(Vector3.Dot(-transform.right, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
 
-					ObjectToMove.localEulerAngles = new Vector3(_posFloat, 0f, 0f);
+					ObjectToMove.localEulerAngles = new Vector3(_currentPositionValue, 0f, 0f);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Y:
 					lhs = Vector3.ProjectOnPlane(m_hand.transform.forward, transform.up);
 					rhs = Vector3.ProjectOnPlane(_lastHandPlane, -transform.up);
-					_posFloat = Mathf.Atan2(Vector3.Dot(-transform.up, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
+					_currentPositionValue = Mathf.Atan2(Vector3.Dot(-transform.up, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
 
-					ObjectToMove.localEulerAngles = new Vector3(0f, _posFloat, 0f);
+					ObjectToMove.localEulerAngles = new Vector3(0f, _currentPositionValue, 0f);
 					break;
                 case OpenScripts2_BasePlugin.Axis.Z:
 					lhs = Vector3.ProjectOnPlane(m_hand.transform.up, -transform.forward);
 					rhs = Vector3.ProjectOnPlane(_lastHandPlane, -transform.forward);
-					_posFloat = Mathf.Atan2(Vector3.Dot(-transform.forward, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
+					_currentPositionValue = Mathf.Atan2(Vector3.Dot(-transform.forward, Vector3.Cross(lhs, rhs)), Vector3.Dot(lhs, rhs)) * 57.29578f;
 
-					ObjectToMove.localEulerAngles = new Vector3(0f, 0f, _posFloat);
+					ObjectToMove.localEulerAngles = new Vector3(0f, 0f, _currentPositionValue);
 					break;
             }
 			_lastHandPlane = lhs;
 
-
-			float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
+			float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _currentPositionValue);
 			CheckSound(lerp);
 
+
+
+		}
+
+		public void RotationModeQuaternion(FVRViveHand hand)
+        {
+			Quaternion curHandRot = m_handRot;
+			Quaternion handRotDelta = curHandRot * Quaternion.Inverse(_lastHandRot);
+
+            handRotDelta.ToAngleAxis(out float rotAngle, out Vector3 rotAxis);
+            if (rotAxis.magnitude == 0 || rotAngle == 0) return;
+
+			if (rotAngle >= 180f) rotAngle -= 180f;
+			else if (rotAngle <= -180f) rotAngle += 180f;
+			rotAxis = Root.InverseTransformDirection(rotAxis);
+
+			float rotAxisProjected = rotAxis.GetAxisValue(MovementAxis);
+
+			if (_debug)
+			{
+				Popcron.Gizmos.Line(ObjectToMove.transform.position, ObjectToMove.transform.position + rotAxis * 0.1f * rotAngle, Color.magenta);
+			}
+			float deltaAngle = rotAxisProjected * rotAngle;
+
+			if (Mathf.Abs(deltaAngle) > 90f)
+			{
+				Debug.Log("DeltaAngle: " + deltaAngle);
+			}
+			/*
+			if (_currentPositionValue + deltaAngle > UpperLimit) deltaAngle = UpperLimit - _currentPositionValue;
+			else if (_currentPositionValue + deltaAngle < LowerLimit) deltaAngle = LowerLimit + _currentPositionValue;
+
+			
+			switch (MovementAxis)
+			{
+				case Axis.X:
+					ObjectToMove.Rotate(new Vector3(deltaAngle, 0, 0));
+					break;
+				case Axis.Y:
+					ObjectToMove.Rotate(new Vector3(0, deltaAngle, 0));
+					break;
+				case Axis.Z:
+					ObjectToMove.Rotate(new Vector3(0, 0, deltaAngle));
+					break;
+				default:
+					break;
+			}
+			*/
+
+
+			if (deltaAngle > 0)
+			{
+				Quaternion upperLimit;
+				switch (MovementAxis)
+				{
+					case OpenScripts2_BasePlugin.Axis.X:
+						upperLimit = Quaternion.Euler(new Vector3(UpperLimit, 0, 0));
+						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, upperLimit, deltaAngle);
+						break;
+					case OpenScripts2_BasePlugin.Axis.Y:
+						upperLimit = Quaternion.Euler(new Vector3(0, UpperLimit, 0));
+						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, upperLimit, deltaAngle);
+						break;
+					case OpenScripts2_BasePlugin.Axis.Z:
+						upperLimit = Quaternion.Euler(new Vector3(0, 0, UpperLimit));
+						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, upperLimit, deltaAngle);
+						break;
+					default:
+						break;
+				}
+			}
+			else
+			{
+				Quaternion lowerLimit;
+				switch (MovementAxis)
+				{
+					case OpenScripts2_BasePlugin.Axis.X:
+						lowerLimit = Quaternion.Euler(new Vector3(LowerLimit, 0, 0));
+						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, lowerLimit, deltaAngle);
+						break;
+					case OpenScripts2_BasePlugin.Axis.Y:
+						lowerLimit = Quaternion.Euler(new Vector3(0, LowerLimit, 0));
+						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, lowerLimit, deltaAngle);
+						break;
+					case OpenScripts2_BasePlugin.Axis.Z:
+						lowerLimit = Quaternion.Euler(new Vector3(0, 0, LowerLimit));
+						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, lowerLimit, deltaAngle);
+						break;
+					default:
+						break;
+				}
+			}
+
+			if (_debug)
+			{
+				Popcron.Gizmos.Line(hand.transform.position, hand.transform.position + hand.transform.forward * 0.1f, Color.blue);
+				Popcron.Gizmos.Line(hand.transform.position, hand.transform.position + hand.transform.up * 0.1f, Color.green);
+				Popcron.Gizmos.Line(hand.transform.position, hand.transform.position + hand.transform.right * 0.1f, Color.red);
+				/*
+				Popcron.Gizmos.Line(hand.transform.position, base.transform.position + lhs * 0.1f, Color.cyan);
+				Popcron.Gizmos.Line(hand.transform.position, base.transform.position + rhs * 0.1f, Color.yellow);
+				Popcron.Gizmos.Line(hand.transform.position, base.transform.position + Vector3.Cross(lhs, rhs) * 0.1f, Color.magenta);
+				*/
+
+			}
+			_currentPositionValue += deltaAngle;
+
+			if (Mathf.Abs(_currentPositionValue - UpperLimit) <= LimitWiggleRoom)
+			{
+				_currentPositionValue = UpperLimit;
+				Quaternion limitRot;
+				limitRot = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(UpperLimit, MovementAxis);
+
+				//switch (MovementAxis)
+				//{
+				//	case OpenScripts2_BasePlugin.Axis.X:
+				//		limitRot = Quaternion.Euler(UpperLimit, 0, 0);
+				//		break;
+				//	case OpenScripts2_BasePlugin.Axis.Y:
+				//		limitRot = Quaternion.Euler(0, UpperLimit, 0);
+				//		break;
+				//	case OpenScripts2_BasePlugin.Axis.Z:
+				//		limitRot = Quaternion.Euler(0, 0, UpperLimit);
+				//		break;
+				//	default:
+				//		limitRot = Quaternion.identity;
+				//		break;
+				//}
+
+				ObjectToMove.localRotation = limitRot;
+			}
+			else if (Mathf.Abs(_currentPositionValue - LowerLimit) <= LimitWiggleRoom)
+			{
+				_currentPositionValue = LowerLimit;
+				Quaternion limitRot;
+				limitRot = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(LowerLimit,MovementAxis);
+
+                //switch (MovementAxis)
+                //{
+                //	case OpenScripts2_BasePlugin.Axis.X:
+                //		limitRot = Quaternion.Euler(LowerLimit, 0, 0);
+                //		break;
+                //	case OpenScripts2_BasePlugin.Axis.Y:
+                //		limitRot = Quaternion.Euler(0, LowerLimit, 0);
+                //		break;
+                //	case OpenScripts2_BasePlugin.Axis.Z:
+                //		limitRot = Quaternion.Euler(0, 0, LowerLimit);
+                //		break;
+                //	default:
+                //		limitRot = Quaternion.identity;
+                //		break;
+                //}
+
+                ObjectToMove.localRotation = limitRot;
+            }
+            float lerp = Mathf.InverseLerp(this.LowerLimit, this.UpperLimit, _currentPositionValue);
+			CheckSound(lerp);
 		}
 
 		private void FoldingMode(FVRViveHand hand)
@@ -175,17 +343,17 @@ namespace OpenScripts2
 				case OpenScripts2_BasePlugin.Axis.X:
 					lhs = -Root.transform.forward;
 					vector = Vector3.ProjectOnPlane(vector, Root.right).normalized;
-					_posFloat = Mathf.Atan2(Vector3.Dot(Root.right, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
+					_currentPositionValue = Mathf.Atan2(Vector3.Dot(Root.right, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
 					break;
 				case OpenScripts2_BasePlugin.Axis.Y:
 					lhs = -Root.transform.forward;
 					vector = Vector3.ProjectOnPlane(vector, Root.up).normalized;
-					_posFloat = Mathf.Atan2(Vector3.Dot(Root.up, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
+					_currentPositionValue = Mathf.Atan2(Vector3.Dot(Root.up, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
 					break;
 				case OpenScripts2_BasePlugin.Axis.Z:
 					lhs = Root.transform.up;
 					vector = Vector3.ProjectOnPlane(vector, Root.forward).normalized;
-					_posFloat = Mathf.Atan2(Vector3.Dot(Root.forward, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
+					_currentPositionValue = Mathf.Atan2(Vector3.Dot(Root.forward, Vector3.Cross(lhs, vector)), Vector3.Dot(lhs, vector)) * 57.29578f;
 					break;
 				default:
 					break;
@@ -199,32 +367,19 @@ namespace OpenScripts2
 				Popcron.Gizmos.Line(Root.position, Vector3.Cross(lhs, vector), Color.blue);
 			}
 
-			if (Mathf.Abs(_posFloat - LowerLimit) < 5f)
+			if (Mathf.Abs(_currentPositionValue - LowerLimit) < 5f)
 			{
-				_posFloat = LowerLimit;
+				_currentPositionValue = LowerLimit;
 			}
-			if (Mathf.Abs(_posFloat - UpperLimit) < 5f)
+			if (Mathf.Abs(_currentPositionValue - UpperLimit) < 5f)
 			{
-				_posFloat = UpperLimit;
+				_currentPositionValue = UpperLimit;
 			}
-			if (_posFloat >= LowerLimit && _posFloat <= UpperLimit)
+			if (_currentPositionValue >= LowerLimit && _currentPositionValue <= UpperLimit)
 			{
-				switch (MovementAxis)
-				{
-					case OpenScripts2_BasePlugin.Axis.X:
-						ObjectToMove.localEulerAngles = new Vector3(_posFloat, 0f, 0f);
-						break;
-					case OpenScripts2_BasePlugin.Axis.Y:
-						ObjectToMove.localEulerAngles = new Vector3(0f, _posFloat, 0f);
-						break;
-					case OpenScripts2_BasePlugin.Axis.Z:
-						ObjectToMove.localEulerAngles = new Vector3(0f, 0f, _posFloat);
-						break;
-					default:
-						break;
-				}
+				ObjectToMove.localRotation = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(_currentPositionValue, MovementAxis);
 
-				float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _posFloat);
+				float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _currentPositionValue);
 				CheckSound(lerp);
 			}
 		}

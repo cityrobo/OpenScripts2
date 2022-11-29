@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace OpenScripts2
@@ -16,8 +17,19 @@ namespace OpenScripts2
         public float ChargeTime = 1f;
         [Tooltip("If checked, every shot will be charged, even in automatic fire. Else only the first shot will be delayed.")]
         public bool ChargesUpEveryShot = false;
+        [Tooltip("If checked, it will not charge on empty and just drop the hammer normally.")]
+        public bool StopsOnEmpty = false;
 
         public AudioEvent ChargingSounds;
+
+        public VisualModifier[] VisualModifiers;
+
+        public float MinMuzzleVelocityMultiplier = 1f;
+        public float MaxMuzzleVelocityMultiplier = 2f;
+
+        public bool ChangesRoundClass = false;
+        public FireArmRoundClass FullChargeRoundClass;
+        
         //public AudioEvent ChargingAbortSounds;
 
         private bool _isHooked = false;
@@ -102,28 +114,48 @@ namespace OpenScripts2
                 }
         }
 
+        public void Update()
+        {
+            foreach (VisualModifier modifier in VisualModifiers)
+            {
+                modifier.UpdateVisualEffects(_timeCharged / ChargeTime);
+            }
+        }
+
         // ClosedBoltWeapon Hooks and Coroutine
         private void UnhookClosedBolt()
         {
             On.FistVR.ClosedBoltWeapon.DropHammer -= ClosedBoltWeapon_DropHammer;
             On.FistVR.ClosedBoltWeapon.FVRUpdate -= ClosedBoltWeapon_FVRUpdate;
+            On.FistVR.ClosedBoltWeapon.Fire -= ClosedBoltWeapon_Fire;
         }
         private void HookClosedBolt()
         {
             On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
             On.FistVR.ClosedBoltWeapon.FVRUpdate += ClosedBoltWeapon_FVRUpdate;
+            On.FistVR.ClosedBoltWeapon.Fire += ClosedBoltWeapon_Fire;
         }
 
         private void ClosedBoltWeapon_FVRUpdate(On.FistVR.ClosedBoltWeapon.orig_FVRUpdate orig, ClosedBoltWeapon self)
         {
             orig(self);
-            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold)) _isAutomaticFire = false;
+            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
         }
 
         private void ClosedBoltWeapon_DropHammer(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
-            if (!_isCharging && !_isAutomaticFire && self == FireArm) StartCoroutine(HammerDropClosedBolt(orig, self));
-            else if (_isAutomaticFire || self != FireArm) orig(self);
+            if (self == FireArm && !_isCharging && !_isAutomaticFire && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(HammerDropClosedBolt(orig, self));
+            else if (self == FireArm && !_isCharging && _isAutomaticFire)
+            {
+                orig(self);
+                if (self.FireSelector_Modes[self.m_fireSelectorMode].ModeType == ClosedBoltWeapon.FireSelectorModeType.Burst && self.m_CamBurst <= 0) _timeCharged = 0f;
+            }
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
+            else if (self != FireArm) orig(self);
         }
         private IEnumerator HammerDropClosedBolt(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
@@ -139,25 +171,30 @@ namespace OpenScripts2
             _isCharging = false;
             ClosedBoltWeapon.FireSelectorModeType modeType = self.FireSelector_Modes[self.m_fireSelectorMode].ModeType;
             if (!ChargesUpEveryShot && modeType != ClosedBoltWeapon.FireSelectorModeType.Single) _isAutomaticFire = true;
-            if (_timeCharged >= ChargeTime) orig(self);
-            else
-            {
-                //SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
-                On.FistVR.ClosedBoltWeapon.Fire += ClosedBoltWeapon_Fire;
-                orig(self);
-                On.FistVR.ClosedBoltWeapon.Fire -= ClosedBoltWeapon_Fire;
-            }
+
+            orig(self);
+
+            if (self.FireSelector_Modes[self.m_fireSelectorMode].ModeType == ClosedBoltWeapon.FireSelectorModeType.Single) _timeCharged = 0f;
         }
 
         private bool ClosedBoltWeapon_Fire(On.FistVR.ClosedBoltWeapon.orig_Fire orig, ClosedBoltWeapon self)
         {
             if (FireArm == self)
             {
+                if (ChangesRoundClass && _timeCharged >= ChargeTime)
+                {
+                    if (self.Chamber != null && self.Chamber.m_round != null && self.Chamber.m_round.RoundClass != FullChargeRoundClass)
+                    {
+                        self.Chamber.m_round = AM.GetRoundSelfPrefab(self.Chamber.m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                        self.Chamber.UpdateProxyDisplay();
+                    }
+                }
+
                 if (!self.Chamber.Fire()) return false;
                 self.m_timeSinceFiredShot = 0f;
-                float velMult = 1f;
+                float velMult;
                 if (self.UsesStickyDetonation) velMult = 1f + Mathf.Lerp(0f, self.StickyMaxMultBonus, self.m_stickyChargeUp);
-                else velMult = _timeCharged / ChargeTime;
+                else velMult = Mathf.Lerp(MinMuzzleVelocityMultiplier,MaxMuzzleVelocityMultiplier,_timeCharged / ChargeTime);
                 self.Fire(self.Chamber, self.GetMuzzle(), true, velMult, -1f);
                 bool twoHandStabilized = self.IsTwoHandStabilized();
                 bool foregripStabilized = self.AltGrip != null;
@@ -194,22 +231,30 @@ namespace OpenScripts2
         {
             On.FistVR.OpenBoltReceiver.ReleaseSeer -= OpenBoltReceiver_ReleaseSeer;
             On.FistVR.OpenBoltReceiver.FVRUpdate -= OpenBoltReceiver_FVRUpdate;
+            On.FistVR.OpenBoltReceiver.Fire -= OpenBoltReceiver_Fire;
         }
         private void HookOpenBolt()
         {
             On.FistVR.OpenBoltReceiver.ReleaseSeer += OpenBoltReceiver_ReleaseSeer;
             On.FistVR.OpenBoltReceiver.FVRUpdate += OpenBoltReceiver_FVRUpdate;
+            On.FistVR.OpenBoltReceiver.Fire += OpenBoltReceiver_Fire;
         }
 
         private void OpenBoltReceiver_FVRUpdate(On.FistVR.OpenBoltReceiver.orig_FVRUpdate orig, OpenBoltReceiver self)
         {
             orig(self);
-            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold)) _isAutomaticFire = false;
+            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
         }
 
         private void OpenBoltReceiver_ReleaseSeer(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
         {
-            if (!_isCharging && !_isAutomaticFire && self == FireArm) StartCoroutine(SeerReleaseOpenBolt(orig, self));
+            if (self == FireArm && !_isCharging && !_isAutomaticFire && (!StopsOnEmpty || (StopsOnEmpty && FireArm.Magazine != null && FireArm.Magazine.HasARound()))) StartCoroutine(SeerReleaseOpenBolt(orig, self));
+            else if (self == FireArm && !_isCharging && _isAutomaticFire) orig(self);
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && (FireArm.Magazine == null || (FireArm.Magazine != null && !FireArm.Magazine.HasARound()))) orig(self);
             else if (self != FireArm) orig(self);
         }
         private IEnumerator SeerReleaseOpenBolt(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
@@ -226,23 +271,28 @@ namespace OpenScripts2
             _isCharging = false;
             OpenBoltReceiver.FireSelectorModeType modeType = self.FireSelector_Modes[self.m_fireSelectorMode].ModeType;
             if (!ChargesUpEveryShot && modeType != OpenBoltReceiver.FireSelectorModeType.Single) _isAutomaticFire = true;
-            if (_timeCharged >= ChargeTime) orig(self);
-            else
-            {
-                // SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
-                On.FistVR.OpenBoltReceiver.Fire += OpenBoltReceiver_Fire;
-                orig(self);
-                On.FistVR.OpenBoltReceiver.Fire -= OpenBoltReceiver_Fire;
-            }
+
+            orig(self);
+
+            if (self.FireSelector_Modes[self.m_fireSelectorMode].ModeType == OpenBoltReceiver.FireSelectorModeType.Single) _timeCharged = 0f;
         }
 
         private bool OpenBoltReceiver_Fire(On.FistVR.OpenBoltReceiver.orig_Fire orig, OpenBoltReceiver self)
         {
             if (self == FireArm)
             {
+                if (ChangesRoundClass && _timeCharged >= ChargeTime)
+                {
+                    if (self.Chamber != null && self.Chamber.m_round != null && self.Chamber.m_round.RoundClass != FullChargeRoundClass)
+                    {
+                        self.Chamber.m_round = AM.GetRoundSelfPrefab(self.Chamber.m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                        self.Chamber.UpdateProxyDisplay();
+                    }
+                }
+
                 if (!self.Chamber.Fire()) return false;
                 self.m_timeSinceFiredShot = 0f;
-                self.Fire(self.Chamber, self.GetMuzzle(), true, _timeCharged / ChargeTime, -1f);
+                self.Fire(self.Chamber, self.GetMuzzle(), true, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
                 self.FireMuzzleSmoke();
                 if (self.UsesDelinker && self.HasBelt) self.DelinkerSystem.Emit(1);
                 if (self.HasBelt) self.BeltDD.AddJitter();
@@ -259,7 +309,7 @@ namespace OpenScripts2
                         if (self.Magazine.HasARound())
                         {
                             self.Magazine.RemoveRound();
-                            self.Fire(self.Chamber, self.GetMuzzle(), false, 1f, -1f);
+                            self.Fire(self.Chamber, self.GetMuzzle(), false, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
                             flag = true;
                             self.FireMuzzleSmoke();
                             self.Recoil(twoHandStabilized, foregripStabilized, shoulderStabilized, null, 1f);
@@ -284,22 +334,37 @@ namespace OpenScripts2
         {
             On.FistVR.Handgun.ReleaseSeer -= Handgun_ReleaseSeer;
             On.FistVR.Handgun.FVRUpdate -= Handgun_FVRUpdate;
+            On.FistVR.Handgun.Fire -= Handgun_Fire;
         }
         private void HookHandgun()
         {
             On.FistVR.Handgun.ReleaseSeer += Handgun_ReleaseSeer;
             On.FistVR.Handgun.FVRUpdate += Handgun_FVRUpdate;
+            On.FistVR.Handgun.Fire += Handgun_Fire;
         }
 
         private void Handgun_FVRUpdate(On.FistVR.Handgun.orig_FVRUpdate orig, Handgun self)
         {
             orig(self);
-            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold)) _isAutomaticFire = false;
+            if (FireArm == self)
+            {
+                if (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold)
+                {
+                    _isAutomaticFire = false;
+                    _timeCharged = 0f;
+                }
+            }
         }
 
         private void Handgun_ReleaseSeer(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
         {
-            if (!_isCharging && !_isAutomaticFire && self == FireArm) StartCoroutine(SeerReleaseHandgun(orig, self));
+            if (self == FireArm && !_isCharging && !_isAutomaticFire && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(SeerReleaseHandgun(orig, self));
+            else if (self == FireArm && !_isCharging && _isAutomaticFire)
+            {
+                orig(self);
+                if (self.FireSelectorModes[self.m_fireSelectorMode].ModeType == Handgun.FireSelectorModeType.Burst && self.m_CamBurst <= 0) _timeCharged = 0f;
+            }
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
         private IEnumerator SeerReleaseHandgun(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
@@ -316,23 +381,28 @@ namespace OpenScripts2
             _isCharging = false;
             Handgun.FireSelectorModeType modeType = self.FireSelectorModes[self.m_fireSelectorMode].ModeType;
             if (!ChargesUpEveryShot && modeType != Handgun.FireSelectorModeType.Single) _isAutomaticFire = true;
-            if (_timeCharged >= ChargeTime) orig(self);
-            else
-            {
-                //SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
-                On.FistVR.Handgun.Fire += Handgun_Fire;
-                orig(self);
-                On.FistVR.Handgun.Fire -= Handgun_Fire;
-            }
+
+            orig(self);
+
+            if (self.FireSelectorModes[self.m_fireSelectorMode].ModeType == Handgun.FireSelectorModeType.Single) _timeCharged = 0f;
         }
 
         private bool Handgun_Fire(On.FistVR.Handgun.orig_Fire orig, Handgun self)
         {
             if (self == FireArm)
             {
+                if (ChangesRoundClass && _timeCharged >= ChargeTime)
+                {
+                    if (self.Chamber != null && self.Chamber.m_round != null && self.Chamber.m_round.RoundClass != FullChargeRoundClass)
+                    {
+                        self.Chamber.m_round = AM.GetRoundSelfPrefab(self.Chamber.m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                        self.Chamber.UpdateProxyDisplay();
+                    }
+                }
+
                 if (!self.Chamber.Fire()) return false;
                 self.m_timeSinceFiredShot = 0f;
-                self.Fire(self.Chamber, self.GetMuzzle(), true, _timeCharged / ChargeTime, -1f);
+                self.Fire(self.Chamber, self.GetMuzzle(), true, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
                 self.FireMuzzleSmoke();
                 bool twoHandStabilized = self.IsTwoHandStabilized();
                 bool foregripStabilized = self.IsForegripStabilized();
@@ -356,16 +426,19 @@ namespace OpenScripts2
         private void UnhookBoltActionRifle()
         {
             On.FistVR.BoltActionRifle.DropHammer -= BoltActionRifle_DropHammer;
+            On.FistVR.BoltActionRifle.Fire -= BoltActionRifle_Fire;
         }
 
         private void HookBoltActionRifle()
         {
             On.FistVR.BoltActionRifle.DropHammer += BoltActionRifle_DropHammer;
+            On.FistVR.BoltActionRifle.Fire += BoltActionRifle_Fire;
         }
 
         private void BoltActionRifle_DropHammer(On.FistVR.BoltActionRifle.orig_DropHammer orig, BoltActionRifle self)
         {
-            if (!_isCharging && self == FireArm) StartCoroutine(DropHammerBoltAction(orig, self));
+            if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(DropHammerBoltAction(orig, self));
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
 
@@ -381,15 +454,10 @@ namespace OpenScripts2
                 yield return null;
             }
             _isCharging = false;
-            if (_timeCharged >= ChargeTime) orig(self);
-            else
-            {
-                // SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
 
-                On.FistVR.BoltActionRifle.Fire += BoltActionRifle_Fire;
-                orig(self);
-                On.FistVR.BoltActionRifle.Fire -= BoltActionRifle_Fire;
-            }
+            orig(self);
+
+            _timeCharged = 0f;
         }
 
         private bool BoltActionRifle_Fire(On.FistVR.BoltActionRifle.orig_Fire orig, BoltActionRifle self)
@@ -397,11 +465,17 @@ namespace OpenScripts2
             if (self == FireArm)
             {
                 BoltActionRifle.FireSelectorMode fireSelectorMode = self.FireSelector_Modes[self.m_fireSelectorMode];
-                if (!self.Chamber.Fire())
+                if (ChangesRoundClass && _timeCharged >= ChargeTime)
                 {
-                    return false;
+                    if (self.Chamber != null && self.Chamber.m_round != null && self.Chamber.m_round.RoundClass != FullChargeRoundClass)
+                    {
+                        self.Chamber.m_round = AM.GetRoundSelfPrefab(self.Chamber.m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                        self.Chamber.UpdateProxyDisplay();
+                    }
                 }
-                self.Fire(self.Chamber, self.GetMuzzle(), true, _timeCharged / ChargeTime, -1f);
+
+                if (!self.Chamber.Fire()) return false;
+                self.Fire(self.Chamber, self.GetMuzzle(), true, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
                 self.FireMuzzleSmoke();
                 bool twoHandStabilized = self.IsTwoHandStabilized();
                 bool foregripStabilized = self.IsForegripStabilized();
@@ -427,16 +501,19 @@ namespace OpenScripts2
         private void UnhookTubeFedShotgun()
         {
             On.FistVR.TubeFedShotgun.ReleaseHammer -= TubeFedShotgun_ReleaseHammer;
+            On.FistVR.TubeFedShotgun.Fire -= TubeFedShotgun_Fire;
         }
 
         private void HookTubeFedShotgun()
         {
             On.FistVR.TubeFedShotgun.ReleaseHammer += TubeFedShotgun_ReleaseHammer;
+            On.FistVR.TubeFedShotgun.Fire += TubeFedShotgun_Fire;
         }
 
         private void TubeFedShotgun_ReleaseHammer(On.FistVR.TubeFedShotgun.orig_ReleaseHammer orig, TubeFedShotgun self)
         {
-            if (!_isCharging && self == FireArm) StartCoroutine(ReleaseHammerTubeFed(orig, self));
+            if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(ReleaseHammerTubeFed(orig, self));
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
 
@@ -452,23 +529,27 @@ namespace OpenScripts2
                 yield return null;
             }
             _isCharging = false;
-            if (_timeCharged >= ChargeTime) orig(self);
-            else
-            {
-                //SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
 
-                On.FistVR.TubeFedShotgun.Fire += TubeFedShotgun_Fire;
-                orig(self);
-                On.FistVR.TubeFedShotgun.Fire -= TubeFedShotgun_Fire;
-            }
+            orig(self);
+
+            _timeCharged = 0f;
         }
 
         private bool TubeFedShotgun_Fire(On.FistVR.TubeFedShotgun.orig_Fire orig, TubeFedShotgun self)
         {
             if (self == FireArm)
             {
+                if (ChangesRoundClass && _timeCharged >= ChargeTime)
+                {
+                    if (self.Chamber != null && self.Chamber.m_round != null && self.Chamber.m_round.RoundClass != FullChargeRoundClass)
+                    {
+                        self.Chamber.m_round = AM.GetRoundSelfPrefab(self.Chamber.m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                        self.Chamber.UpdateProxyDisplay();
+                    }
+                }
+
                 if (!self.Chamber.Fire()) return false;
-                self.Fire(self.Chamber, self.GetMuzzle(), true, _timeCharged / ChargeTime, -1f);
+                self.Fire(self.Chamber, self.GetMuzzle(), true, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
                 self.FireMuzzleSmoke();
                 bool twoHandStabilized = self.IsTwoHandStabilized();
                 bool foregripStabilized = self.IsForegripStabilized();
@@ -496,7 +577,8 @@ namespace OpenScripts2
 
         private void LeverActionFirearm_Fire(On.FistVR.LeverActionFirearm.orig_Fire orig, LeverActionFirearm self)
         {
-            if (!_isCharging && self == FireArm) StartCoroutine(FireLeverAction(orig, self));
+            if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(FireLeverAction(orig, self));
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
 
@@ -512,13 +594,10 @@ namespace OpenScripts2
                 yield return null;
             }
             _isCharging = false;
-            if (_timeCharged >= ChargeTime) orig(self);
-            else
-            {
-                // SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
 
-                ChargedLeverActionFire(self);
-            }
+            ChargedLeverActionFire(self);
+
+            _timeCharged = 0f;
         }
 
         private void ChargedLeverActionFire(LeverActionFirearm self)
@@ -534,6 +613,22 @@ namespace OpenScripts2
             self.PlayAudioEvent(FirearmAudioEventType.HammerHit, 1f);
             bool hasFired = false;
             bool firstChamber = true;
+            if (ChangesRoundClass && _timeCharged >= ChargeTime)
+            {
+                if (self.Chamber != null && self.Chamber.m_round != null && self.Chamber.m_round.RoundClass != FullChargeRoundClass)
+                {
+                    self.Chamber.m_round = AM.GetRoundSelfPrefab(self.Chamber.m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                    self.Chamber.UpdateProxyDisplay();
+                }
+            }
+            if (ChangesRoundClass && _timeCharged >= ChargeTime)
+            {
+                if (self.Chamber2 != null && self.Chamber2.m_round != null && self.Chamber2.m_round.RoundClass != FullChargeRoundClass)
+                {
+                    self.Chamber2.m_round = AM.GetRoundSelfPrefab(self.Chamber2.m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                    self.Chamber2.UpdateProxyDisplay();
+                }
+            }
             if (self.Chamber.Fire())
             {
                 hasFired = true;
@@ -548,8 +643,8 @@ namespace OpenScripts2
             }
             if (hasFired)
             {
-                if (firstChamber) self.Fire(self.Chamber, self.GetMuzzle(), true, _timeCharged / ChargeTime, -1f);
-                else self.Fire(self.Chamber2, self.SecondMuzzle, true, _timeCharged / ChargeTime, -1f);
+                if (firstChamber) self.Fire(self.Chamber, self.GetMuzzle(), true, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
+                else self.Fire(self.Chamber2, self.SecondMuzzle, true, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
                 self.FireMuzzleSmoke();
                 bool twoHandStabilized = self.IsTwoHandStabilized();
                 bool foregripStabilized = self.AltGrip != null;
@@ -564,15 +659,18 @@ namespace OpenScripts2
         private void UnhookBreakActionWeapon()
         {
             On.FistVR.BreakActionWeapon.DropHammer -= BreakActionWeapon_DropHammer;
+            On.FistVR.BreakActionWeapon.Fire -= BreakActionWeapon_Fire;
         }
         private void HookBreakActionWeapon()
         {
             On.FistVR.BreakActionWeapon.DropHammer += BreakActionWeapon_DropHammer;
+            On.FistVR.BreakActionWeapon.Fire += BreakActionWeapon_Fire;
         }
 
         private void BreakActionWeapon_DropHammer(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
         {
-            if (!_isCharging && self == FireArm) StartCoroutine(DropHammerBreakAction(orig, self));
+            if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Barrels[self.m_curBarrel].Chamber.IsFull))) StartCoroutine(DropHammerBreakAction(orig, self));
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Barrels[self.m_curBarrel].Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
         private IEnumerator DropHammerBreakAction(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
@@ -587,15 +685,10 @@ namespace OpenScripts2
                 yield return null;
             }
             _isCharging = false;
-            if (_timeCharged >= ChargeTime) orig(self);
-            else
-            {
-                // SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
 
-                On.FistVR.BreakActionWeapon.Fire += BreakActionWeapon_Fire;
-                orig(self);
-                On.FistVR.BreakActionWeapon.Fire -= BreakActionWeapon_Fire;
-            }
+            orig(self);
+
+            _timeCharged = 0f;
         }
 
         private bool BreakActionWeapon_Fire(On.FistVR.BreakActionWeapon.orig_Fire orig, BreakActionWeapon self, int b, bool FireAllBarrels, int index)
@@ -603,8 +696,16 @@ namespace OpenScripts2
             if (self == FireArm)
             {
                 self.m_curBarrel = b;
+                if (ChangesRoundClass && _timeCharged >= ChargeTime)
+                {
+                    if (self.Barrels[b].Chamber != null && self.Barrels[b].Chamber.m_round != null && self.Barrels[b].Chamber.m_round.RoundClass != FullChargeRoundClass)
+                    {
+                        self.Barrels[b].Chamber.m_round = AM.GetRoundSelfPrefab(self.Barrels[b].Chamber.m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                        self.Barrels[b].Chamber.UpdateProxyDisplay();
+                    }
+                }
                 if (!self.Barrels[b].Chamber.Fire()) return false;
-                self.Fire(self.Barrels[b].Chamber, self.GetMuzzle(), true, _timeCharged / ChargeTime, -1f);
+                self.Fire(self.Barrels[b].Chamber, self.GetMuzzle(), true, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
                 self.FireMuzzleSmoke(self.Barrels[b].MuzzleIndexBarrelFire);
                 self.FireMuzzleSmoke(self.Barrels[b].MuzzleIndexBarrelSmoke);
                 self.AddGas(self.Barrels[b].GasOutIndexBarrel);

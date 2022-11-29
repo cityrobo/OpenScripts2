@@ -9,7 +9,6 @@ namespace OpenScripts2
 		public FVRFireArmAttachment[] Attachments;
 		public FVRFireArmAttachmentMount AttachmentMount;
 
-#if !DEBUG
 		public void Start()
 		{
 			StartCoroutine("AttachAllToMount");
@@ -28,6 +27,5 @@ namespace OpenScripts2
 				yield return null;
 			}
         }
-#endif
 	}
 }

@@ -32,7 +32,7 @@ namespace OpenScripts2
 
         static AttachmentMountPicatinnyRail()
         {
-            MethodInfo _methodInfo = typeof(FVRPhysicalObject).GetMethod(nameof(FVRPhysicalObject.GetPosTarget), BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo _methodInfo = typeof(FVRPhysicalObject).GetMethod(nameof(FVRPhysicalObject.GetPosTarget), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             _methodPointer = _methodInfo.MethodHandle.GetFunctionPointer();
 
 #if !DEBUG

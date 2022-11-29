@@ -112,6 +112,97 @@ namespace OpenScripts2
             return Vector3.Dot(AV, AB) / Vector3.Dot(AB, AB);
         }
     }
+
+    static class QuaternionUtils
+    {
+
+    }
+
+    static class CurveCalculator
+    {
+        public static AnimationCurve GetCurve(float Exponent, float StartsAt = 0f, bool InvertX = false, bool InvertY = false, int NumberOfKeys = 10)
+        {
+            List<Keyframe> keys = new List<Keyframe>();
+            float tangent;
+            float step = 1f / NumberOfKeys;
+            Keyframe key;
+
+            float X = 0f;
+            float Y = Mathf.Pow(X, Exponent);
+
+            int j = 0;
+
+            if (StartsAt != 0f)
+            {
+                if (InvertX)
+                {
+                    X = 1f - X;
+                }
+                if (InvertY)
+                {
+                    Y = 1f - Y;
+                }
+                key = new Keyframe(X, Y, 0, 0);
+                keys.Add(key);
+
+                X = 0;
+                tangent = GetTangentAt(X,Exponent) / (1f - StartsAt);
+                if (tangent == float.PositiveInfinity) tangent = Mathf.Pow(0f + step, Exponent) / (step / 1.5f);
+                Y = Mathf.Pow(X, Exponent);
+                X = Mathf.Lerp(StartsAt, 1f, X);
+                if (InvertY)
+                {
+                    Y = 1f - Y;
+                    tangent = -tangent;
+                }
+                if (InvertX)
+                {
+                    X = 1f - X;
+                    tangent = -tangent;
+
+                    key = new Keyframe(X, Y, tangent, 0);
+                    key.tangentMode = 1;
+                }
+                else
+                {
+                    key = new Keyframe(X, Y, 0, tangent);
+                    key.tangentMode = 1;
+                }
+
+                keys.Add(key);
+
+                j = 1;
+            }
+            for (int i = j; i <= NumberOfKeys; i++)
+            {
+                X = i * step;
+                tangent = GetTangentAt(X, Exponent) / (1f - StartsAt);
+                if (tangent == float.PositiveInfinity) tangent = Mathf.Pow(X + step, Exponent) / (step / 1.5f);
+
+                Y = Mathf.Pow(X, Exponent);
+                X = Mathf.Lerp(StartsAt, 1f, X);
+                if (InvertX)
+                {
+                    X = 1f - X;
+                    tangent = -tangent;
+                }
+                if (InvertY)
+                {
+                    Y = 1f - Y;
+                    tangent = -tangent;
+                }
+
+                key = new Keyframe(X, Y, tangent, tangent);
+                keys.Add(key);
+            }
+
+            return new AnimationCurve(keys.ToArray());
+        }
+        public static float GetTangentAt(float X, float Exponent)
+        {
+            return Exponent * Mathf.Pow(X, Exponent - 1f);
+        }
+    }
 }
 
 namespace UnityEngine
@@ -296,9 +387,44 @@ namespace UnityEngine
             }
         }
 
+        public static float GetLocalPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis)
+        {
+            switch (axis)
+            {
+                case OpenScripts2_BasePlugin.Axis.X:
+                    return transform.localPosition.x;
+                case OpenScripts2_BasePlugin.Axis.Y:
+                    return transform.localPosition.x;
+                case OpenScripts2_BasePlugin.Axis.Z:
+                    return transform.localPosition.z;
+                default:
+                    return 0f;
+            }
+        }
+
+        public static float GetLocalScaleAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis)
+        {
+            switch (axis)
+            {
+                case OpenScripts2_BasePlugin.Axis.X:
+                    return transform.localScale.x;
+                case OpenScripts2_BasePlugin.Axis.Y:
+                    return transform.localScale.x;
+                case OpenScripts2_BasePlugin.Axis.Z:
+                    return transform.localScale.z;
+                default:
+                    return 0f;
+            }
+        }
+
         public static float GetAxisValue(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis)
         {
             return vector[(int)axis];
+        }
+
+        public static float GetAxisValue(this Quaternion quaternion, OpenScripts2_BasePlugin.Axis axis)
+        {
+            return quaternion.eulerAngles[(int)axis];
         }
 
         public static Vector3 ModifyAxisValue(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, float value)
@@ -306,33 +432,66 @@ namespace UnityEngine
             vector[(int)axis] = value;
             return vector;
         }
+        public static void ModifyLocalTransform(this Transform transform, OpenScripts2_BasePlugin.TransformType type, OpenScripts2_BasePlugin.Axis axis, float value)
+        {
+            switch (type)
+            {
+                case OpenScripts2_BasePlugin.TransformType.Movement:
+                    transform.ModifyLocalPositionAxisValue(axis, value);
+                    break;
+                case OpenScripts2_BasePlugin.TransformType.Rotation:
+                    transform.ModifyLocalRotationAxisValue(axis, value);
+                    break;
+                case OpenScripts2_BasePlugin.TransformType.Scale:
+                    transform.ModifyLocalScaleAxisValue(axis, value);
+                    break;
+            }
+        }
 
         public static void ModifyPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newPos = transform.position;
             newPos[(int)axis] = value;
-            transform.localPosition = newPos;
+            if (transform.position != newPos) transform.position = newPos;
         }
 
         public static void ModifyLocalPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newPos = transform.localPosition;
             newPos[(int)axis] = value;
-            transform.localPosition = newPos;
+            if (transform.localPosition != newPos) transform.localPosition = newPos;
         }
 
         public static void ModifyRotationAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newRot = transform.rotation.eulerAngles;
             newRot[(int)axis] = value;
-            transform.rotation = Quaternion.Euler(newRot);
+            if (axis == OpenScripts2_BasePlugin.Axis.X && newRot.y >= 179f && newRot.z >= 179f)
+            {
+                newRot.y -= 180f;
+                newRot.z -= 180f;
+            }
+            if (transform.rotation != Quaternion.Euler(newRot)) transform.rotation = Quaternion.Euler(newRot);
         }
 
         public static void ModifyLocalRotationAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newRot = transform.localRotation.eulerAngles;
             newRot[(int)axis] = value;
-            transform.localRotation = Quaternion.Euler(newRot);
+            if (axis == OpenScripts2_BasePlugin.Axis.X && newRot.y >= 179f && newRot.z >= 179f)
+            {
+                newRot.y -= 180f;
+                newRot.z -= 180f;
+            }
+            //Debug.Log(newRot);
+            if (transform.localRotation != Quaternion.Euler(newRot)) transform.localRotation = Quaternion.Euler(newRot);
+        }
+
+        public static void ModifyLocalScaleAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
+        {
+            Vector3 newPos = transform.localScale;
+            newPos[(int)axis] = value;
+            if (transform.localScale != newPos) transform.localScale = newPos;
         }
 
         public static Quaternion TransformRotation(this Transform transform, Quaternion rot)

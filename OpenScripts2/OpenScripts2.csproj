@@ -52,7 +52,7 @@
     </Reference>
     <Reference Include="MMHOOK_Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\MMHOOK_Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\H3VR\profiles\Creating Mods Stratum\BepInEx\plugins\MMHOOK\MMHOOK_Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil, Version=0.10.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.dll</HintPath>
@@ -98,6 +98,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\FirearmControl\FireArmStartBurstFix.cs" />
     <Compile Include="src\FirearmControl\AdditionalBarrel.cs" />
     <Compile Include="src\AttachmentScripts\AttachmentPicatinnyRailForwardStop.cs" />
     <Compile Include="src\AttachmentScripts\AttachmentMountPicatinnyRail.cs" />
@@ -152,7 +153,10 @@
     <Compile Include="src\SmartWeapons\SmartWeapon.cs" />
     <Compile Include="src\SmartWeapons\TopAttackProjectile.cs" />
     <Compile Include="src\SmartWeapons\TopAttackSystem.cs" />
+    <Compile Include="src\VisualModification\ManipulateTransforms.cs" />
+    <Compile Include="src\VisualModification\VisualModifier.cs" />
     <Compile Include="src\VisualModification\FirearmHeatingEffect.cs" />
+    <Compile Include="src\VisualModification\VisualModifierEditor.cs" />
     <Compile Include="src\VisualModification\FirearmHeatingEffectEditor.cs" />
     <Compile Include="src\VisualModification\FirearmHeatingEffect_FirearmCore.cs" />
     <Compile Include="src\VisualModification\LongRecoilSystem_ClosedBolt.cs" />

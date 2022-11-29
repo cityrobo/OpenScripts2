@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace OpenScripts2
@@ -16,9 +17,14 @@ namespace OpenScripts2
         public float ChargeTime = 1f;
         [Tooltip("If checked, every shot will be charged, even in automatic fire. Else only the first shot will be delayed.")]
         public bool ChargesUpEveryShot = false;
+        [Tooltip("If checked, it will not charge on empty and just drop the hammer normally.")]
+        [FormerlySerializedAs("StopsOnEmptyMag")]
+        public bool StopsOnEmpty = false;
 
         public AudioEvent ChargingSounds;
         public AudioEvent ChargingAbortSounds;
+
+        public VisualModifier[] VisualModifiers;
 
         private bool _isHooked = false;
         private float _timeCharged = 0f;
@@ -101,6 +107,13 @@ namespace OpenScripts2
                         break;
                 }
         }
+        public void Update()
+        {
+            foreach (VisualModifier modifier in VisualModifiers)
+            {
+                modifier.UpdateVisualEffects(_timeCharged / ChargeTime);
+            }
+        }
 
         // ClosedBoltWeapon Hooks and Coroutine
         private void UnhookClosedBolt()
@@ -117,13 +130,23 @@ namespace OpenScripts2
         private void ClosedBoltWeapon_FVRUpdate(On.FistVR.ClosedBoltWeapon.orig_FVRUpdate orig, ClosedBoltWeapon self)
         {
             orig(self);
-            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold)) _isAutomaticFire = false;
+            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
         }
 
         private void ClosedBoltWeapon_DropHammer(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
-            if (!_isCharging && !_isAutomaticFire && self == FireArm) StartCoroutine(HammerDropClosedBolt(orig, self));
-            else if (_isAutomaticFire || self != FireArm) orig(self);
+            if (self == FireArm && !_isCharging && !_isAutomaticFire && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(HammerDropClosedBolt(orig, self));
+            else if (self == FireArm && !_isCharging && _isAutomaticFire)
+            {
+                orig(self);
+                if (self.FireSelector_Modes[self.m_fireSelectorMode].ModeType == ClosedBoltWeapon.FireSelectorModeType.Burst && self.m_CamBurst <= 0) _timeCharged = 0f;
+            }
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
+            else if (self != FireArm) orig(self);
         }
         private IEnumerator HammerDropClosedBolt(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
@@ -141,6 +164,8 @@ namespace OpenScripts2
             if (!ChargesUpEveryShot && modeType != ClosedBoltWeapon.FireSelectorModeType.Single) _isAutomaticFire = true;
             if (_timeCharged >= ChargeTime) orig(self);
             else SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
+
+            if (self.FireSelector_Modes[self.m_fireSelectorMode].ModeType == ClosedBoltWeapon.FireSelectorModeType.Single) _timeCharged = 0f;
         }
 
         // OpenBoltReceiver Hooks and Coroutine
@@ -158,12 +183,18 @@ namespace OpenScripts2
         private void OpenBoltReceiver_FVRUpdate(On.FistVR.OpenBoltReceiver.orig_FVRUpdate orig, OpenBoltReceiver self)
         {
             orig(self);
-            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold)) _isAutomaticFire = false;
+            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
         }
 
         private void OpenBoltReceiver_ReleaseSeer(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
         {
-            if (!_isCharging && !_isAutomaticFire && self == FireArm) StartCoroutine(SeerReleaseOpenBolt(orig, self));
+            if (self == FireArm && !_isCharging && !_isAutomaticFire && (!StopsOnEmpty || (StopsOnEmpty && FireArm.Magazine != null && FireArm.Magazine.HasARound()))) StartCoroutine(SeerReleaseOpenBolt(orig, self));
+            else if (self == FireArm && !_isCharging && _isAutomaticFire ) orig(self);
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && (FireArm.Magazine == null || (FireArm.Magazine != null && !FireArm.Magazine.HasARound()))) orig(self);
             else if (self != FireArm) orig(self);
         }
         private IEnumerator SeerReleaseOpenBolt(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
@@ -182,6 +213,8 @@ namespace OpenScripts2
             if (!ChargesUpEveryShot && modeType != OpenBoltReceiver.FireSelectorModeType.Single) _isAutomaticFire = true;
             if (_timeCharged >= ChargeTime) orig(self);
             else SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
+
+            if (self.FireSelector_Modes[self.m_fireSelectorMode].ModeType == OpenBoltReceiver.FireSelectorModeType.Single) _timeCharged = 0f;
         }
 
         // Handgun Hooks and Coroutine
@@ -199,12 +232,22 @@ namespace OpenScripts2
         private void Handgun_FVRUpdate(On.FistVR.Handgun.orig_FVRUpdate orig, Handgun self)
         {
             orig(self);
-            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold)) _isAutomaticFire = false;
+            if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
         }
 
         private void Handgun_ReleaseSeer(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
         {
-            if (!_isCharging && !_isAutomaticFire && self == FireArm) StartCoroutine(SeerReleaseHandgun(orig, self));
+            if (self == FireArm && !_isCharging && !_isAutomaticFire && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(SeerReleaseHandgun(orig, self));
+            else if (self == FireArm && !_isCharging && _isAutomaticFire)
+            {
+                orig(self);
+                if (self.FireSelectorModes[self.m_fireSelectorMode].ModeType == Handgun.FireSelectorModeType.Burst && self.m_CamBurst <= 0) _timeCharged = 0f;
+            }
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
         private IEnumerator SeerReleaseHandgun(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
@@ -223,6 +266,8 @@ namespace OpenScripts2
             if (!ChargesUpEveryShot && modeType != Handgun.FireSelectorModeType.Single) _isAutomaticFire = true;
             if (_timeCharged >= ChargeTime) orig(self);
             else SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
+
+            if (self.FireSelectorModes[self.m_fireSelectorMode].ModeType == Handgun.FireSelectorModeType.Single) _timeCharged = 0f;
         }
 
         // BoltActionRifle Hooks and Coroutine
@@ -238,7 +283,8 @@ namespace OpenScripts2
 
         private void BoltActionRifle_DropHammer(On.FistVR.BoltActionRifle.orig_DropHammer orig, BoltActionRifle self)
         {
-            if (!_isCharging && self == FireArm) StartCoroutine(DropHammerBoltAction(orig, self));
+            if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(DropHammerBoltAction(orig, self));
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
 
@@ -256,6 +302,8 @@ namespace OpenScripts2
             _isCharging = false;
             if (_timeCharged >= ChargeTime) orig(self);
             else SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
+
+            _timeCharged = 0f;
         }
 
         // TubeFedShotgun Hooks and Coroutine
@@ -271,7 +319,8 @@ namespace OpenScripts2
 
         private void TubeFedShotgun_ReleaseHammer(On.FistVR.TubeFedShotgun.orig_ReleaseHammer orig, TubeFedShotgun self)
         {
-            if (!_isCharging && self == FireArm) StartCoroutine(ReleaseHammerTubeFed(orig, self));
+            if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(ReleaseHammerTubeFed(orig, self));
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
 
@@ -289,6 +338,8 @@ namespace OpenScripts2
             _isCharging = false;
             if (_timeCharged >= ChargeTime) orig(self);
             else SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
+
+            _timeCharged = 0f;
         }
 
         // LeverActionFirearm Hooks and Coroutine
@@ -303,7 +354,8 @@ namespace OpenScripts2
 
         private void LeverActionFirearm_Fire(On.FistVR.LeverActionFirearm.orig_Fire orig, LeverActionFirearm self)
         {
-            if (!_isCharging && self == FireArm) StartCoroutine(FireLeverAction(orig, self));
+            if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(FireLeverAction(orig, self));
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
 
@@ -321,6 +373,8 @@ namespace OpenScripts2
             _isCharging = false;
             if (_timeCharged >= ChargeTime) orig(self);
             else SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
+
+            _timeCharged = 0f;
         }
 
         // BreakOpenShotgun Hooks and Coroutine
@@ -335,7 +389,8 @@ namespace OpenScripts2
 
         private void BreakActionWeapon_DropHammer(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
         {
-            if (!_isCharging && self == FireArm) StartCoroutine(DropHammerBreakAction(orig, self));
+            if (self == FireArm &&!_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Barrels[self.m_curBarrel].Chamber.IsFull))) StartCoroutine(DropHammerBreakAction(orig, self));
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Barrels[self.m_curBarrel].Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
         private IEnumerator DropHammerBreakAction(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
@@ -352,6 +407,8 @@ namespace OpenScripts2
             _isCharging = false;
             if (_timeCharged >= ChargeTime) orig(self);
             else SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
+
+            _timeCharged = 0f;
         }
 #endif
     }
