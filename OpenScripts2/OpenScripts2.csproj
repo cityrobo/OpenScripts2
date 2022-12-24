@@ -216,6 +216,6 @@
 if $(ConfigurationName) == Release copy $(TargetDir)OpenScripts2.pdb $(ProjectDir)OpenScripts2.pdb
 if $(ConfigurationName) == Release $(ProjectDir)pdb2mdb.exe $(ProjectDir)OpenScripts2.dll
 
-if $(ConfigurationName) == Debug copy $(TargetPath) $(ProjectDir)MeatKitDLL\$(TargetName).dll</PostBuildEvent>
+if $(ConfigurationName) == Debug copy $(TargetPath) $(ProjectDir)MeatKitDLL\$(TargetName)_MeatKit.dll</PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -29,89 +29,132 @@ namespace OpenScripts2
 
         public bool ChangesRoundClass = false;
         public FireArmRoundClass FullChargeRoundClass;
-        
+
+        public bool ChangesRoundPrefab = false;
+        public GameObject FullChargeRoundPrefab;
+
+        private FVRFireArmRound _fullChargeRound;
+
         //public AudioEvent ChargingAbortSounds;
 
-        private bool _isHooked = false;
         private float _timeCharged = 0f;
         private bool _isCharging = false;
         private bool _isAutomaticFire = false;
 #if !DEBUG
         public void Awake()
         {
-            if (!_isHooked)
-                switch (FireArm)
+            switch (FireArm)
+            {
+                case ClosedBoltWeapon w:
+                    HookClosedBolt();
+                    break;
+                case OpenBoltReceiver w:
+                    HookOpenBolt();
+                    break;
+                case Handgun w:
+                    HookHandgun();
+                    break;
+                case BoltActionRifle w:
+                    HookBoltActionRifle();
+                    break;
+                case TubeFedShotgun w:
+                    HookTubeFedShotgun();
+                    break;
+                case LeverActionFirearm w:
+                    HookLeverActionFirearm();
+                    break;
+                case BreakActionWeapon w:
+                    HookBreakActionWeapon();
+                    break;
+                default:
+                    LogWarning($"Firearm type \"{FireArm.GetType()}\" not supported! Tell me and I'll see about adding it!");
+                    break;
+            }
+            if (ChangesRoundPrefab)
+            {
+                On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
+                try
                 {
-                    case ClosedBoltWeapon w:
-                        HookClosedBolt();
-                        _isHooked = true;
-                        break;
-                    case OpenBoltReceiver w:
-                        HookOpenBolt();
-                        _isHooked = true;
-                        break;
-                    case Handgun w:
-                        HookHandgun();
-                        _isHooked = true;
-                        break;
-                    case BoltActionRifle w:
-                        HookBoltActionRifle();
-                        _isHooked = true;
-                        break;
-                    case TubeFedShotgun w:
-                        HookTubeFedShotgun();
-                        _isHooked = true;
-                        break;
-                    case LeverActionFirearm w:
-                        HookLeverActionFirearm();
-                        _isHooked = true;
-                        break;
-                    case BreakActionWeapon w:
-                        HookBreakActionWeapon();
-                        _isHooked = true;
-                        break;
-                    default:
-                        LogWarning($"Firearm type \"{FireArm.GetType()}\" not supported! Tell me and I'll see about adding it!");
-                        break;
+                    _fullChargeRound = FullChargeRoundPrefab.GetComponent<FVRFireArmRound>();
                 }
+                catch (Exception)
+                {
+                    LogError("No FullChargeRoundPrefab provided but ChangesRoundPrefab set to true!");
+                }
+            }
         }
 
         public void OnDestroy()
         {
-            if (_isHooked)
-                switch (FireArm)
+            switch (FireArm)
+            {
+                case ClosedBoltWeapon w:
+                    UnhookClosedBolt();
+                    break;
+                case OpenBoltReceiver w:
+                    UnhookOpenBolt();
+                    break;
+                case Handgun w:
+                    UnhookHandgun();
+                    break;
+                case BoltActionRifle w:
+                    UnhookBoltActionRifle();
+                    break;
+                case TubeFedShotgun w:
+                    UnhookTubeFedShotgun();
+                    break;
+                case LeverActionFirearm w:
+                    UnhookLeverActionRifle();
+                    break;
+                case BreakActionWeapon w:
+                    UnhookBreakActionWeapon();
+                    break;
+                default:
+                    break;
+            }
+            if (ChangesRoundPrefab)
+            {
+                On.FistVR.FVRFireArm.Fire -= FVRFireArm_Fire;
+            }
+        }
+        private void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
+        {
+            if (self == FireArm && _timeCharged >= ChargeTime && _fullChargeRound != null)
+            {
+                if (doBuzz && self.m_hand != null)
                 {
-                    case ClosedBoltWeapon w:
-                        UnhookClosedBolt();
-                        _isHooked = false;
-                        break;
-                    case OpenBoltReceiver w:
-                        UnhookOpenBolt();
-                        _isHooked = false;
-                        break;
-                    case Handgun w:
-                        UnhookHandgun();
-                        _isHooked = false;
-                        break;
-                    case BoltActionRifle w:
-                        UnhookBoltActionRifle();
-                        _isHooked = false;
-                        break;
-                    case TubeFedShotgun w:
-                        UnhookTubeFedShotgun();
-                        _isHooked = false;
-                        break;
-                    case LeverActionFirearm w:
-                        UnhookLeverActionRifle();
-                        _isHooked = false;
-                        break;
-                    case BreakActionWeapon w:
-                        UnhookBreakActionWeapon();
-                        _isHooked = false;
-                        break;
-                    default:
-                        break;
+                    self.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
+                    if (self.AltGrip != null && self.AltGrip.m_hand != null)
+                    {
+                        self.AltGrip.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
+                    }
                 }
+                GM.CurrentSceneSettings.OnShotFired(self);
+                if (self.IsSuppressed()) GM.CurrentPlayerBody.VisibleEvent(0.1f);
+                else GM.CurrentPlayerBody.VisibleEvent(2f);
+                float chamberVelMult = AM.GetChamberVelMult(chamber.RoundType, Vector3.Distance(chamber.transform.position, muzzle.position));
+                float num = self.GetCombinedFixedDrop(self.AccuracyClass) * 0.0166667f;
+                Vector2 vector = self.GetCombinedFixedDrift(self.AccuracyClass) * 0.0166667f;
+                for (int i = 0; i < _fullChargeRound.NumProjectiles; i++)
+                {
+                    float d = _fullChargeRound.ProjectileSpread + self.m_internalMechanicalMOA + self.GetCombinedMuzzleDeviceAccuracy();
+
+                    if (_fullChargeRound.BallisticProjectilePrefab != null)
+                    {
+                        Vector3 b = muzzle.forward * 0.005f;
+                        GameObject ballisticProjectilePrefab = Instantiate(_fullChargeRound.BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
+                        Vector2 vector2 = (UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle) * 0.33333334f * d;
+                        ballisticProjectilePrefab.transform.Rotate(new Vector3(vector2.x + vector.y + num, vector2.y + vector.x, 0f));
+                        BallisticProjectile component = ballisticProjectilePrefab.GetComponent<BallisticProjectile>();
+                        component.Fire(component.MuzzleVelocityBase * chamber.ChamberVelocityMultiplier * velMult * chamberVelMult, ballisticProjectilePrefab.transform.forward, self, true);
+                        if (rangeOverride > 0f)
+                        {
+                            component.ForceSetMaxDist(rangeOverride);
+                        }
+                    }
+                }
+            }
+            else orig(self, chamber, muzzle, doBuzz, velMult, rangeOverride);
         }
 
         public void Update()
