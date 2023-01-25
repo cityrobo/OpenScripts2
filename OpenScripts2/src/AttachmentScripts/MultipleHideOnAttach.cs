@@ -18,6 +18,9 @@ namespace OpenScripts2
         [Header("Enable to show Objects instead:")]
         public bool ShowOnAttach = false;
 
+        [Header("Only enabled for specific attachment IDs")]
+        public List<string> AttachmentIds = new();
+
         public void Awake()
         {
             attachmentMount.HasHoverDisablePiece = true;
@@ -26,20 +29,47 @@ namespace OpenScripts2
                 attachmentMount.DisableOnHover = new GameObject("MultipleHideOnAttach_Proxy");
             }
         }
+
         public void Update()
         {
-            if (attachmentMount.DisableOnHover.activeInHierarchy == false)
+            if (AttachmentIds.Count == 0)
             {
-                foreach (GameObject gameObject in ObjectToHideOrShow)
+                if (attachmentMount.DisableOnHover.activeInHierarchy == false)
                 {
-                    gameObject.SetActive(ShowOnAttach);
+                    foreach (GameObject gameObject in ObjectToHideOrShow)
+                    {
+                        gameObject.SetActive(ShowOnAttach);
+                    }
+                }
+                else
+                {
+                    foreach (GameObject gameObject in ObjectToHideOrShow)
+                    {
+                        gameObject.SetActive(!ShowOnAttach);
+                    }
                 }
             }
             else
             {
-                foreach (GameObject gameObject in ObjectToHideOrShow)
+                bool correctIDFound = false;
+                foreach (FVRFireArmAttachment attachment in attachmentMount.AttachmentsList)
                 {
-                    gameObject.SetActive(!ShowOnAttach);
+                    if (AttachmentIds.Contains(attachment.ObjectWrapper.ItemID)) correctIDFound = true;
+                }
+
+                if (correctIDFound)
+                {
+                    foreach (GameObject gameObject in ObjectToHideOrShow)
+                    {
+                        gameObject.SetActive(ShowOnAttach);
+                    }
+                }
+                else
+                {
+                    foreach (GameObject gameObject in ObjectToHideOrShow)
+                    {
+                        gameObject.SetActive(!ShowOnAttach);
+                    }
                 }
             }
         }
