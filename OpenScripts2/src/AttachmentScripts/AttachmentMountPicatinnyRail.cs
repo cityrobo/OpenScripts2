@@ -12,10 +12,14 @@ namespace OpenScripts2
 {
     public class AttachmentMountPicatinnyRail : OpenScripts2_BasePlugin
     {
+        [Header("Picatinny Rail Config")]
         public FVRFireArmAttachmentMount Mount;
         public int NumberOfPicatinnySlots = 0;
-        [Tooltip("Sound generated while moving attachment between slots.")]
+        [Tooltip("Sound played while moving attachment between slots.")]
         public AudioEvent SlotSound;
+        [Header("Optional")]
+        public List<Transform> SpecificSlotPositions = new();
+
 
         [HideInInspector]
         public static Dictionary<FVRFireArmAttachment, AttachmentPicatinnyRailForwardStop> ExistingForwardStops = new();
@@ -29,6 +33,10 @@ namespace OpenScripts2
         private static IntPtr _methodPointer;
 
         private int _lastPosIndex = -1;
+
+        private bool _usesSpecificSlotLerps = false;
+        private List<float> _specificSlotLerps = new();
+        private List<Vector3> _specificSlotPos = new();
 
         static AttachmentMountPicatinnyRail()
         {
@@ -84,17 +92,66 @@ namespace OpenScripts2
                 Vector3 rear = self.curMount.Point_Rear.position;
                 Vector3 closestValidPoint = self.GetClosestValidPoint(front, rear, self.transform.position);
                 float inverseLerp = Vector3Utils.InverseLerp(front, rear, closestValidPoint);
-                float posIndex = Mathf.Round(inverseLerp / picatinnyRail._slotLerpFactor);
+
+                int posIndex = 0;
+                if (picatinnyRail._usesSpecificSlotLerps)
+                {
+                    float min = float.MaxValue;
+                    float diff;
+                    for (int i = 0; i < picatinnyRail._specificSlotLerps.Count; i++)
+                    {
+                        diff = Mathf.Abs(picatinnyRail._specificSlotLerps[i] - inverseLerp);
+                        if (diff < min)
+                        {
+                            posIndex = i;
+                            min = diff;
+                        }
+                    }
+                }
+                else
+                {
+                    posIndex = (int)Mathf.Round(inverseLerp / picatinnyRail._slotLerpFactor);
+                }
+
                 AttachmentPicatinnyRailForwardStop forwardStop;
                 if (ExistingForwardStops.TryGetValue(self, out forwardStop))
                 {
                     Vector3 closestValidPointLimit = closestValidPoint + self.transform.forward * Vector3.Distance(forwardStop.transform.position, self.transform.position);
                     float inverseLerpUnclamped = Vector3Utils.InverseLerpUnclamped(front, rear, closestValidPointLimit);
-                    int posIndexLimit = (int)Mathf.Round(inverseLerpUnclamped / picatinnyRail._slotLerpFactor);
+
+                    int posIndexLimit = 0;
+                    if (picatinnyRail._usesSpecificSlotLerps)
+                    {
+                        float min = float.MaxValue;
+                        float diff;
+                        for (int i = 0; i < picatinnyRail._specificSlotLerps.Count; i++)
+                        {
+                            diff = Mathf.Abs(picatinnyRail._specificSlotLerps[i] - inverseLerpUnclamped);
+                            if (diff < min)
+                            {
+                                posIndexLimit = i;
+                                min = diff;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        posIndexLimit = (int)Mathf.Round(inverseLerpUnclamped / picatinnyRail._slotLerpFactor);
+                    }
                     if (posIndexLimit < 0) posIndex -= posIndexLimit;
                     else if (posIndexLimit >= picatinnyRail.NumberOfPicatinnySlots) posIndex -= (posIndexLimit - (picatinnyRail.NumberOfPicatinnySlots - 1));
                 }
-                Vector3 snapPos = Vector3.Lerp(front, rear, posIndex * picatinnyRail._slotLerpFactor);
+
+                Vector3 snapPos;
+                if (picatinnyRail._usesSpecificSlotLerps)
+                {
+                    snapPos = m.transform.TransformPoint(picatinnyRail._specificSlotPos[posIndex]);
+                }
+                else
+                {
+                    snapPos = Vector3.Lerp(front, rear, posIndex * picatinnyRail._slotLerpFactor);
+                }
+
                 self.transform.position = snapPos;
                 //
 
@@ -141,6 +198,29 @@ namespace OpenScripts2
             _exisingAttachmentMountPicatinnyRail.Add(Mount, this);
 
             _slotLerpFactor = 1f/(NumberOfPicatinnySlots - 1);
+
+            if (SpecificSlotPositions.Count > 0f)
+            {
+                _usesSpecificSlotLerps = true;
+                _specificSlotLerps.AddRange(new float[]{0f, 1f});
+            }
+
+            foreach (Transform slotPos in SpecificSlotPositions)
+            {
+                _specificSlotLerps.Add(Vector3Utils.InverseLerp(Mount.Point_Front.position, Mount.Point_Rear.position, slotPos.position));
+            }
+            foreach (float specificLerp in _specificSlotLerps)
+            {
+                _specificSlotPos.Add(Mount.transform.InverseTransformPoint(Vector3.Lerp(Mount.Point_Front.position, Mount.Point_Rear.position, specificLerp)));
+            }
+
+            NumberOfPicatinnySlots = _specificSlotPos.Count;
+
+            for (int i = 0; i < SpecificSlotPositions.Count; i++)
+            {
+                Destroy(SpecificSlotPositions[i].gameObject);
+            }
+            SpecificSlotPositions.Clear();
         }
 
         public void OnDestoy()
@@ -184,21 +264,64 @@ namespace OpenScripts2
                 if (Vector3.Distance(closestValidPoint, self.m_handPos) < 0.15f)
                 {
                     float inverseLerp = Vector3Utils.InverseLerp(front, rear, closestValidPoint);
-                    int posIndex = (int) Mathf.Round(inverseLerp / _slotLerpFactor);
 
-                    AttachmentPicatinnyRailForwardStop forwardStop;
-                    //Log($"posIndex Before Limit: {posIndex}");
-                    if (ExistingForwardStops.TryGetValue(self, out forwardStop))
+                    int posIndex = 0;
+                    if (_usesSpecificSlotLerps)
                     {
-                        Vector3 closestValidPointLimit = closestValidPoint + self.transform.forward * Vector3.Distance(forwardStop.transform.position,self.transform.position);
+                        float min = float.MaxValue;
+                        float diff;
+                        for (int i = 0; i < _specificSlotLerps.Count; i++)
+                        {
+                            diff = Mathf.Abs(_specificSlotLerps[i] - inverseLerp);
+                            if (diff < min )
+                            {
+                                posIndex = i;
+                                min = diff;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        posIndex = (int)Mathf.Round(inverseLerp / _slotLerpFactor);
+                    }
+
+                    if (ExistingForwardStops.TryGetValue(self, out AttachmentPicatinnyRailForwardStop forwardStop))
+                    {
+                        Vector3 closestValidPointLimit = closestValidPoint + self.transform.forward * Vector3.Distance(forwardStop.transform.position, self.transform.position);
                         float inverseLerpUnclamped = Vector3Utils.InverseLerpUnclamped(front, rear, closestValidPointLimit);
-                        int posIndexLimit = (int)Mathf.Round(inverseLerpUnclamped / _slotLerpFactor);
-                        //Log($"posIndexLimit: {posIndexLimit}");
+                        int posIndexLimit = 0;
+                        if (_usesSpecificSlotLerps)
+                        {
+                            float min = float.MaxValue;
+                            float diff;
+                            for (int i = 0; i < _specificSlotLerps.Count; i++)
+                            {
+                                diff = Mathf.Abs(_specificSlotLerps[i] - inverseLerpUnclamped);
+                                if (diff < min)
+                                {
+                                    posIndexLimit = i;
+                                    min = diff;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            posIndexLimit = (int)Mathf.Round(inverseLerpUnclamped / _slotLerpFactor);
+                        }
+
                         if (posIndexLimit < 0) posIndex -= posIndexLimit;
                         else if (posIndexLimit >= NumberOfPicatinnySlots) posIndex -= (posIndexLimit - (NumberOfPicatinnySlots - 1));
                     }
-                    //Log($"posIndex After Limit: {posIndex}");
-                    Vector3 snapPos = Vector3.Lerp(front, rear, posIndex * _slotLerpFactor);
+
+                    Vector3 snapPos;
+                    if (_usesSpecificSlotLerps)
+                    {
+                        snapPos = Mount.transform.TransformPoint(_specificSlotPos[posIndex]);
+                    }
+                    else
+                    {
+                        snapPos = Vector3.Lerp(front, rear, posIndex * _slotLerpFactor);
+                    }
 
                     if (posIndex != _lastPosIndex)
                     {
