@@ -19,8 +19,7 @@ namespace OpenScripts2
 
         public void Update()
         {
-
-            if (Attachment.Sensor.CurHoveredMount != null)
+            if (Attachment.Sensor.CurHoveredMount != null || Attachment.curMount != null)
             {
                 foreach (GameObject gameObject in ObjectToHideOrShow)
                 {
