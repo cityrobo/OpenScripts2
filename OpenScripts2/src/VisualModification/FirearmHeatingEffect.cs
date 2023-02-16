@@ -60,11 +60,11 @@ namespace OpenScripts2
         [Tooltip("Enables emission weight AnimationCurve system.")]
         public bool EmissionUsesAdvancedCurve = false;
         [Tooltip("Advanced emission weight control. Values from 0 to 1 only!")]
-        public AnimationCurve EmissionCurve;
+        public AnimationCurve EmissionCurve = new();
         [Tooltip("Advanced left/right emission scroll speed control. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-Axis) represents the actual scroll speed and is uncapped. The max value set above is ignored.")]
-        public AnimationCurve EmissionScrollSpeedCurve_X;
+        public AnimationCurve EmissionScrollSpeedCurve_X = new();
         [Tooltip("Advanced up/down emission scroll speed control. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-Axis) represents the actual scroll speed and is uncapped. The max value set above is ignored.")]
-        public AnimationCurve EmissionScrollSpeedCurve_Y;
+        public AnimationCurve EmissionScrollSpeedCurve_Y = new();
 
         // Detail weight system
         [Header("Detail weight config")]
@@ -74,7 +74,7 @@ namespace OpenScripts2
         [Tooltip("Enables emission weight AnimationCurve system.")]
         public bool DetailUsesAdvancedCurve = false;
         [Tooltip("Advanced emission weight control. Values from 0 to 1 only!")]
-        public AnimationCurve DetailCurve;
+        public AnimationCurve DetailCurve = new();
 
         // Particle emission rate system
         [Header("Particle effects config")]
@@ -89,7 +89,7 @@ namespace OpenScripts2
         [Tooltip("Enables particle rate AnimationCurve system.")]
         public bool ParticlesUsesAdvancedCurve = false;
         [Tooltip("Advanced particle rate control. Values from 0 to 1 only! The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts like a multiplier of the max emission rate, clamped between 0 and 1.")]
-        public AnimationCurve ParticlesCurve;
+        public AnimationCurve ParticlesCurve = new();
 
         // Sound volume system
         [Header("Sound effects config")]
@@ -106,7 +106,7 @@ namespace OpenScripts2
         [Tooltip("Enables sound volume AnimationCurve system.")]
         public bool SoundUsesAdvancedCurve = false;
         [Tooltip("Advanced sound volume control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) is the volume at that heat level.")]
-        public AnimationCurve VolumeCurve;
+        public AnimationCurve VolumeCurve = new();
 
         // Accuracy MOA multiplier system
         [Header("Accuracy Settings")]
@@ -117,7 +117,7 @@ namespace OpenScripts2
         [Tooltip("Enables MOA multiplier AnimationCurve system.")]
         public bool AccuracyUsesAdvancedCurve = false;
         [Tooltip("Advanced MOA multiplier control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts like a multiplier of the max MOA multiplier, clamped between 0 and 1.")]
-        public AnimationCurve AccuracyCurve;
+        public AnimationCurve AccuracyCurve = new();
 
         // Bolt Speed Change System
         [Header("Bolt Speed Settings")]
@@ -131,11 +131,11 @@ namespace OpenScripts2
         [Tooltip("Enables bolt speed AnimationCurve system.")]
         public bool BoltSpeedUsesAdvancedCurve = false;
         [Tooltip("Advanced bolt speed control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts as an advanced lerp for the above set maximum values.")]
-        public AnimationCurve BoltForwardSpeedMultiplierCurve;
+        public AnimationCurve BoltForwardSpeedMultiplierCurve = new();
         [Tooltip("Advanced bolt speed control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts as an advanced lerp for the above set maximum values.")]
-        public AnimationCurve BoltRearwardSpeedMultiplierCurve;
+        public AnimationCurve BoltRearwardSpeedMultiplierCurve = new();
         [Tooltip("Advanced bolt speed control. Values from 0 to 1 only!. The X-axis is clamped between 0 and 1 and represents the heat level. The value (Y-axis) acts as an advanced lerp for the above set maximum values.")]
-        public AnimationCurve BoltSpringStiffnessMultiplierCurve;
+        public AnimationCurve BoltSpringStiffnessMultiplierCurve = new();
 
         // Exploding Part System
         [Header("Explosion System")]
