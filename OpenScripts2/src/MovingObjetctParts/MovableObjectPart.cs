@@ -31,17 +31,22 @@ namespace OpenScripts2
 		public AudioEvent CloseSounds;
 		public AudioEvent OpenSounds;
 
-		private enum State
+		public bool IsOpen => _state == E_State.Open;
+        public bool IsClosed => _state == E_State.Closed;
+        public bool IsMid => _state == E_State.Mid;
+
+        private enum E_State
 		{
 			Open,
 			Mid,
 			Closed
 		}
 
-		private State _state;
-		private State _lastState;
+		private E_State _state;
+		private E_State _lastState;
 
 		private float _currentPositionValue;
+
 		private Vector3 _origPos;
 
 		private Vector3 _lastHandPlane;
@@ -55,6 +60,7 @@ namespace OpenScripts2
 			base.Start();
 			_origPos = ObjectToMove.localPosition;
         }
+
 		public override void BeginInteraction(FVRViveHand hand)
 		{
 			base.BeginInteraction(hand);
@@ -70,8 +76,7 @@ namespace OpenScripts2
 					_lastHandPlane = Vector3.ProjectOnPlane(hand.transform.forward, -Root.up);
 					break;
 			}
-
-			if (MovementMode == Mode.Translation) _lastHandPos = m_handPos; 
+			if (MovementMode == Mode.Translation) _lastHandPos = m_handPos;
 			else if (MovementMode == Mode.Rotation) _lastHandRot = m_handRot;
 		}
 
@@ -84,13 +89,15 @@ namespace OpenScripts2
 					TranslationMode();
                     break;
                 case Mode.Rotation:
-					RotationMode(hand);
+					//RotationMode(hand);
+					RotationModeQuaternion(hand);
                     break;
                 case Mode.Folding:
                     FoldingMode(hand);
                     break;
             }
-			_lastHandPos = m_handPos;
+            if (MovementMode == Mode.Translation) _lastHandPos = m_handPos;
+            else if (MovementMode == Mode.Rotation) _lastHandRot = m_handRot;
         }
 
 		public void TranslationMode()
@@ -113,27 +120,6 @@ namespace OpenScripts2
             {
 				_currentPositionValue = UpperLimit;
             }
-			/*
-			Vector3 posVector;
-			switch (MovementAxis)
-            {
-                case OpenScripts2_BasePlugin.Axis.X:
-					posVector = GetClosestValidPoint(new Vector3(LowerLimit,0f,0f), new Vector3(UpperLimit, 0f, 0f), Root.InverseTransformPoint(m_handPos));
-					_currentPositionValue = posVector.x;
-					ObjectToMove.localPosition = new Vector3(_currentPositionValue, _origPos.y, _origPos.z);
-					break;
-                case OpenScripts2_BasePlugin.Axis.Y:
-					posVector = GetClosestValidPoint(new Vector3(0f, LowerLimit, 0f), new Vector3(0f, UpperLimit, 0f), Root.InverseTransformPoint(m_handPos));
-					_currentPositionValue = posVector.y;
-					ObjectToMove.localPosition = new Vector3(_origPos.x, _currentPositionValue, _origPos.z);
-					break;
-                case OpenScripts2_BasePlugin.Axis.Z:
-					posVector = GetClosestValidPoint(new Vector3(0f, 0f, LowerLimit), new Vector3(0f, 0f, UpperLimit), Root.InverseTransformPoint(m_handPos));
-					_currentPositionValue = posVector.z;
-					ObjectToMove.localPosition = new Vector3(_origPos.x, _origPos.y, _currentPositionValue);
-					break;
-            }
-			*/
 			ObjectToMove.ModifyLocalPositionAxisValue(MovementAxis, _currentPositionValue);
 
             float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _currentPositionValue);
@@ -173,9 +159,6 @@ namespace OpenScripts2
 
 			float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _currentPositionValue);
 			CheckSound(lerp);
-
-
-
 		}
 
 		public void RotationModeQuaternion(FVRViveHand hand)
@@ -202,7 +185,7 @@ namespace OpenScripts2
 			{
 				Debug.Log("DeltaAngle: " + deltaAngle);
 			}
-			/*
+            /*
 			if (_currentPositionValue + deltaAngle > UpperLimit) deltaAngle = UpperLimit - _currentPositionValue;
 			else if (_currentPositionValue + deltaAngle < LowerLimit) deltaAngle = LowerLimit + _currentPositionValue;
 
@@ -222,114 +205,64 @@ namespace OpenScripts2
 					break;
 			}
 			*/
+            _currentPositionValue = Mathf.Clamp(_currentPositionValue + deltaAngle, LowerLimit, UpperLimit);
+
+			//if (deltaAngle > 0)
+			//{
+			//	Quaternion upperLimit = Quaternion.identity;
+			//	switch (MovementAxis)
+			//	{
+			//		case OpenScripts2_BasePlugin.Axis.X:
+			//			upperLimit = Quaternion.Euler(UpperLimit, 0f, 0f);
+			//			break;
+			//		case OpenScripts2_BasePlugin.Axis.Y:
+			//			upperLimit = Quaternion.Euler(0f, UpperLimit, 0f);
+			//			break;
+			//		case OpenScripts2_BasePlugin.Axis.Z:
+			//			upperLimit = Quaternion.Euler(0f, 0f, UpperLimit);
+			//			break;
+			//	}
+   //             ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, upperLimit, deltaAngle);
+   //         }
+			//else
+			//{
+			//	Quaternion lowerLimit = Quaternion.identity;
+			//	switch (MovementAxis)
+			//	{
+			//		case OpenScripts2_BasePlugin.Axis.X:
+			//			lowerLimit = Quaternion.Euler(LowerLimit, 0f, 0f);
+			//			break;
+			//		case OpenScripts2_BasePlugin.Axis.Y:
+			//			lowerLimit = Quaternion.Euler(0f, LowerLimit, 0f);
+			//			break;
+			//		case OpenScripts2_BasePlugin.Axis.Z:
+			//			lowerLimit = Quaternion.Euler(0f, 0f, LowerLimit);
+			//			break;
+			//	}
+   //             ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, lowerLimit, deltaAngle);
+   //         }
+
+			//if (_debug)
+			//{
+			//	Popcron.Gizmos.Line(hand.transform.position, hand.transform.position + hand.transform.forward * 0.1f, Color.blue);
+			//	Popcron.Gizmos.Line(hand.transform.position, hand.transform.position + hand.transform.up * 0.1f, Color.green);
+			//	Popcron.Gizmos.Line(hand.transform.position, hand.transform.position + hand.transform.right * 0.1f, Color.red);
+			//}
 
 
-			if (deltaAngle > 0)
-			{
-				Quaternion upperLimit;
-				switch (MovementAxis)
-				{
-					case OpenScripts2_BasePlugin.Axis.X:
-						upperLimit = Quaternion.Euler(new Vector3(UpperLimit, 0, 0));
-						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, upperLimit, deltaAngle);
-						break;
-					case OpenScripts2_BasePlugin.Axis.Y:
-						upperLimit = Quaternion.Euler(new Vector3(0, UpperLimit, 0));
-						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, upperLimit, deltaAngle);
-						break;
-					case OpenScripts2_BasePlugin.Axis.Z:
-						upperLimit = Quaternion.Euler(new Vector3(0, 0, UpperLimit));
-						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, upperLimit, deltaAngle);
-						break;
-					default:
-						break;
-				}
-			}
-			else
-			{
-				Quaternion lowerLimit;
-				switch (MovementAxis)
-				{
-					case OpenScripts2_BasePlugin.Axis.X:
-						lowerLimit = Quaternion.Euler(new Vector3(LowerLimit, 0, 0));
-						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, lowerLimit, deltaAngle);
-						break;
-					case OpenScripts2_BasePlugin.Axis.Y:
-						lowerLimit = Quaternion.Euler(new Vector3(0, LowerLimit, 0));
-						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, lowerLimit, deltaAngle);
-						break;
-					case OpenScripts2_BasePlugin.Axis.Z:
-						lowerLimit = Quaternion.Euler(new Vector3(0, 0, LowerLimit));
-						ObjectToMove.localRotation = Quaternion.RotateTowards(ObjectToMove.localRotation, lowerLimit, deltaAngle);
-						break;
-					default:
-						break;
-				}
-			}
-
-			if (_debug)
-			{
-				Popcron.Gizmos.Line(hand.transform.position, hand.transform.position + hand.transform.forward * 0.1f, Color.blue);
-				Popcron.Gizmos.Line(hand.transform.position, hand.transform.position + hand.transform.up * 0.1f, Color.green);
-				Popcron.Gizmos.Line(hand.transform.position, hand.transform.position + hand.transform.right * 0.1f, Color.red);
-				/*
-				Popcron.Gizmos.Line(hand.transform.position, base.transform.position + lhs * 0.1f, Color.cyan);
-				Popcron.Gizmos.Line(hand.transform.position, base.transform.position + rhs * 0.1f, Color.yellow);
-				Popcron.Gizmos.Line(hand.transform.position, base.transform.position + Vector3.Cross(lhs, rhs) * 0.1f, Color.magenta);
-				*/
-
-			}
-			_currentPositionValue += deltaAngle;
+			ObjectToMove.ModifyLocalRotationAxisValue(MovementAxis,_currentPositionValue);
 
 			if (Mathf.Abs(_currentPositionValue - UpperLimit) <= LimitWiggleRoom)
 			{
 				_currentPositionValue = UpperLimit;
-				Quaternion limitRot;
-				limitRot = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(UpperLimit, MovementAxis);
-
-				//switch (MovementAxis)
-				//{
-				//	case OpenScripts2_BasePlugin.Axis.X:
-				//		limitRot = Quaternion.Euler(UpperLimit, 0, 0);
-				//		break;
-				//	case OpenScripts2_BasePlugin.Axis.Y:
-				//		limitRot = Quaternion.Euler(0, UpperLimit, 0);
-				//		break;
-				//	case OpenScripts2_BasePlugin.Axis.Z:
-				//		limitRot = Quaternion.Euler(0, 0, UpperLimit);
-				//		break;
-				//	default:
-				//		limitRot = Quaternion.identity;
-				//		break;
-				//}
-
-				ObjectToMove.localRotation = limitRot;
-			}
+				ObjectToMove.ModifyLocalRotationAxisValue(MovementAxis, UpperLimit);
+            }
 			else if (Mathf.Abs(_currentPositionValue - LowerLimit) <= LimitWiggleRoom)
 			{
 				_currentPositionValue = LowerLimit;
-				Quaternion limitRot;
-				limitRot = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(LowerLimit,MovementAxis);
-
-                //switch (MovementAxis)
-                //{
-                //	case OpenScripts2_BasePlugin.Axis.X:
-                //		limitRot = Quaternion.Euler(LowerLimit, 0, 0);
-                //		break;
-                //	case OpenScripts2_BasePlugin.Axis.Y:
-                //		limitRot = Quaternion.Euler(0, LowerLimit, 0);
-                //		break;
-                //	case OpenScripts2_BasePlugin.Axis.Z:
-                //		limitRot = Quaternion.Euler(0, 0, LowerLimit);
-                //		break;
-                //	default:
-                //		limitRot = Quaternion.identity;
-                //		break;
-                //}
-
-                ObjectToMove.localRotation = limitRot;
+                ObjectToMove.ModifyLocalRotationAxisValue(MovementAxis, LowerLimit);
             }
-            float lerp = Mathf.InverseLerp(this.LowerLimit, this.UpperLimit, _currentPositionValue);
+            float lerp = Mathf.InverseLerp(LowerLimit, UpperLimit, _currentPositionValue);
 			CheckSound(lerp);
 		}
 
@@ -388,22 +321,22 @@ namespace OpenScripts2
         {
 			if (lerp < LimitWiggleRoom)
 			{
-				_state = State.Open;
+				_state = E_State.Open;
 
 			}
 			else if (lerp > 1f - LimitWiggleRoom)
 			{
-				_state = State.Closed;
+				_state = E_State.Closed;
 			}
 			else
 			{
-				_state = State.Mid;
+				_state = E_State.Mid;
 			}
-			if (_state == State.Open && _lastState != State.Open)
+			if (_state == E_State.Open && _lastState != E_State.Open)
 			{
 				SM.PlayGenericSound(OpenSounds, ObjectToMove.position);
 			}
-			if (_state == State.Closed && _lastState != State.Closed)
+			if (_state == E_State.Closed && _lastState != E_State.Closed)
 			{
 				SM.PlayGenericSound(CloseSounds, ObjectToMove.position);
 			}
