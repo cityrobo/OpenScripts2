@@ -51,7 +51,49 @@ namespace OpenScripts2
             On.FistVR.BoltActionRifle.UpdateBolt += BoltActionRifle_UpdateBolt;
 #endif
         }
+        public void Awake()
+        {
+            switch (FireArm)
+            {
+                case ClosedBoltWeapon w:
+                    _existingManipulateFireArmRoundProxyClosedBolts.Add(w, this);
+                    break;
+                case Handgun w:
+                    _existingManipulateFireArmRoundProxyHandGuns.Add(w, this);
+                    break;
+                case TubeFedShotgun w:
+                    _existingManipulateFireArmRoundProxyTubeFedShotguns.Add(w, this);
+                    break;
+                case OpenBoltReceiver w:
+                    _existingManipulateFireArmRoundProxyOpenBoltReceivers.Add(w, this);
+                    break;
+                case BoltActionRifle w:
+                    _existingManipulateFireArmRoundProxyBoltActionRifles.Add(w, this);
+                    break;
+            }
+        }
 
+        public void OnDestroy()
+        {
+            switch (FireArm)
+            {
+                case ClosedBoltWeapon w:
+                    _existingManipulateFireArmRoundProxyClosedBolts.Remove(w);
+                    break;
+                case Handgun w:
+                    _existingManipulateFireArmRoundProxyHandGuns.Remove(w);
+                    break;
+                case TubeFedShotgun w:
+                    _existingManipulateFireArmRoundProxyTubeFedShotguns.Remove(w);
+                    break;
+                case OpenBoltReceiver w:
+                    _existingManipulateFireArmRoundProxyOpenBoltReceivers.Remove(w);
+                    break;
+                case BoltActionRifle w:
+                    _existingManipulateFireArmRoundProxyBoltActionRifles.Remove(w);
+                    break;
+            }
+        }
 #if !DEBUG
         private static void ClosedBoltWeapon_UpdateDisplayRoundPositions(On.FistVR.ClosedBoltWeapon.orig_UpdateDisplayRoundPositions orig, ClosedBoltWeapon self)
         {
@@ -59,26 +101,6 @@ namespace OpenScripts2
             if (_existingManipulateFireArmRoundProxyClosedBolts.TryGetValue(self, out manipulateFireArmRoundProxy))
             {
                 if (self.Chamber.IsFull)
-                {
-                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.Bolt.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.Bolt.m_boltZ_forward, self.Bolt.m_boltZ_current);
-                    float xPosVal = manipulateFireArmRoundProxy.ChamberingPosX.Evaluate(boltLerpBetweenExtractAndFore);
-                    float yPosVal = manipulateFireArmRoundProxy.ChamberingPosY.Evaluate(boltLerpBetweenExtractAndFore);
-                    float zPosVal = manipulateFireArmRoundProxy.ChamberingPosZ.Evaluate(boltLerpBetweenExtractAndFore);
-
-                    float xRotVal = manipulateFireArmRoundProxy.ChamberingRotX.Evaluate(boltLerpBetweenExtractAndFore);
-                    float yRotVal = manipulateFireArmRoundProxy.ChamberingRotY.Evaluate(boltLerpBetweenExtractAndFore);
-                    float zRotVal = manipulateFireArmRoundProxy.ChamberingRotZ.Evaluate(boltLerpBetweenExtractAndFore);
-
-                    if (manipulateFireArmRoundProxy.DoubleFeed && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
-                    {
-                        xPosVal = -xPosVal;
-                        yRotVal = -yRotVal;
-                    }
-
-                    self.Chamber.ProxyRound.position = self.Bolt.transform.parent.TransformPoint(new Vector3(xPosVal,yPosVal,zPosVal));
-                    self.Chamber.ProxyRound.rotation = self.Bolt.transform.parent.rotation * Quaternion.Euler(xRotVal,yRotVal,zRotVal);
-                }
-                if (self.m_proxy.IsFull)
                 {
                     float boltLerpBetweenEjectAndFore = Mathf.InverseLerp(self.Bolt.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundExtractionEndPos.position).z, self.Bolt.m_boltZ_forward, self.Bolt.m_boltZ_current);
                     float xPosVal = manipulateFireArmRoundProxy.ExtractionPosX.Evaluate(boltLerpBetweenEjectAndFore);
@@ -92,6 +114,26 @@ namespace OpenScripts2
                     self.Chamber.ProxyRound.position = self.Bolt.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
                     self.Chamber.ProxyRound.rotation = self.Bolt.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
                 }
+                if (self.m_proxy.IsFull)
+                {
+                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.Bolt.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.Bolt.m_boltZ_forward, self.Bolt.m_boltZ_current);
+                    float xPosVal = manipulateFireArmRoundProxy.ChamberingPosX.Evaluate(boltLerpBetweenExtractAndFore);
+                    float yPosVal = manipulateFireArmRoundProxy.ChamberingPosY.Evaluate(boltLerpBetweenExtractAndFore);
+                    float zPosVal = manipulateFireArmRoundProxy.ChamberingPosZ.Evaluate(boltLerpBetweenExtractAndFore);
+
+                    float xRotVal = manipulateFireArmRoundProxy.ChamberingRotX.Evaluate(boltLerpBetweenExtractAndFore);
+                    float yRotVal = manipulateFireArmRoundProxy.ChamberingRotY.Evaluate(boltLerpBetweenExtractAndFore);
+                    float zRotVal = manipulateFireArmRoundProxy.ChamberingRotZ.Evaluate(boltLerpBetweenExtractAndFore);
+
+                    if (manipulateFireArmRoundProxy.DoubleFeed && self.Magazine != null && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
+                    {
+                        xPosVal = -xPosVal;
+                        yRotVal = -yRotVal;
+                    }
+
+                    self.m_proxy.ProxyRound.position = self.Bolt.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
+                    self.m_proxy.ProxyRound.rotation = self.Bolt.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
+                }
             }
             else orig(self);
         }
@@ -102,26 +144,6 @@ namespace OpenScripts2
             if (_existingManipulateFireArmRoundProxyHandGuns.TryGetValue(self, out manipulateFireArmRoundProxy))
             {
                 if (self.Chamber.IsFull)
-                {
-                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.Slide.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.Slide.m_slideZ_forward, self.Slide.m_slideZ_current);
-                    float xPosVal = manipulateFireArmRoundProxy.ChamberingPosX.Evaluate(boltLerpBetweenExtractAndFore);
-                    float yPosVal = manipulateFireArmRoundProxy.ChamberingPosY.Evaluate(boltLerpBetweenExtractAndFore);
-                    float zPosVal = manipulateFireArmRoundProxy.ChamberingPosZ.Evaluate(boltLerpBetweenExtractAndFore);
-
-                    float xRotVal = manipulateFireArmRoundProxy.ChamberingRotX.Evaluate(boltLerpBetweenExtractAndFore);
-                    float yRotVal = manipulateFireArmRoundProxy.ChamberingRotY.Evaluate(boltLerpBetweenExtractAndFore);
-                    float zRotVal = manipulateFireArmRoundProxy.ChamberingRotZ.Evaluate(boltLerpBetweenExtractAndFore);
-
-                    if (manipulateFireArmRoundProxy.DoubleFeed && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
-                    {
-                        xPosVal = -xPosVal;
-                        yRotVal = -yRotVal;
-                    }
-
-                    self.Chamber.ProxyRound.position = self.Slide.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
-                    self.Chamber.ProxyRound.rotation = self.Slide.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
-                }
-                if (self.m_proxy.IsFull)
                 {
                     float boltLerpBetweenEjectAndFore = Mathf.InverseLerp(self.Slide.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundExtractionEndPos.position).z, self.Slide.m_slideZ_forward, self.Slide.m_slideZ_current);
                     float xPosVal = manipulateFireArmRoundProxy.ExtractionPosX.Evaluate(boltLerpBetweenEjectAndFore);
@@ -135,6 +157,26 @@ namespace OpenScripts2
                     self.Chamber.ProxyRound.position = self.Slide.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
                     self.Chamber.ProxyRound.rotation = self.Slide.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
                 }
+                if (self.m_proxy.IsFull)
+                {
+                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.Slide.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.Slide.m_slideZ_forward, self.Slide.m_slideZ_current);
+                    float xPosVal = manipulateFireArmRoundProxy.ChamberingPosX.Evaluate(boltLerpBetweenExtractAndFore);
+                    float yPosVal = manipulateFireArmRoundProxy.ChamberingPosY.Evaluate(boltLerpBetweenExtractAndFore);
+                    float zPosVal = manipulateFireArmRoundProxy.ChamberingPosZ.Evaluate(boltLerpBetweenExtractAndFore);
+
+                    float xRotVal = manipulateFireArmRoundProxy.ChamberingRotX.Evaluate(boltLerpBetweenExtractAndFore);
+                    float yRotVal = manipulateFireArmRoundProxy.ChamberingRotY.Evaluate(boltLerpBetweenExtractAndFore);
+                    float zRotVal = manipulateFireArmRoundProxy.ChamberingRotZ.Evaluate(boltLerpBetweenExtractAndFore);
+
+                    if (manipulateFireArmRoundProxy.DoubleFeed && self.Magazine != null && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
+                    {
+                        xPosVal = -xPosVal;
+                        yRotVal = -yRotVal;
+                    }
+
+                    self.m_proxy.ProxyRound.position = self.Slide.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
+                    self.m_proxy.ProxyRound.rotation = self.Slide.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
+                }
             }
             else orig(self);
         }
@@ -145,26 +187,6 @@ namespace OpenScripts2
             if (_existingManipulateFireArmRoundProxyTubeFedShotguns.TryGetValue(self, out manipulateFireArmRoundProxy))
             {
                 if (self.Chamber.IsFull)
-                {
-                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.Bolt.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.Bolt.m_boltZ_forward, self.Bolt.m_boltZ_current);
-                    float xPosVal = manipulateFireArmRoundProxy.ChamberingPosX.Evaluate(boltLerpBetweenExtractAndFore);
-                    float yPosVal = manipulateFireArmRoundProxy.ChamberingPosY.Evaluate(boltLerpBetweenExtractAndFore);
-                    float zPosVal = manipulateFireArmRoundProxy.ChamberingPosZ.Evaluate(boltLerpBetweenExtractAndFore);
-
-                    float xRotVal = manipulateFireArmRoundProxy.ChamberingRotX.Evaluate(boltLerpBetweenExtractAndFore);
-                    float yRotVal = manipulateFireArmRoundProxy.ChamberingRotY.Evaluate(boltLerpBetweenExtractAndFore);
-                    float zRotVal = manipulateFireArmRoundProxy.ChamberingRotZ.Evaluate(boltLerpBetweenExtractAndFore);
-
-                    if (manipulateFireArmRoundProxy.DoubleFeed && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
-                    {
-                        xPosVal = -xPosVal;
-                        yRotVal = -yRotVal;
-                    }
-
-                    self.Chamber.ProxyRound.position = self.Bolt.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
-                    self.Chamber.ProxyRound.rotation = self.Bolt.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
-                }
-                if (self.m_proxy.IsFull)
                 {
                     float boltLerpBetweenEjectAndFore = Mathf.InverseLerp(self.Bolt.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundExtractionEndPos.position).z, self.Bolt.m_boltZ_forward, self.Bolt.m_boltZ_current);
                     float xPosVal = manipulateFireArmRoundProxy.ExtractionPosX.Evaluate(boltLerpBetweenEjectAndFore);
@@ -177,6 +199,26 @@ namespace OpenScripts2
 
                     self.Chamber.ProxyRound.position = self.Bolt.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
                     self.Chamber.ProxyRound.rotation = self.Bolt.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
+                }
+                if (self.m_proxy.IsFull)
+                {
+                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.Bolt.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.Bolt.m_boltZ_forward, self.Bolt.m_boltZ_current);
+                    float xPosVal = manipulateFireArmRoundProxy.ChamberingPosX.Evaluate(boltLerpBetweenExtractAndFore);
+                    float yPosVal = manipulateFireArmRoundProxy.ChamberingPosY.Evaluate(boltLerpBetweenExtractAndFore);
+                    float zPosVal = manipulateFireArmRoundProxy.ChamberingPosZ.Evaluate(boltLerpBetweenExtractAndFore);
+
+                    float xRotVal = manipulateFireArmRoundProxy.ChamberingRotX.Evaluate(boltLerpBetweenExtractAndFore);
+                    float yRotVal = manipulateFireArmRoundProxy.ChamberingRotY.Evaluate(boltLerpBetweenExtractAndFore);
+                    float zRotVal = manipulateFireArmRoundProxy.ChamberingRotZ.Evaluate(boltLerpBetweenExtractAndFore);
+
+                    if (manipulateFireArmRoundProxy.DoubleFeed && self.Magazine != null && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
+                    {
+                        xPosVal = -xPosVal;
+                        yRotVal = -yRotVal;
+                    }
+
+                    self.m_proxy.ProxyRound.position = self.Bolt.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
+                    self.m_proxy.ProxyRound.rotation = self.Bolt.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
                 }
             }
             else orig(self);
@@ -189,26 +231,6 @@ namespace OpenScripts2
             {
                 if (self.Chamber.IsFull)
                 {
-                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.Bolt.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.Bolt.m_boltZ_forward, self.Bolt.m_boltZ_current);
-                    float xPosVal = manipulateFireArmRoundProxy.ChamberingPosX.Evaluate(boltLerpBetweenExtractAndFore);
-                    float yPosVal = manipulateFireArmRoundProxy.ChamberingPosY.Evaluate(boltLerpBetweenExtractAndFore);
-                    float zPosVal = manipulateFireArmRoundProxy.ChamberingPosZ.Evaluate(boltLerpBetweenExtractAndFore);
-
-                    float xRotVal = manipulateFireArmRoundProxy.ChamberingRotX.Evaluate(boltLerpBetweenExtractAndFore);
-                    float yRotVal = manipulateFireArmRoundProxy.ChamberingRotY.Evaluate(boltLerpBetweenExtractAndFore);
-                    float zRotVal = manipulateFireArmRoundProxy.ChamberingRotZ.Evaluate(boltLerpBetweenExtractAndFore);
-
-                    if (manipulateFireArmRoundProxy.DoubleFeed && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
-                    {
-                        xPosVal = -xPosVal;
-                        yRotVal = -yRotVal;
-                    }
-
-                    self.Chamber.ProxyRound.position = self.Bolt.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
-                    self.Chamber.ProxyRound.rotation = self.Bolt.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
-                }
-                if (self.m_proxy.IsFull)
-                {
                     float boltLerpBetweenEjectAndFore = Mathf.InverseLerp(self.Bolt.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundExtractionEndPos.position).z, self.Bolt.m_boltZ_forward, self.Bolt.m_boltZ_current);
                     float xPosVal = manipulateFireArmRoundProxy.ExtractionPosX.Evaluate(boltLerpBetweenEjectAndFore);
                     float yPosVal = manipulateFireArmRoundProxy.ExtractionPosY.Evaluate(boltLerpBetweenEjectAndFore);
@@ -221,19 +243,9 @@ namespace OpenScripts2
                     self.Chamber.ProxyRound.position = self.Bolt.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
                     self.Chamber.ProxyRound.rotation = self.Bolt.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
                 }
-            }
-            else orig(self);
-        }
-
-        private static void BoltActionRifle_UpdateBolt(On.FistVR.BoltActionRifle.orig_UpdateBolt orig, BoltActionRifle self, BoltActionRifle_Handle.BoltActionHandleState State, float lerp)
-        {
-            orig(self,State,lerp);
-            ManipulateFireArmRoundProxy manipulateFireArmRoundProxy;
-            if (_existingManipulateFireArmRoundProxyBoltActionRifles.TryGetValue(self, out manipulateFireArmRoundProxy))
-            {
-                if (self.Chamber.IsFull)
+                if (self.m_proxy.IsFull)
                 {
-                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.BoltHandle.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.BoltHandle.transform.parent.InverseTransformPoint(self.BoltHandle.Point_Forward.position).z, self.BoltHandle.transform.localPosition.z);
+                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.Bolt.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.Bolt.m_boltZ_forward, self.Bolt.m_boltZ_current);
                     float xPosVal = manipulateFireArmRoundProxy.ChamberingPosX.Evaluate(boltLerpBetweenExtractAndFore);
                     float yPosVal = manipulateFireArmRoundProxy.ChamberingPosY.Evaluate(boltLerpBetweenExtractAndFore);
                     float zPosVal = manipulateFireArmRoundProxy.ChamberingPosZ.Evaluate(boltLerpBetweenExtractAndFore);
@@ -242,16 +254,26 @@ namespace OpenScripts2
                     float yRotVal = manipulateFireArmRoundProxy.ChamberingRotY.Evaluate(boltLerpBetweenExtractAndFore);
                     float zRotVal = manipulateFireArmRoundProxy.ChamberingRotZ.Evaluate(boltLerpBetweenExtractAndFore);
 
-                    if (manipulateFireArmRoundProxy.DoubleFeed && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
+                    if (manipulateFireArmRoundProxy.DoubleFeed && self.Magazine != null && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
                     {
                         xPosVal = -xPosVal;
                         yRotVal = -yRotVal;
                     }
 
-                    self.Chamber.ProxyRound.position = self.BoltHandle.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
-                    self.Chamber.ProxyRound.rotation = self.BoltHandle.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
+                    self.m_proxy.ProxyRound.position = self.Bolt.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
+                    self.m_proxy.ProxyRound.rotation = self.Bolt.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
                 }
-                if (self.m_proxy.IsFull)
+            }
+            else orig(self);
+        }
+
+        private static FVRFireArmRound BoltActionRifle_UpdateBolt(On.FistVR.BoltActionRifle.orig_UpdateBolt orig, BoltActionRifle self, BoltActionRifle_Handle.BoltActionHandleState State, float lerp, bool isCatchHeld)
+        {
+            FVRFireArmRound round = orig(self,State,lerp, isCatchHeld);
+            ManipulateFireArmRoundProxy manipulateFireArmRoundProxy;
+            if (_existingManipulateFireArmRoundProxyBoltActionRifles.TryGetValue(self, out manipulateFireArmRoundProxy))
+            {
+                if (self.Chamber.IsFull)
                 {
                     float boltLerpBetweenEjectAndFore = Mathf.InverseLerp(self.BoltHandle.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundExtractionEndPos.position).z, self.BoltHandle.transform.parent.InverseTransformPoint(self.BoltHandle.Point_Forward.position).z, self.BoltHandle.transform.localPosition.z);
                     float xPosVal = manipulateFireArmRoundProxy.ExtractionPosX.Evaluate(boltLerpBetweenEjectAndFore);
@@ -265,7 +287,28 @@ namespace OpenScripts2
                     self.Chamber.ProxyRound.position = self.BoltHandle.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
                     self.Chamber.ProxyRound.rotation = self.BoltHandle.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
                 }
+                if (self.m_proxy.IsFull)
+                {
+                    float boltLerpBetweenExtractAndFore = Mathf.InverseLerp(self.BoltHandle.transform.parent.InverseTransformPoint(manipulateFireArmRoundProxy.BoltRoundChamberingStartPos.position).z, self.BoltHandle.transform.parent.InverseTransformPoint(self.BoltHandle.Point_Forward.position).z, self.BoltHandle.transform.localPosition.z);
+                    float xPosVal = manipulateFireArmRoundProxy.ChamberingPosX.Evaluate(boltLerpBetweenExtractAndFore);
+                    float yPosVal = manipulateFireArmRoundProxy.ChamberingPosY.Evaluate(boltLerpBetweenExtractAndFore);
+                    float zPosVal = manipulateFireArmRoundProxy.ChamberingPosZ.Evaluate(boltLerpBetweenExtractAndFore);
+
+                    float xRotVal = manipulateFireArmRoundProxy.ChamberingRotX.Evaluate(boltLerpBetweenExtractAndFore);
+                    float yRotVal = manipulateFireArmRoundProxy.ChamberingRotY.Evaluate(boltLerpBetweenExtractAndFore);
+                    float zRotVal = manipulateFireArmRoundProxy.ChamberingRotZ.Evaluate(boltLerpBetweenExtractAndFore);
+
+                    if (manipulateFireArmRoundProxy.DoubleFeed && self.Magazine != null && !(self.Magazine.m_numRounds % 2f == 0 && manipulateFireArmRoundProxy.StartsAtEvenRoundCount || self.Magazine.m_numRounds % 2f != 0 && !manipulateFireArmRoundProxy.StartsAtEvenRoundCount))
+                    {
+                        xPosVal = -xPosVal;
+                        yRotVal = -yRotVal;
+                    }
+
+                    self.m_proxy.ProxyRound.position = self.BoltHandle.transform.parent.TransformPoint(new Vector3(xPosVal, yPosVal, zPosVal));
+                    self.m_proxy.ProxyRound.rotation = self.BoltHandle.transform.parent.rotation * Quaternion.Euler(xRotVal, yRotVal, zRotVal);
+                }
             }
+            return round;
         }
 #endif
     }
