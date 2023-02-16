@@ -14,7 +14,8 @@ namespace OpenScripts2
         {
             System.Type type = original.GetType();
             Component copy = destination.AddComponent(type);
-            System.Reflection.FieldInfo[] fields = type.GetFields();
+            BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+            System.Reflection.FieldInfo[] fields = type.GetFields(flags);
             foreach (System.Reflection.FieldInfo field in fields)
             {
                 field.SetValue(copy, field.GetValue(original));
@@ -24,9 +25,9 @@ namespace OpenScripts2
 
         public static T CopyComponent<T>(this Component target, T reference) where T : Component
 		{
-			Type type = target.GetType();
-			if (type != reference.GetType()) return null; // type mis-match
-			BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Default | BindingFlags.DeclaredOnly;
+			Type type = reference.GetType();
+			//if (type != reference.GetType()) return null; // type mis-match
+			BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 			PropertyInfo[] pinfos = type.GetProperties(flags);
 			foreach (var pinfo in pinfos)
 			{
@@ -49,9 +50,9 @@ namespace OpenScripts2
 
 		public static T CopyObject<T>(this UnityEngine.Object target, T reference) where T : UnityEngine.Object
 		{
-			Type type = target.GetType();
-			if (type != reference.GetType()) return null; // type mis-match
-			BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Default | BindingFlags.DeclaredOnly;
+			Type type = reference.GetType();
+			//if (type != reference.GetType()) return null; // type mis-match
+			BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 			PropertyInfo[] pinfos = type.GetProperties(flags);
 			foreach (var pinfo in pinfos)
 			{
