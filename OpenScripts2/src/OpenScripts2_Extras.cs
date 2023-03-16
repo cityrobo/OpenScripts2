@@ -422,11 +422,47 @@ namespace UnityEngine
         {
             return vector[(int)axis];
         }
+        public static Vector3 GetAxisVector(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis)
+        {
+            Vector3 strippedVector = Vector3.zero;
+            switch (axis)
+            {
+                case OpenScripts2_BasePlugin.Axis.X:
+                    strippedVector.x = vector.x;
+                    break;
+                case OpenScripts2_BasePlugin.Axis.Y:
+                    strippedVector.y = vector.y;
+                    break;
+                case OpenScripts2_BasePlugin.Axis.Z:
+                    strippedVector.z = vector.z;
+                    break;
+            }
+            return strippedVector;
+        }
+
+        public static Vector3 GetCombinedAxisVector(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, Vector3 other)
+        {
+            Vector3 strippedVector = other;
+            switch (axis)
+            {
+                case OpenScripts2_BasePlugin.Axis.X:
+                    strippedVector.x = vector.x;
+                    break;
+                case OpenScripts2_BasePlugin.Axis.Y:
+                    strippedVector.y = vector.y;
+                    break;
+                case OpenScripts2_BasePlugin.Axis.Z:
+                    strippedVector.z = vector.z;
+                    break;
+            }
+            return strippedVector;
+        }
 
         public static float GetAxisValue(this Quaternion quaternion, OpenScripts2_BasePlugin.Axis axis)
         {
             return quaternion.eulerAngles[(int)axis];
         }
+
 
         public static Vector3 ModifyAxisValue(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, float value)
         {

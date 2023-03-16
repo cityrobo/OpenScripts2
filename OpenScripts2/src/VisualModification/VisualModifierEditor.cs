@@ -142,8 +142,8 @@ namespace OpenScripts2
                 BetterPropertyField.DrawSerializedProperty(objectToMove, new GUIContent("Object to Move"));
                 if (f.ObjectToMove != null)
                 {
-                    f.MovementExponent = EditorGUILayout.FloatField(new GUIContent("Particles Exponent", "Same as the Emission Exponent, but for the movement lerp."), f.MovementExponent);
-                    f.MovementStartsAt = EditorGUILayout.FloatField(new GUIContent("Animation Starts At", "InputValue level at which movement starts."), f.MovementStartsAt);
+                    f.MovementExponent = EditorGUILayout.FloatField(new GUIContent("Movement Exponent", "Same as the Emission Exponent, but for the movement lerp."), f.MovementExponent);
+                    f.MovementStartsAt = EditorGUILayout.FloatField(new GUIContent("Movement Starts At", "InputValue level at which movement starts."), f.MovementStartsAt);
                     f.MovementUsesAdvancedCurve = EditorGUILayout.Toggle(new GUIContent("Does Movement use Advanced Curve?", "Enables movement lerp AnimationCurve system."), f.MovementUsesAdvancedCurve);
                     if (f.MovementUsesAdvancedCurve)
                     {
@@ -161,7 +161,7 @@ namespace OpenScripts2
                 if (f.Animator != null)
                 {
                     f.AnimationNodeName = EditorGUILayout.TextField(new GUIContent("Animation Node Name", "Name of the Animation Node inside the Animator that should be affected"),f.AnimationNodeName);
-                    f.AnimationExponent = EditorGUILayout.FloatField(new GUIContent("Particles Exponent", "Same as the Emission Exponent, but for the animation position."), f.AnimationExponent);
+                    f.AnimationExponent = EditorGUILayout.FloatField(new GUIContent("Animation Exponent", "Same as the Emission Exponent, but for the animation position."), f.AnimationExponent);
                     f.AnimationStartsAt = EditorGUILayout.FloatField(new GUIContent("Animation Starts At", "InputValue level at which animation starts."), f.AnimationStartsAt);
                     f.AnimationUsesAdvancedCurve = EditorGUILayout.Toggle(new GUIContent("Does Animation use Advanced Curve?", "Enables animation position AnimationCurve system."), f.AnimationUsesAdvancedCurve);
                     if (f.AnimationUsesAdvancedCurve)

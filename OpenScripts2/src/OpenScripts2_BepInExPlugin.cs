@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace OpenScripts2
 {
-    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.1.1")]
+    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.2.0")]
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {
         public static ConfigEntry<bool> FirearmHeatingEffect_CanExplode;
@@ -39,19 +39,19 @@ namespace OpenScripts2
 
         public static void Log(MonoBehaviour plugin, string message)
         {
-            Instance.Logging.LogMessage($"{nameof(plugin)}: {message}");
+            Instance.Logging.LogMessage($"{plugin}: {message}");
         }
         public static void LogWarning(MonoBehaviour plugin, string message)
         {
-            Instance.Logging.LogWarning($"{nameof(plugin)}: {message}");
+            Instance.Logging.LogWarning($"{plugin}: {message}");
         }
         public static void LogError(MonoBehaviour plugin, string message)
         {
-            Instance.Logging.LogError($"{nameof(plugin)}: {message}");
+            Instance.Logging.LogError($"{plugin}: {message}");
         }
         public static void LogException(MonoBehaviour plugin, Exception e)
         {
-            Instance.Logging.LogError($"{nameof(plugin)}: {e.Message}");
+            Instance.Logging.LogError($"{plugin}: {e.Message}");
         }
     }
     /*

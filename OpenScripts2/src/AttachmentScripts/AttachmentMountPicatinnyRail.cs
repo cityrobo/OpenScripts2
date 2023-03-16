@@ -72,7 +72,11 @@ namespace OpenScripts2
             {
                 self.curMount = m;
                 self.StoreAndDestroyRigidbody();
-                if (self.curMount.GetRootMount().ParentToThis)
+                if (self.curMount.GetComponent<AttachmentMountParentToThis>() != null)
+                {
+                    self.SetParentage(self.curMount.transform);
+                }
+                else if (self.curMount.GetRootMount().ParentToThis)
                 {
                     self.SetParentage(self.curMount.GetRootMount().transform);
                 }

@@ -4,14 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace OpenScripts2
 {
-    public class PrecisionTranslatingPart : FVRInteractiveObject
+    public class MovingFireArmAttachmentInterface : FVRFireArmAttachmentInterface
     {
-        [Header("Precision Translating Part Config")]
+        [Header("Moving FireArm Attachment Interface Config")]
 
-        [Tooltip("One degree means linear movement, two degrees means movement on a plane, three degrees free spacial movement")]
+        [Tooltip("One degree means linear movement, two degrees means movement on a plane, three degrees free spacial movement.")]
         public EDegreesOfFreedom DegreesOfFreedom;
         public enum EDegreesOfFreedom
         {
@@ -24,6 +25,12 @@ namespace OpenScripts2
         public Vector2 YLimits = new Vector2(float.NegativeInfinity, float.PositiveInfinity);
         public Vector2 ZLimits = new Vector2(float.NegativeInfinity, float.PositiveInfinity);
 
+        public bool OverridesDisableOnHoverOfMount = false;
+        [Tooltip("Something placed on this mount will disabled the hover on disable piece again.")]
+        public FVRFireArmAttachmentMount OverrideDisableOverrideMount;
+
+        public Transform SecondaryPiece;
+
         private Vector3 _lastPos;
         private Vector3 _lastHandPos;
 
@@ -31,13 +38,65 @@ namespace OpenScripts2
         private Vector3 _lowerLimit;
         private Vector3 _upperLimit;
 
+        [HideInInspector]
+        public GameObject DisableOnHover;
+
+        public const string POSITION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Position";
+        public const string SECONDARY_POSITION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Secondary Position";
+
         public override void Awake()
         {
             base.Awake();
             _lowerLimit = new Vector3(XLimits.x, YLimits.x, ZLimits.x);
             _upperLimit = new Vector3(XLimits.y, YLimits.y, ZLimits.y);
 
-            _startPos = transform.localPosition;
+            _startPos = Attachment.ObjectWrapper.GetGameObject().GetComponent<FVRFireArmAttachment>().AttachmentInterface.transform.localPosition;
+        }
+
+        public override void OnAttach()
+        {
+            base.OnAttach();
+
+            if (OverridesDisableOnHoverOfMount)
+            {
+                if (Attachment.curMount.MyObject is CustomOpenScripts2Attachment attachment && attachment.AttachmentInterface is MovingFireArmAttachmentInterface attachmentInterface)
+                {
+                    DisableOnHover = attachmentInterface.DisableOnHover;
+                    attachmentInterface.DisableOnHover = null;
+                    DisableOnHover?.SetActive(true);
+                }
+                else 
+                {
+                    DisableOnHover = Attachment.curMount.DisableOnHover;
+                    Attachment.curMount.DisableOnHover = null;
+                    DisableOnHover?.SetActive(true);
+                }
+            }
+        }
+
+        public override void OnDetach()
+        {
+            if (Attachment.curMount.MyObject is CustomOpenScripts2Attachment attachment && attachment.AttachmentInterface is MovingFireArmAttachmentInterface attachmentInterface)
+            {
+                attachmentInterface.DisableOnHover = DisableOnHover;
+            }
+            else
+            {
+                Attachment.curMount.DisableOnHover = DisableOnHover;
+            }
+            DisableOnHover = null;
+            base.OnDetach();
+        }
+
+        public override void FVRUpdate()
+        {
+            base.FVRUpdate();
+
+            if (OverridesDisableOnHoverOfMount && OverrideDisableOverrideMount != null)
+            {
+                if (OverrideDisableOverrideMount.HasAttachmentsOnIt()) DisableOnHover?.SetActive(false);
+                else DisableOnHover?.SetActive(true);
+            }
         }
 
         public override void BeginInteraction(FVRViveHand hand)
@@ -93,6 +152,18 @@ namespace OpenScripts2
         private void ThreeDegreesOfFreedom(Vector3 newPosRaw)
         {
             transform.localPosition = transform.parent.InverseTransformPoint(transform.position + newPosRaw).Clamp(_lowerLimit, _upperLimit);
+        }
+
+        [ContextMenu("Copy existing Interface's values")]
+        public void CopyAttachment()
+        {
+            FVRFireArmAttachmentInterface[] attachments = GetComponents<FVRFireArmAttachmentInterface>();
+
+            FVRFireArmAttachmentInterface toCopy = attachments.Single(c => c != this);
+
+            toCopy.Attachment.AttachmentInterface = this;
+
+            this.CopyComponent(toCopy);
         }
     }
 }

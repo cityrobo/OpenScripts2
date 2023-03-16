@@ -12,9 +12,10 @@ namespace OpenScripts2
 	{
 		public FVRFireArm FireArm;
 
-		public LayerMask LM_OverlapCapsuleTargetMask;
-		public LayerMask LM_RaycastTargetMask;
-		public float MaxRange = 2000f;
+		public LayerMask LM_OverlapCapsuleTargetMask = LayerMask.GetMask("AI Entity");
+		public LayerMask LM_RaycastTargetMask = LayerMask.GetMask("Environment");
+        public LayerMask LM_BlockMask = LayerMask.GetMask("Environment");
+        public float MaxRange = 2000f;
 		public float ObjectTargetingFOV = 1f;
 
 		private Vector3? _targetPoint = null;
@@ -48,20 +49,29 @@ namespace OpenScripts2
 
 		private RaycastHit _raycastHit;
 		private Collider[] _targetArray = new Collider[32];
-		private LayerMask LM_BlockMask = LayerMask.GetMask("Environment");
+
+		// Hook Stuff
+		private static Dictionary<FVRFireArm, TopAttackSystem> _exisingTopAttackFirearms = new();
 
 #if !(DEBUG || MEATKIT)
 
+		static TopAttackSystem()
+		{
+            Hook();
+        }
+
 		public void Awake()
 		{
-			Hook();
 			_modeTexts = new string[]{ TopAttackModeText, FrontalAttackModeText };
 			_overlapCapsuleRadius = Mathf.Tan(ObjectTargetingFOV * Mathf.Deg2Rad) * MaxRange;
+
+			_exisingTopAttackFirearms.Add(FireArm, this);
 		}
 		public void OnDestroy()
 		{
-			Unhook();
-		}
+            //Unhook();
+            _exisingTopAttackFirearms.Remove(FireArm);
+        }
 
 		public void Update()
         {
@@ -92,15 +102,13 @@ namespace OpenScripts2
 			else
 			{
 				_targetRB = null;
-
 			}
 
-			
+			bool raycastHit = false;
 
             if (Physics.Raycast(transform.position, transform.forward, out _raycastHit, MaxRange, LM_RaycastTargetMask,QueryTriggerInteraction.Collide))
             {
-				RangeTextField.text = string.Format("{0:F0}m", _raycastHit.distance);
-
+				raycastHit = true;
                 if (AttackMode == TopAttackProjectile.EAttackMode.Top && _raycastHit.distance > MinRangeTopAttackMode)
                 {
 					_targetPoint = _raycastHit.point;
@@ -109,17 +117,18 @@ namespace OpenScripts2
                 {
 					_targetPoint = _raycastHit.point;
 				}
-
-				if (_targetRB != null)
-				{
-					string targetName = _targetRB.name.Replace(_removeFromName, "");
-					TargetTextField.text = string.Format(RigidbodyTargetText, targetName);
-				}
-				else
-				{
-					TargetTextField.text = string.Format(PositionTargetText, _raycastHit.point.x, _raycastHit.point.y, _raycastHit.point.z);
-				}
 			}
+            if (_targetRB != null)
+            {
+                string targetName = _targetRB.name.Replace(_removeFromName, "");
+                TargetTextField.text = string.Format(RigidbodyTargetText, targetName);
+                RangeTextField.text = string.Format("{0:F0}m", distance);
+            }
+            else if (raycastHit)
+            {
+                RangeTextField.text = string.Format("{0:F0}m", _raycastHit.distance);
+                TargetTextField.text = string.Format(PositionTargetText, _raycastHit.point.x, _raycastHit.point.y, _raycastHit.point.z);
+            }
             else
             {
 				RangeTextField.text = OutOfRangeText;
@@ -129,30 +138,84 @@ namespace OpenScripts2
 				_targetRB = null;
 			}
         }
-		public void Unhook()
-		{
-			On.FistVR.FVRFireArm.Fire -= FVRFireArm_Fire; 
-			On.FistVR.FVRPhysicalObject.UpdateInteraction -= FVRPhysicalObject_UpdateInteraction;
-		}
-		public void Hook()
+		//public void Unhook()
+		//{
+		//	On.FistVR.FVRFireArm.Fire -= FVRFireArm_Fire; 
+		//	On.FistVR.FVRPhysicalObject.UpdateInteraction -= FVRPhysicalObject_UpdateInteraction;
+		//}
+		public static void Hook()
 		{
 			On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
             On.FistVR.FVRPhysicalObject.UpdateInteraction += FVRPhysicalObject_UpdateInteraction;
 		}
 
-        private void FVRPhysicalObject_UpdateInteraction(On.FistVR.FVRPhysicalObject.orig_UpdateInteraction orig, FVRPhysicalObject self, FVRViveHand hand)
+        private static void FVRPhysicalObject_UpdateInteraction(On.FistVR.FVRPhysicalObject.orig_UpdateInteraction orig, FVRPhysicalObject self, FVRViveHand hand)
         {
             orig(self, hand);
-			if (self == FireArm)
+			if (self is FVRFireArm && _exisingTopAttackFirearms.TryGetValue(self as FVRFireArm, out TopAttackSystem topAttackSystem))
             {
                 if (hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes,Vector2.left)<45f)
                 {
-					ChangeMode();
+                    topAttackSystem.ChangeMode();
                 }
             }
         }
 
-		private void ChangeMode()
+        private static void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
+        {
+            if (_exisingTopAttackFirearms.TryGetValue(self as FVRFireArm, out TopAttackSystem topAttackSystem))
+            {
+                if (doBuzz && self.m_hand != null)
+                {
+                    self.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
+                    if (self.AltGrip != null && self.AltGrip.m_hand != null)
+                    {
+                        self.AltGrip.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
+                    }
+                }
+                GM.CurrentSceneSettings.OnShotFired(self);
+                if (self.IsSuppressed())
+                {
+                    GM.CurrentPlayerBody.VisibleEvent(0.1f);
+                }
+                else
+                {
+                    GM.CurrentPlayerBody.VisibleEvent(2f);
+                }
+                float chamberVelMult = AM.GetChamberVelMult(chamber.RoundType, Vector3.Distance(chamber.transform.position, muzzle.position));
+                float num = self.GetCombinedFixedDrop(self.AccuracyClass) * 0.0166667f;
+                Vector2 vector = self.GetCombinedFixedDrift(self.AccuracyClass) * 0.0166667f;
+                for (int i = 0; i < chamber.GetRound().NumProjectiles; i++)
+                {
+                    float d = chamber.GetRound().ProjectileSpread + self.m_internalMechanicalMOA + self.GetCombinedMuzzleDeviceAccuracy();
+                    if (chamber.GetRound().BallisticProjectilePrefab != null)
+                    {
+                        Vector3 b = muzzle.forward * 0.005f;
+                        GameObject gameObject = Instantiate<GameObject>(chamber.GetRound().BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
+                        Vector2 vector2 = (UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle) * 0.33333334f * d;
+                        gameObject.transform.Rotate(new Vector3(vector2.x + vector.y + num, vector2.y + vector.x, 0f));
+                        BallisticProjectile component = gameObject.GetComponent<BallisticProjectile>();
+                        component.Fire(component.MuzzleVelocityBase * chamber.ChamberVelocityMultiplier * velMult * chamberVelMult, gameObject.transform.forward, self, true);
+
+                        TopAttackProjectile topAttackProjectile = gameObject.GetComponent<TopAttackProjectile>();
+                        if (topAttackProjectile != null && topAttackSystem._targetPoint != new Vector3(float.MaxValue, float.MaxValue, float.MaxValue))
+                        {
+                            if (topAttackSystem._targetRB == null) topAttackProjectile.TargetPoint = topAttackSystem._targetPoint;
+                            else topAttackProjectile.TargetRB = topAttackSystem._targetRB;
+
+                            topAttackProjectile.AttackMode = topAttackSystem.AttackMode;
+                        }
+                        if (rangeOverride > 0f)
+                        {
+                            component.ForceSetMaxDist(rangeOverride);
+                        }
+                    }
+                }
+            }
+            else orig(self, chamber, muzzle, doBuzz, velMult, rangeOverride);
+        }
+
+        private void ChangeMode()
         {
 			switch (AttackMode)
 			{
@@ -171,59 +234,6 @@ namespace OpenScripts2
 			}
 		}
 
-        private void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
-		{
-			if (self == FireArm)
-			{
-				if (doBuzz && self.m_hand != null)
-				{
-					self.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
-					if (self.AltGrip != null && self.AltGrip.m_hand != null)
-					{
-						self.AltGrip.m_hand.Buzz(self.m_hand.Buzzer.Buzz_GunShot);
-					}
-				}
-				GM.CurrentSceneSettings.OnShotFired(self);
-				if (self.IsSuppressed())
-				{
-					GM.CurrentPlayerBody.VisibleEvent(0.1f);
-				}
-				else
-				{
-					GM.CurrentPlayerBody.VisibleEvent(2f);
-				}
-				float chamberVelMult = AM.GetChamberVelMult(chamber.RoundType, Vector3.Distance(chamber.transform.position, muzzle.position));
-				float num = self.GetCombinedFixedDrop(self.AccuracyClass) * 0.0166667f;
-				Vector2 vector = self.GetCombinedFixedDrift(self.AccuracyClass) * 0.0166667f;
-				for (int i = 0; i < chamber.GetRound().NumProjectiles; i++)
-				{
-					float d = chamber.GetRound().ProjectileSpread + self.m_internalMechanicalMOA + self.GetCombinedMuzzleDeviceAccuracy();
-					if (chamber.GetRound().BallisticProjectilePrefab != null)
-					{
-						Vector3 b = muzzle.forward * 0.005f;
-						GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(chamber.GetRound().BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
-						Vector2 vector2 = (UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle) * 0.33333334f * d;
-						gameObject.transform.Rotate(new Vector3(vector2.x + vector.y + num, vector2.y + vector.x, 0f));
-						BallisticProjectile component = gameObject.GetComponent<BallisticProjectile>();
-						component.Fire(component.MuzzleVelocityBase * chamber.ChamberVelocityMultiplier * velMult * chamberVelMult, gameObject.transform.forward, self, true);
-
-						TopAttackProjectile smartProjectile = gameObject.GetComponent<TopAttackProjectile>();
-						if (smartProjectile != null && _targetPoint != new Vector3(float.MaxValue, float.MaxValue, float.MaxValue))
-						{
-							if (_targetRB == null) smartProjectile.TargetPoint = _targetPoint;
-							else  smartProjectile.TargetRB = _targetRB;
-
-							smartProjectile.AttackMode = AttackMode;
-						}
-						if (rangeOverride > 0f)
-						{
-							component.ForceSetMaxDist(rangeOverride);
-						}
-					}
-				}
-			}
-			else orig(self, chamber, muzzle, doBuzz, velMult, rangeOverride);
-		}
 #endif
 	}
 }

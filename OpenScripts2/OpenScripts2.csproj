@@ -42,10 +42,10 @@
       <HintPath>..\packages\HarmonyX.2.10.0\lib\net35\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.105.4\lib\net35\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.106.10\lib\net35\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.105.4\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.106.10\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx, Version=5.4.17.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\BepInEx.BaseLib.5.4.17\lib\net35\BepInEx.dll</HintPath>
@@ -91,13 +91,18 @@
       <HintPath>..\packages\UnityEngine.5.6.1\lib\net35\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.105.4\lib\net35\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.106.10\lib\net35\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="Valve.Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.105.4\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.106.10\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\AttachmentScripts\CustomOpenScripts2MuzzleDevice.cs" />
+    <Compile Include="src\AttachmentScripts\MovingFireArmMuzzleDeviceInterface .cs" />
+    <Compile Include="src\AttachmentScripts\MovingFireArmAttachmentInterface.cs" />
+    <Compile Include="src\AttachmentScripts\FirearmFeatureChangerAttachment.cs" />
+    <Compile Include="src\AttachmentScripts\CustomOpenScripts2Attachment.cs" />
     <Compile Include="src\FirearmControl\FireArmStartBurstFix.cs" />
     <Compile Include="src\FirearmControl\AdditionalBarrel.cs" />
     <Compile Include="src\AttachmentScripts\AttachmentPicatinnyRailForwardStop.cs" />
@@ -116,6 +121,11 @@
     <Compile Include="src\FirearmControl\HandgunSpin.cs" />
     <Compile Include="src\FirearmControl\RevolverFireNChambersBack.cs" />
     <Compile Include="src\MagazineScripts\AutomaticStripperClip.cs" />
+    <Compile Include="src\ModularWorkshop\ModularStock.cs" />
+    <Compile Include="src\ModularWorkshop\ModularBarrel.cs" />
+    <Compile Include="src\ModularWorkshop\ModularHandguard.cs" />
+    <Compile Include="src\ModularWorkshop\ModularClosedBoltWeapon.cs" />
+    <Compile Include="src\ModularWorkshop\ModularWeaponPart.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_ClosedBolt.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_OpenBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_ClosedBolt.cs" />
@@ -153,6 +163,8 @@
     <Compile Include="src\SmartWeapons\SmartWeapon.cs" />
     <Compile Include="src\SmartWeapons\TopAttackProjectile.cs" />
     <Compile Include="src\SmartWeapons\TopAttackSystem.cs" />
+    <Compile Include="src\VisualModification\MovementVisualEffect.cs" />
+    <Compile Include="src\VisualModification\InteractionVisualEffect.cs" />
     <Compile Include="src\VisualModification\ManipulateTransforms.cs" />
     <Compile Include="src\VisualModification\VisualModifier.cs" />
     <Compile Include="src\VisualModification\FirearmHeatingEffect.cs" />
@@ -216,6 +228,7 @@
 if $(ConfigurationName) == Release copy $(TargetDir)OpenScripts2.pdb $(ProjectDir)OpenScripts2.pdb
 if $(ConfigurationName) == Release $(ProjectDir)pdb2mdb.exe $(ProjectDir)OpenScripts2.dll
 
-if $(ConfigurationName) == Debug copy $(TargetPath) $(ProjectDir)MeatKitDLL\$(TargetName)_MeatKit.dll</PostBuildEvent>
+if $(ConfigurationName) == Debug copy $(TargetPath) $(ProjectDir)MeatKitDLL\$(TargetName)_MeatKit.dll
+if $(ConfigurationName) == Debug 7z a $(ProjectDir)MeatKitDLL.zip $(ProjectDir)MeatKitDLL\$(TargetName)_MeatKit.dll</PostBuildEvent>
   </PropertyGroup>
 </Project>

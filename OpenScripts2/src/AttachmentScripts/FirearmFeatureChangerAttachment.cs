@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace OpenScripts2
 {
-    public class FirearmFeatureChangerAttachment : FVRFireArmAttachment
+    public class FirearmFeatureChangerAttachment : CustomOpenScripts2Attachment
     {
         public enum EFirearmFeature
         {
@@ -151,19 +151,6 @@ namespace OpenScripts2
                         break;
                 }
             }
-        }
-
-        [ContextMenu("Copy existing Attachment's values")]
-        public void CopyAttachment()
-        {
-            FVRFireArmAttachment[] attachments = GetComponents<FVRFireArmAttachment>();
-
-            FVRFireArmAttachment toCopy = attachments.Single(c => c != this);
-
-            toCopy.AttachmentInterface.Attachment = this;
-            toCopy.Sensor.Attachment = this;
-
-            this.CopyComponent(toCopy);
         }
     }
 }

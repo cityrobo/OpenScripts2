@@ -4,65 +4,72 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace OpenScripts2
 {
     public class FireModeAttachment : OpenScripts2_BasePlugin
     {
-        public FVRFireArmAttachment attachment;
+        [FormerlySerializedAs("attachment")]
+        public FVRFireArmAttachment Attachment;
 
         public ClosedBoltWeapon.FireSelectorModeType[] FireSelectorModeTypes;
-        public int[] burstAmounts;
+        [FormerlySerializedAs("burstAmounts")]
+        public int[] BurstAmounts;
 
-        public bool addsSelectorPositions = false;
-        public float[] selectorPositions;
+        [FormerlySerializedAs("selectorPositions")]
+        public float[] SelectorPositions;
 
-        private bool attached = false;
-        private FVRFireArm firearm;
-        private Handgun.FireSelectorMode[] originalHandgunFireModes;
-        private ClosedBoltWeapon.FireSelectorMode[] originalClosedBoltFireModes;
-        private OpenBoltReceiver.FireSelectorMode[] originalOpenBoltFireModes;
-        private List<OpenBoltBurstFire> openBoltBursts;
+        private bool _attached = false;
+        private FVRFireArm _firearm;
+        private Handgun.FireSelectorMode[] _originalHandgunFireModes;
+        private ClosedBoltWeapon.FireSelectorMode[] _originalClosedBoltFireModes;
+        private OpenBoltReceiver.FireSelectorMode[] _originalOpenBoltFireModes;
+        private List<OpenBoltBurstFire> _openBoltBursts;
 
-        private bool handgunHadFireSelectorButton = false;
+        private bool _handgunHadFireSelectorButton = false;
+
+        private bool _addsSelectorPositions = false;
 
         public void Awake()
         {
-            openBoltBursts = new List<OpenBoltBurstFire>();
+            _openBoltBursts = new List<OpenBoltBurstFire>();
+
+            if (SelectorPositions.Length > 0) _addsSelectorPositions = true;
         }
 
         public void Update()
         {
-            if (!attached && attachment.curMount != null)
+            if (!_attached && Attachment.curMount != null)
             {
                 //Debug.Log(Attachment.curMount);
                 ChangeFireMode(true);
-                attached = true;
+                _attached = true;
             }
 
-            if (attached && attachment.curMount == null)
+            if (_attached && Attachment.curMount == null)
             {
                 //Debug.Log(Attachment.curMount);
                 ChangeFireMode(false);
-                attached = false;
+                _attached = false;
 
-                firearm = null;
+                _firearm = null;
             }
         }
         public void ChangeFireMode(bool activate)
         {
-            if (attachment.curMount != null) firearm = attachment.curMount.GetRootMount().MyObject as FVRFireArm;
+            if (Attachment.curMount != null) _firearm = Attachment.curMount.GetRootMount().MyObject as FVRFireArm;
 
-            if (firearm is OpenBoltReceiver) ChangeFireMode(firearm as OpenBoltReceiver, activate);
-            else if (firearm is ClosedBoltWeapon) ChangeFireMode(firearm as ClosedBoltWeapon, activate);
-            else if (firearm is Handgun) ChangeFireMode(firearm as Handgun, activate);
+            if (_firearm is OpenBoltReceiver) ChangeFireMode(_firearm as OpenBoltReceiver, activate);
+            else if (_firearm is ClosedBoltWeapon) ChangeFireMode(_firearm as ClosedBoltWeapon, activate);
+            else if (_firearm is Handgun) ChangeFireMode(_firearm as Handgun, activate);
         }
 
         public void ChangeFireMode(OpenBoltReceiver openBoltReceiver, bool activate)
         {
             if (activate)
             {
-                originalOpenBoltFireModes = openBoltReceiver.FireSelector_Modes;
+                _originalOpenBoltFireModes = openBoltReceiver.FireSelector_Modes;
                 int burstIndex = 0;
                 int selectorPosIndex = 0;
 
@@ -80,10 +87,10 @@ namespace OpenScripts2
                         case ClosedBoltWeapon.FireSelectorModeType.Burst:
                             newFireSelectorMode.ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
                             OpenBoltBurstFire openBoltBurst = openBoltReceiver.gameObject.AddComponent<OpenBoltBurstFire>();
-                            openBoltBursts.Add(openBoltBurst);
+                            _openBoltBursts.Add(openBoltBurst);
                             openBoltBurst.OpenBoltReceiver = openBoltReceiver;
                             openBoltBurst.SelectorSetting = openBoltReceiver.FireSelector_Modes.Length;
-                            openBoltBurst.BurstAmount = burstAmounts[burstIndex];
+                            openBoltBurst.BurstAmount = BurstAmounts[burstIndex];
                             //openBoltBurstGM.SetActive(true);
 
                             burstIndex++;
@@ -96,8 +103,8 @@ namespace OpenScripts2
                             continue;
                     }
 
-                    if (!addsSelectorPositions) newFireSelectorMode.SelectorPosition = originalOpenBoltFireModes[originalOpenBoltFireModes.Length - 1].SelectorPosition;
-                    else newFireSelectorMode.SelectorPosition = selectorPositions[selectorPosIndex];
+                    if (!_addsSelectorPositions) newFireSelectorMode.SelectorPosition = _originalOpenBoltFireModes[_originalOpenBoltFireModes.Length - 1].SelectorPosition;
+                    else newFireSelectorMode.SelectorPosition = SelectorPositions[selectorPosIndex];
                     openBoltReceiver.FireSelector_Modes = openBoltReceiver.FireSelector_Modes.Concat(new OpenBoltReceiver.FireSelectorMode[] { newFireSelectorMode }).ToArray();
 
                     selectorPosIndex++;
@@ -105,16 +112,16 @@ namespace OpenScripts2
             }
             else
             {
-                openBoltReceiver.m_fireSelectorMode = originalOpenBoltFireModes.Length - 1;
-                openBoltReceiver.FireSelector_Modes = originalOpenBoltFireModes;
-                if (openBoltBursts.Count != 0)
+                openBoltReceiver.m_fireSelectorMode = _originalOpenBoltFireModes.Length - 1;
+                openBoltReceiver.FireSelector_Modes = _originalOpenBoltFireModes;
+                if (_openBoltBursts.Count != 0)
                 {
-                    foreach (var openBoltBurst in openBoltBursts)
+                    foreach (var openBoltBurst in _openBoltBursts)
                     {
                         Destroy(openBoltBurst);
                     }
 
-                    openBoltBursts.Clear();
+                    _openBoltBursts.Clear();
                 }
             }
         }
@@ -123,7 +130,7 @@ namespace OpenScripts2
         {
             if (activate)
             {
-                originalClosedBoltFireModes = closedBoltWeapon.FireSelector_Modes;
+                _originalClosedBoltFireModes = closedBoltWeapon.FireSelector_Modes;
 
                 int burstIndex = 0;
                 int selectorPosIndex = 0;
@@ -140,27 +147,27 @@ namespace OpenScripts2
                             break;
                         case ClosedBoltWeapon.FireSelectorModeType.Burst:
                             newFireSelectorMode.ModeType = ClosedBoltWeapon.FireSelectorModeType.Burst;
-                            newFireSelectorMode.BurstAmount = burstAmounts[burstIndex];
+                            newFireSelectorMode.BurstAmount = BurstAmounts[burstIndex];
                             burstIndex++;
                             break;
                         case ClosedBoltWeapon.FireSelectorModeType.FullAuto:
                             newFireSelectorMode.ModeType = ClosedBoltWeapon.FireSelectorModeType.FullAuto;
                             break;
                         default:
-                            this.LogError("FireSelectorMode not supported: " + FireSelectorModeType);
+                            LogError("FireSelectorMode not supported: " + FireSelectorModeType);
                             continue;
                     }
-                    if (!addsSelectorPositions) newFireSelectorMode.SelectorPosition = originalClosedBoltFireModes[originalClosedBoltFireModes.Length - 1].SelectorPosition;
-                    else newFireSelectorMode.SelectorPosition = selectorPositions[selectorPosIndex];
-                    closedBoltWeapon.FireSelector_Modes = originalClosedBoltFireModes.Concat(new ClosedBoltWeapon.FireSelectorMode[] { newFireSelectorMode }).ToArray();
+                    if (!_addsSelectorPositions) newFireSelectorMode.SelectorPosition = _originalClosedBoltFireModes[_originalClosedBoltFireModes.Length - 1].SelectorPosition;
+                    else newFireSelectorMode.SelectorPosition = SelectorPositions[selectorPosIndex];
+                    closedBoltWeapon.FireSelector_Modes = closedBoltWeapon.FireSelector_Modes.Concat(new ClosedBoltWeapon.FireSelectorMode[] { newFireSelectorMode }).ToArray();
 
                     selectorPosIndex++;
                 }
             }
             else
             {
-                closedBoltWeapon.m_fireSelectorMode = originalClosedBoltFireModes.Length - 1;
-                closedBoltWeapon.FireSelector_Modes = originalClosedBoltFireModes;
+                closedBoltWeapon.m_fireSelectorMode = _originalClosedBoltFireModes.Length - 1;
+                closedBoltWeapon.FireSelector_Modes = _originalClosedBoltFireModes;
             }
         }
 
@@ -168,9 +175,9 @@ namespace OpenScripts2
         {
             if (activate)
             {
-                handgunHadFireSelectorButton = handgun.HasFireSelector;
+                _handgunHadFireSelectorButton = handgun.HasFireSelector;
 
-                originalHandgunFireModes = handgun.FireSelectorModes;
+                _originalHandgunFireModes = handgun.FireSelectorModes;
                 handgun.HasFireSelector = true;
 
                 if (handgun.FireSelector == null) handgun.FireSelector = new GameObject().transform;
@@ -190,19 +197,19 @@ namespace OpenScripts2
                             break;
                         case ClosedBoltWeapon.FireSelectorModeType.Burst:
                             newFireSelectorMode.ModeType = Handgun.FireSelectorModeType.Burst;
-                            newFireSelectorMode.BurstAmount = burstAmounts[burstIndex];
+                            newFireSelectorMode.BurstAmount = BurstAmounts[burstIndex];
                             burstIndex++;
                             break;
                         case ClosedBoltWeapon.FireSelectorModeType.FullAuto:
                             newFireSelectorMode.ModeType = Handgun.FireSelectorModeType.FullAuto;
                             break;
                         default:
-                            this.LogError("FireSelectorMode not supported: " + FireSelectorModeType);
+                            LogError("FireSelectorMode not supported: " + FireSelectorModeType);
                             continue;
                     }
 
-                    if (!addsSelectorPositions) newFireSelectorMode.SelectorPosition = originalHandgunFireModes[originalHandgunFireModes.Length - 1].SelectorPosition;
-                    else newFireSelectorMode.SelectorPosition = selectorPositions[selectorPosIndex];
+                    if (!_addsSelectorPositions) newFireSelectorMode.SelectorPosition = _originalHandgunFireModes[_originalHandgunFireModes.Length - 1].SelectorPosition;
+                    else newFireSelectorMode.SelectorPosition = SelectorPositions[selectorPosIndex];
                     handgun.FireSelectorModes = handgun.FireSelectorModes.Concat(new Handgun.FireSelectorMode[] { newFireSelectorMode }).ToArray();
 
                     selectorPosIndex++;
@@ -210,10 +217,10 @@ namespace OpenScripts2
             }
             else
             {
-                handgun.m_fireSelectorMode = originalHandgunFireModes.Length - 1;
-                handgun.FireSelectorModes = originalHandgunFireModes;
+                handgun.m_fireSelectorMode = _originalHandgunFireModes.Length - 1;
+                handgun.FireSelectorModes = _originalHandgunFireModes;
 
-                if (!handgunHadFireSelectorButton)
+                if (!_handgunHadFireSelectorButton)
                 {
                     Destroy(handgun.FireSelector.gameObject);
                     handgun.HasFireSelector = false;

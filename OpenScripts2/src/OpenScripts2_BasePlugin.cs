@@ -158,19 +158,19 @@ namespace OpenScripts2
 
         public void Log(string message)
         {
-            OpenScripts2_BepInExPlugin.Instance.Logging.LogMessage($"{gameObject.name} {GetType()}: {message}");
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogMessage($"{this}: {message}");
         }
         public void LogWarning(string message)
         {
-            OpenScripts2_BepInExPlugin.Instance.Logging.LogWarning($"{gameObject.name} {GetType()}: {message}");
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogWarning($"{this}: {message}");
         }
         public void LogError(string message)
         {
-            OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{gameObject.name} {GetType()}: {message}");
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{this}: {message}");
         }
         public void LogException(Exception e)
         {
-            OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{gameObject.name} {GetType()}: {e.Message}");
+            OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{this}: {e.Message}");
         }
     }
 }

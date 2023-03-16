@@ -4,14 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace OpenScripts2
 {
-    public class PrecisionTranslatingPart : FVRInteractiveObject
+    public class MovingFireArmMuzzleDeviceInterface : MuzzleDeviceInterface
     {
-        [Header("Precision Translating Part Config")]
+        [Header("Moving FireArm MuzzleDevice Interface Config")]
 
-        [Tooltip("One degree means linear movement, two degrees means movement on a plane, three degrees free spacial movement")]
+        [Tooltip("One degree means linear movement, two degrees means movement on a plane, three degrees free spacial movement.")]
         public EDegreesOfFreedom DegreesOfFreedom;
         public enum EDegreesOfFreedom
         {
@@ -24,6 +25,8 @@ namespace OpenScripts2
         public Vector2 YLimits = new Vector2(float.NegativeInfinity, float.PositiveInfinity);
         public Vector2 ZLimits = new Vector2(float.NegativeInfinity, float.PositiveInfinity);
 
+        public Transform SecondaryPiece;
+
         private Vector3 _lastPos;
         private Vector3 _lastHandPos;
 
@@ -31,13 +34,16 @@ namespace OpenScripts2
         private Vector3 _lowerLimit;
         private Vector3 _upperLimit;
 
+        public const string POSITION_FLAGDIC_KEY = "MovingFireArmMuzzleDeviceInterface Position";
+        public const string SECONDARY_POSITION_FLAGDIC_KEY = "MovingFireArmMuzzleDeviceInterface Secondary Position";
+
         public override void Awake()
         {
             base.Awake();
             _lowerLimit = new Vector3(XLimits.x, YLimits.x, ZLimits.x);
             _upperLimit = new Vector3(XLimits.y, YLimits.y, ZLimits.y);
 
-            _startPos = transform.localPosition;
+            _startPos = Attachment.ObjectWrapper.GetGameObject().GetComponent<FVRFireArmAttachment>().AttachmentInterface.transform.localPosition;
         }
 
         public override void BeginInteraction(FVRViveHand hand)
@@ -56,6 +62,8 @@ namespace OpenScripts2
             {
                 Vector3 adjustedHandPosDelta = (hand.Input.FilteredPos - _lastHandPos) * m_hand.Input.TriggerFloat;
                 Vector3 posDelta = (transform.position - _lastPos) * m_hand.Input.TriggerFloat;
+                OpenScripts2_BepInExPlugin.Log(this, posDelta.ToString());
+
                 Vector3 newPosRaw = transform.position + adjustedHandPosDelta - posDelta;
                 switch (DegreesOfFreedom)
                 {
@@ -93,6 +101,18 @@ namespace OpenScripts2
         private void ThreeDegreesOfFreedom(Vector3 newPosRaw)
         {
             transform.localPosition = transform.parent.InverseTransformPoint(transform.position + newPosRaw).Clamp(_lowerLimit, _upperLimit);
+        }
+
+        [ContextMenu("Copy existing Interface's values")]
+        public void CopyAttachment()
+        {
+            MuzzleDeviceInterface[] attachments = GetComponents<MuzzleDeviceInterface>();
+
+            MuzzleDeviceInterface toCopy = attachments.Single(c => c != this);
+
+            toCopy.Attachment.AttachmentInterface = this;
+
+            this.CopyComponent(toCopy);
         }
     }
 }

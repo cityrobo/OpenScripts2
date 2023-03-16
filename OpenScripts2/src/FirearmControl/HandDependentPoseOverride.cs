@@ -25,7 +25,7 @@ namespace OpenScripts2
             On.FistVR.FVRPhysicalObject.BeginInteraction += FVRPhysicalObject_BeginInteraction;
         }
 
-        public void Start()
+        public void Awake()
         {
             if (LeftPoseOverride_Touch != null && RightPoseOverride_Touch != null) _hasPoseOverride_Touch = true;
 
@@ -39,19 +39,35 @@ namespace OpenScripts2
 
         private static void FVRPhysicalObject_BeginInteraction(On.FistVR.FVRPhysicalObject.orig_BeginInteraction orig, FVRPhysicalObject self, FVRViveHand hand)
         {
-            HandDependentPoseOverride handDependentPoseOverride = null;
-
-            if (_existingHandDependentPoseOverride.TryGetValue(self,out handDependentPoseOverride))
+            if (_existingHandDependentPoseOverride.TryGetValue(self, out HandDependentPoseOverride handDependentPoseOverride))
             {
                 if (!hand.IsThisTheRightHand)
                 {
-                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && handDependentPoseOverride._hasPoseOverride_Touch) self.PoseOverride = handDependentPoseOverride.LeftPoseOverride_Touch;
-                    else self.PoseOverride = handDependentPoseOverride.LeftPoseOverride;
+                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && handDependentPoseOverride._hasPoseOverride_Touch)
+                    {
+                        self.PoseOverride = handDependentPoseOverride.LeftPoseOverride_Touch;
+                        self.PoseOverride_Touch = handDependentPoseOverride.LeftPoseOverride_Touch;
+                        if (self is FVRFireArm f) f.m_storedLocalPoseOverrideRot = f.PoseOverride.localRotation;
+                    }
+                    else
+                    {
+                        self.PoseOverride = handDependentPoseOverride.LeftPoseOverride;
+                        if (self is FVRFireArm f) f.m_storedLocalPoseOverrideRot = f.PoseOverride.localRotation;
+                    }
                 }
                 else
                 {
-                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && handDependentPoseOverride._hasPoseOverride_Touch) self.PoseOverride = handDependentPoseOverride.RightPoseOverride_Touch;
-                    else self.PoseOverride = handDependentPoseOverride.RightPoseOverride;
+                    if ((hand.CMode == ControlMode.Oculus || hand.CMode == ControlMode.Index) && handDependentPoseOverride._hasPoseOverride_Touch)
+                    {
+                        self.PoseOverride = handDependentPoseOverride.RightPoseOverride_Touch;
+                        self.PoseOverride_Touch = handDependentPoseOverride.RightPoseOverride_Touch;
+                        if (self is FVRFireArm f) f.m_storedLocalPoseOverrideRot = f.PoseOverride.localRotation;
+                    }
+                    else
+                    {
+                        self.PoseOverride = handDependentPoseOverride.RightPoseOverride;
+                        if (self is FVRFireArm f) f.m_storedLocalPoseOverrideRot = f.PoseOverride.localRotation;
+                    }
                 }
             }
 

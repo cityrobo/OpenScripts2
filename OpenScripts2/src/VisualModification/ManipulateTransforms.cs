@@ -210,5 +210,44 @@ namespace OpenScripts2
                 }
             }
         }
+        [Serializable]
+        public class TransformObservationDefinition
+        {
+            public Transform ObservedTransform;
+            public TransformType ObservedTransformParameter;
+            public Axis AxisToObserve;
+            public float LowerObservationLimit;
+            public float UpperObservationLimit;
+
+            private Quaternion _lastRot;
+            private float _deltaRotFloat;
+            private float _currentRotation;
+
+            public void Initialize()
+            {
+                _lastRot = ObservedTransform.transform.localRotation;
+            }
+
+            public float GetObservationLerp()
+            {
+                switch (ObservedTransformParameter)
+                {
+                    case TransformType.Movement:
+                        return Mathf.InverseLerp(LowerObservationLimit, UpperObservationLimit, ObservedTransform.GetLocalPositionAxisValue(AxisToObserve));
+                    case TransformType.Rotation:
+                        Quaternion deltaRot = ObservedTransform.localRotation * Quaternion.Inverse(_lastRot);
+                        _deltaRotFloat = deltaRot.GetAxisValue(AxisToObserve);
+                        if (_deltaRotFloat > 180) _deltaRotFloat -= 360f;
+                        _currentRotation += _deltaRotFloat;
+                        _lastRot = ObservedTransform.localRotation;
+                        return Mathf.InverseLerp(LowerObservationLimit, UpperObservationLimit, _currentRotation);
+                    case TransformType.Scale:
+                        return Mathf.InverseLerp(LowerObservationLimit, UpperObservationLimit, ObservedTransform.GetLocalScaleAxisValue(AxisToObserve));
+                }
+
+                return 0f;
+            }
+        }
+
     }
 }
