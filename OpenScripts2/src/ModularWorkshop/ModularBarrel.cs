@@ -9,5 +9,10 @@ namespace OpenScripts2.ModularWorkshop
     {
         public Transform MuzzlePosition;
         public FVRFireArm.MuzzleState DefaultMuzzleState;
+
+        public override void Awake()
+        {
+            base.Awake();
+        }
     }
 }

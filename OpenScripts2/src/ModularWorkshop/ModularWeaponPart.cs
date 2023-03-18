@@ -13,13 +13,15 @@ namespace OpenScripts2.ModularWorkshop
 
         private Transform[] childObjects;
 
+        protected List<Transform>_objectsToKeep = new();
+
         public virtual void Awake()
         {
             childObjects = this.GetComponentsInDirectChildren<Transform>(true);
 
             foreach (Transform child in childObjects)
             {
-                child.parent = transform.parent;
+                child.SetParent(transform.parent);
             }
         }
 
@@ -27,7 +29,7 @@ namespace OpenScripts2.ModularWorkshop
         {
             foreach (Transform child in childObjects)
             {
-                Destroy(child.gameObject);
+                if (!_objectsToKeep.Contains(child)) Destroy(child.gameObject);
             }
         }
     }

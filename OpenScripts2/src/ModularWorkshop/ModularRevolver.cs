@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace OpenScripts2.ModularWorkshop
 {
-    public class ModularClosedBoltWeapon : ClosedBoltWeapon , IModularWeapon
+    public class ModularRevolver : Revolver , IModularWeapon
     {
         [Header("Modular Configuration")]
         public Transform ModularBarrelPosition;
@@ -36,6 +36,14 @@ namespace OpenScripts2.ModularWorkshop
         private const string c_modularHandguardKey = "ModulHandguard";
         private const string c_modularStockKey = "ModulStock";
 
+        public override void Awake()
+        {
+            base.Awake();
+
+            ConfigureAll();
+        }
+
+
         public override void ConfigureFromFlagDic(Dictionary<string, string> f)
         {
             base.ConfigureFromFlagDic(f);
@@ -55,13 +63,13 @@ namespace OpenScripts2.ModularWorkshop
         {
             Dictionary<string, string> flagDic = base.GetFlagDic();
 
-            flagDic.Add(c_modularBarrelKey, SelectedModularBarrel.ToString());
-            flagDic.Add(c_modularHandguardKey, SelectedModularHandguard.ToString());
-            flagDic.Add(c_modularStockKey, SelectedModularStock.ToString());
+            if (ModularBarrelPrefabs.Length > 0) flagDic.Add(c_modularBarrelKey, SelectedModularBarrel.ToString());
+            if (ModularHandguardPrefabs.Length > 0) flagDic.Add(c_modularHandguardKey, SelectedModularHandguard.ToString());
+            if (ModularStockPrefabs.Length > 0) flagDic.Add(c_modularStockKey, SelectedModularStock.ToString());
 
             foreach (var modularWeaponPartsAttachmentPoint in ModularWeaponPartsAttachmentPoints)
             {
-                flagDic.Add("Modul" + modularWeaponPartsAttachmentPoint.GroupName, modularWeaponPartsAttachmentPoint.SelectedModularWeaponPart.ToString());
+                if (modularWeaponPartsAttachmentPoint.ModularWeaponPartsPrefabs.Length > 0) flagDic.Add("Modul" + modularWeaponPartsAttachmentPoint.GroupName, modularWeaponPartsAttachmentPoint.SelectedModularWeaponPart.ToString());
             }
 
             return flagDic;
@@ -79,8 +87,8 @@ namespace OpenScripts2.ModularWorkshop
             }
             AttachmentMounts.AddRange(modularWeaponPart.AttachmentMounts);
 
-            Destroy(ModularBarrelPosition.gameObject);
-            ModularBarrelPosition = modularWeaponPart.transform;
+            Destroy(modularWeaponPartsAttachmentPoint.ModularPartPoint.gameObject);
+            modularWeaponPartsAttachmentPoint.ModularPartPoint = modularWeaponPart.transform;
         }
 
         public void ConfigureModularBarrel(int index)
@@ -88,9 +96,15 @@ namespace OpenScripts2.ModularWorkshop
             SelectedModularBarrel = index;
 
             GameObject modularBarrelPrefab = Instantiate(ModularBarrelPrefabs[index], ModularBarrelPosition.position, ModularBarrelPosition.rotation, ModularBarrelPosition.parent);
+            
+            //modularBarrelPrefab.transform.localPosition = ModularBarrelPosition.localPosition;
+            //modularBarrelPrefab.transform.localRotation = ModularBarrelPosition.localRotation;
+            //modularBarrelPrefab.transform.parent = modularBarrelPrefab.transform.parent;
+            
             ModularBarrel modularBarrel = modularBarrelPrefab.GetComponent<ModularBarrel>();
 
-            MuzzlePos = modularBarrel.MuzzlePosition;
+            MuzzlePos.position = modularBarrel.MuzzlePosition.position;
+            MuzzlePos.rotation = modularBarrel.MuzzlePosition.rotation;
             DefaultMuzzleState = modularBarrel.DefaultMuzzleState;
 
             foreach (var mount in ModularBarrelPosition.GetComponent<ModularWeaponPart>().AttachmentMounts)
@@ -187,12 +201,31 @@ namespace OpenScripts2.ModularWorkshop
             ModularStockPosition = modularStockPrefab.transform;
         }
 
+        public void ConfigureAll()
+        {
+            if (ModularBarrelPrefabs.Length > 0) ConfigureModularBarrel(SelectedModularBarrel);
+            OpenScripts2_BepInExPlugin.Log(this, $"Configured with {ModularBarrelPrefabs.Length} Barrels.");
+            if (GetModularHandguardPrefabs.Length > 0) ConfigureModularHandguard(SelectedModularHandguard);
+            if (ModularStockPrefabs.Length > 0) ConfigureModularStock(SelectedModularStock);
+            foreach (ModularWeaponPartsAttachmentPoint attachmentPoint in ModularWeaponPartsAttachmentPoints)
+            {
+                if (attachmentPoint.ModularWeaponPartsPrefabs.Length > 0) ConfigureModularWeaponPart(attachmentPoint, attachmentPoint.SelectedModularWeaponPart);
+                OpenScripts2_BepInExPlugin.Log(this, $"Configured with {attachmentPoint.ModularWeaponPartsPrefabs.Length} {attachmentPoint.GroupName}.");
+            }
+        }
+
         [ContextMenu("Copy Existing Firearm Component")]
         public void CopyFirearm()
         {
-            ClosedBoltWeapon[] attachments = GetComponents<ClosedBoltWeapon>();
-            ClosedBoltWeapon toCopy = attachments.Single(c => c != this);
-            toCopy.Bolt.Weapon = this;
+            Revolver[] attachments = GetComponents<Revolver>();
+            Revolver toCopy = attachments.Single(c => c != this);
+            toCopy.Cylinder.Revolver = this;
+
+            foreach (var mount in toCopy.AttachmentMounts)
+            {
+                mount.MyObject = this;
+                mount.Parent = this;
+            }
 
             this.CopyComponent(toCopy);
         }
