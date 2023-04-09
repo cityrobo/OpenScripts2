@@ -18,12 +18,12 @@ namespace OpenScripts2
         [Tooltip("Sound played while moving attachment between slots.")]
         public AudioEvent SlotSound;
         [Header("Optional")]
+        [Tooltip("Excluding Front and Back pos!")]
         public List<Transform> SpecificSlotPositions = new();
 
 
         [HideInInspector]
         public static Dictionary<FVRFireArmAttachment, AttachmentPicatinnyRailForwardStop> ExistingForwardStops = new();
-
         private static Dictionary<FVRFireArmAttachmentMount, AttachmentMountPicatinnyRail> _exisingAttachmentMountPicatinnyRail = new();
 
         private FVRFireArmAttachment _currentlyPatchedAttachment = null;

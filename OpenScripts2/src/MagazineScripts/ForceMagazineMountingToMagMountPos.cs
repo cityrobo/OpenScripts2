@@ -6,7 +6,7 @@ namespace OpenScripts2
     public class ForceMagazineMountingToMagMountPos : OpenScripts2_BasePlugin
     {
         public FVRFireArm FireArm;
-        private bool _posChanged;
+        private bool _posChanged = false;
 
         public void Update()
         {

@@ -5,10 +5,10 @@ using FistVR;
 
 namespace OpenScripts2 
 { 
-	public class VanillaScopeMaterialCreator : OpenScripts2_BasePlugin
+	public class VanillaRedDotMaterialCreator : OpenScripts2_BasePlugin
 	{
-		[Header("Amplifier")]
-		public Amplifier AmplifierComponent;
+		[Header("RedDotSight")]
+		public RedDotSight RedDotComponent;
 
 		[Header("H3VR/HolograpicSight")]
 		public Texture H3vrHolograpicSightTexture;
@@ -30,22 +30,6 @@ namespace OpenScripts2
 		private const string c_h3vrHolograpicSightBlendOut = "_BlendOut";
 		private const int c_h3vrHolograpicSightRenderQueue = 3001;
 
-		//[Header("Unlit/ScopeShader")]
-		//public Texture UnlitScopeShaderTexture;
-
-		private static Shader _unlitScopeShader = null;
-		private static Material _unlitScopeShaderMaterial = null;
-		private const string c_unlitScopeShader = "Unlit/ScopeShader";
-		// private const string c_unlitScopeShaderMainTex = "_MainTex";
-
-		//[Header("Hidden/ScopeBlur")]
-		//public Texture HiddenScopeBlurTexture;
-
-		private static Shader _hiddenScopeBlurShader = null;
-		private static Material _hiddenScopeBlurMaterial = null;
-		private const string c_hiddenScopeBlurShader = "Hidden/ScopeBlur";
-		// private const string c_hiddenScopeBlurMainTex = "_MainTex";
-
 		public void Awake() 
 		{
 			// H3VR/HolograpicSight
@@ -60,28 +44,8 @@ namespace OpenScripts2
 			_h3vrHolograpicSightMaterial.SetFloat(c_h3vrHolograpicSightBlendOut, H3vrHolograpicSightBlendOut);
 			_h3vrHolograpicSightMaterial.renderQueue = c_h3vrHolograpicSightRenderQueue;
 
-			// Unlit/ScopeShader
-			if (_unlitScopeShaderMaterial == null)
-			{
-				if (_unlitScopeShader == null) _unlitScopeShader = Shader.Find(c_unlitScopeShader);
-				_unlitScopeShaderMaterial = new Material(_unlitScopeShader);
-
-				// if (UnlitScopeShaderTexture != null) _unlitScopeShaderMaterial.SetTexture(c_unlitScopeShaderMainTex, UnlitScopeShaderTexture);
-			}
-
-			// Hidden/ScopeBlur
-			if (_hiddenScopeBlurMaterial == null)
-			{
-				if (_hiddenScopeBlurShader == null) _hiddenScopeBlurShader = Shader.Find(c_hiddenScopeBlurShader);
-				_hiddenScopeBlurMaterial = new Material(_hiddenScopeBlurShader);
-
-				// if (HiddenScopeBlurTexture != null) _hiddenScopeBlurMaterial.SetTexture(c_hiddenScopeBlurMainTex, HiddenScopeBlurTexture);
-			}
-
-			ScopeCam scopeCam = AmplifierComponent.ScopeCam;
-			scopeCam.GetComponent<MeshRenderer>().sharedMaterial = _unlitScopeShaderMaterial;
-			scopeCam.PostMaterial = _hiddenScopeBlurMaterial;
-			scopeCam.Reticule.GetComponent<MeshRenderer>().sharedMaterial = _h3vrHolograpicSightMaterial;
+			Renderer reticleRenderer = RedDotComponent.BrightnessRend;
+			reticleRenderer.sharedMaterial = _h3vrHolograpicSightMaterial;
 		}
 
 		public void OnDestroy()

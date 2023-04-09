@@ -20,6 +20,12 @@ namespace OpenScripts2
         [FormerlySerializedAs("selectorPositions")]
         public float[] SelectorPositions;
 
+        public bool ReplacesExistingFireSelectorModes = false;
+
+        public Transform ExternalFireSelector;
+        public Axis ExternalFireSelectorAxis;
+        public TransformType ExternalFireSelectorTransformType;
+
         private bool _attached = false;
         private FVRFireArm _firearm;
         private Handgun.FireSelectorMode[] _originalHandgunFireModes;
@@ -54,6 +60,22 @@ namespace OpenScripts2
                 _attached = false;
 
                 _firearm = null;
+            }
+
+            if (ExternalFireSelector != null && _attached && Attachment.curMount != null)
+            {
+                switch (_firearm)
+                {
+                    case OpenBoltReceiver w:
+                        ExternalFireSelector.ModifyLocalTransform(ExternalFireSelectorTransformType, ExternalFireSelectorAxis, w.FireSelector_Modes[w.m_fireSelectorMode].SelectorPosition);
+                        break;
+                    case ClosedBoltWeapon w:
+                        ExternalFireSelector.ModifyLocalTransform(ExternalFireSelectorTransformType, ExternalFireSelectorAxis, w.FireSelector_Modes[w.m_fireSelectorMode].SelectorPosition);
+                        break;
+                    case Handgun w:
+                        ExternalFireSelector.ModifyLocalTransform(ExternalFireSelectorTransformType, ExternalFireSelectorAxis, w.FireSelectorModes[w.m_fireSelectorMode].SelectorPosition);
+                        break;
+                }
             }
         }
         public void ChangeFireMode(bool activate)
@@ -105,9 +127,67 @@ namespace OpenScripts2
 
                     if (!_addsSelectorPositions) newFireSelectorMode.SelectorPosition = _originalOpenBoltFireModes[_originalOpenBoltFireModes.Length - 1].SelectorPosition;
                     else newFireSelectorMode.SelectorPosition = SelectorPositions[selectorPosIndex];
-                    openBoltReceiver.FireSelector_Modes = openBoltReceiver.FireSelector_Modes.Concat(new OpenBoltReceiver.FireSelectorMode[] { newFireSelectorMode }).ToArray();
+
+                    if (!ReplacesExistingFireSelectorModes || selectorPosIndex > 0) openBoltReceiver.FireSelector_Modes = openBoltReceiver.FireSelector_Modes.Concat(new OpenBoltReceiver.FireSelectorMode[] { newFireSelectorMode }).ToArray();
+                    else openBoltReceiver.FireSelector_Modes = new OpenBoltReceiver.FireSelectorMode[] { newFireSelectorMode };
 
                     selectorPosIndex++;
+                }
+
+                if (openBoltReceiver.FireSelectorSwitch != null)
+                {
+                    OpenBoltReceiver.InterpStyle fireSelector_InterpStyle = openBoltReceiver.FireSelector_InterpStyle;
+                    if (fireSelector_InterpStyle != OpenBoltReceiver.InterpStyle.Rotation)
+                    {
+                        if (fireSelector_InterpStyle == OpenBoltReceiver.InterpStyle.Translate)
+                        {
+                            Vector3 zero = Vector3.zero;
+                            OpenBoltReceiver.Axis fireSelector_Axis = openBoltReceiver.FireSelector_Axis;
+                            if (fireSelector_Axis != OpenBoltReceiver.Axis.X)
+                            {
+                                if (fireSelector_Axis != OpenBoltReceiver.Axis.Y)
+                                {
+                                    if (fireSelector_Axis == OpenBoltReceiver.Axis.Z)
+                                    {
+                                        zero.z = openBoltReceiver.FireSelector_Modes[openBoltReceiver.m_fireSelectorMode].SelectorPosition;
+                                    }
+                                }
+                                else
+                                {
+                                    zero.y = openBoltReceiver.FireSelector_Modes[openBoltReceiver.m_fireSelectorMode].SelectorPosition;
+                                }
+                            }
+                            else
+                            {
+                                zero.x = openBoltReceiver.FireSelector_Modes[openBoltReceiver.m_fireSelectorMode].SelectorPosition;
+                            }
+                            openBoltReceiver.FireSelectorSwitch.localPosition = zero;
+                        }
+                    }
+                    else
+                    {
+                        Vector3 zero2 = Vector3.zero;
+                        OpenBoltReceiver.Axis fireSelector_Axis2 = openBoltReceiver.FireSelector_Axis;
+                        if (fireSelector_Axis2 != OpenBoltReceiver.Axis.X)
+                        {
+                            if (fireSelector_Axis2 != OpenBoltReceiver.Axis.Y)
+                            {
+                                if (fireSelector_Axis2 == OpenBoltReceiver.Axis.Z)
+                                {
+                                    zero2.z = openBoltReceiver.FireSelector_Modes[openBoltReceiver.m_fireSelectorMode].SelectorPosition;
+                                }
+                            }
+                            else
+                            {
+                                zero2.y = openBoltReceiver.FireSelector_Modes[openBoltReceiver.m_fireSelectorMode].SelectorPosition;
+                            }
+                        }
+                        else
+                        {
+                            zero2.x = openBoltReceiver.FireSelector_Modes[openBoltReceiver.m_fireSelectorMode].SelectorPosition;
+                        }
+                        openBoltReceiver.FireSelectorSwitch.localEulerAngles = zero2;
+                    }
                 }
             }
             else
@@ -159,9 +239,16 @@ namespace OpenScripts2
                     }
                     if (!_addsSelectorPositions) newFireSelectorMode.SelectorPosition = _originalClosedBoltFireModes[_originalClosedBoltFireModes.Length - 1].SelectorPosition;
                     else newFireSelectorMode.SelectorPosition = SelectorPositions[selectorPosIndex];
-                    closedBoltWeapon.FireSelector_Modes = closedBoltWeapon.FireSelector_Modes.Concat(new ClosedBoltWeapon.FireSelectorMode[] { newFireSelectorMode }).ToArray();
+
+                    if (!ReplacesExistingFireSelectorModes || selectorPosIndex > 0) closedBoltWeapon.FireSelector_Modes = closedBoltWeapon.FireSelector_Modes.Concat(new ClosedBoltWeapon.FireSelectorMode[] { newFireSelectorMode }).ToArray();
+                    else closedBoltWeapon.FireSelector_Modes = new ClosedBoltWeapon.FireSelectorMode[] { newFireSelectorMode };
 
                     selectorPosIndex++;
+                }
+
+                if (closedBoltWeapon.FireSelectorSwitch != null)
+                {
+                    closedBoltWeapon.SetAnimatedComponent(closedBoltWeapon.FireSelectorSwitch, closedBoltWeapon.FireSelector_Modes[closedBoltWeapon.m_fireSelectorMode].SelectorPosition, closedBoltWeapon.FireSelector_InterpStyle, closedBoltWeapon.FireSelector_Axis);
                 }
             }
             else
@@ -210,9 +297,12 @@ namespace OpenScripts2
 
                     if (!_addsSelectorPositions) newFireSelectorMode.SelectorPosition = _originalHandgunFireModes[_originalHandgunFireModes.Length - 1].SelectorPosition;
                     else newFireSelectorMode.SelectorPosition = SelectorPositions[selectorPosIndex];
-                    handgun.FireSelectorModes = handgun.FireSelectorModes.Concat(new Handgun.FireSelectorMode[] { newFireSelectorMode }).ToArray();
+
+                    if (!ReplacesExistingFireSelectorModes || selectorPosIndex > 0) handgun.FireSelectorModes = handgun.FireSelectorModes.Concat(new Handgun.FireSelectorMode[] { newFireSelectorMode }).ToArray();
+                    else handgun.FireSelectorModes = new Handgun.FireSelectorMode[] { newFireSelectorMode };
 
                     selectorPosIndex++;
+
                 }
             }
             else

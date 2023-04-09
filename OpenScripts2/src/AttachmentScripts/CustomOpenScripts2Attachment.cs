@@ -34,6 +34,9 @@ namespace OpenScripts2
                     break;
             }
 
+            SkinChanger skinChanger = GetComponent<SkinChanger>();
+            if (skinChanger != null) SkinChangerFlagDic(flagDic, true, skinChanger);
+
             return flagDic;
         }
 
@@ -53,6 +56,9 @@ namespace OpenScripts2
                     MovingFireArmAttachmentInterfaceFlagDic(f, false, i);
                     break;
             }
+
+            SkinChanger skinChanger = GetComponent<SkinChanger>();
+            if (skinChanger != null) SkinChangerFlagDic(f, true, skinChanger);
         }
 
         private void MovingFireArmAttachmentInterfaceFlagDic(Dictionary<string,string> flagDic, bool save, MovingFireArmAttachmentInterface i)
@@ -62,6 +68,9 @@ namespace OpenScripts2
             {
                 value = i.transform.localPosition.ToString("F6").Replace(" ", "").Replace("(", "").Replace(")", "");
                 flagDic.Add(MovingFireArmAttachmentInterface.POSITION_FLAGDIC_KEY, value);
+
+                value = i.transform.localRotation.ToString("F6").Replace(" ", "").Replace("(", "").Replace(")", "");
+                flagDic.Add(MovingFireArmAttachmentInterface.ROTATION_FLAGDIC_KEY, value);
 
                 if (i.SecondaryPiece != null)
                 {
@@ -74,11 +83,32 @@ namespace OpenScripts2
                 string[] split = value.Split(',');
                 i.transform.localPosition = new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
 
+                if (flagDic.TryGetValue(MovingFireArmAttachmentInterface.ROTATION_FLAGDIC_KEY, out value))
+                {
+                    split = value.Split(',');
+                    i.SecondaryPiece.localRotation = new Quaternion(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]), float.Parse(split[3]));
+                }
+
                 if (flagDic.TryGetValue(MovingFireArmAttachmentInterface.SECONDARY_POSITION_FLAGDIC_KEY, out value) && i.SecondaryPiece != null)
                 {
                     split = value.Split(',');
                     i.SecondaryPiece.localPosition = new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
                 }
+            }
+        }
+
+        private void SkinChangerFlagDic(Dictionary<string, string> flagDic, bool save, SkinChanger i)
+        {
+            string value;
+            if (save)
+            {
+                value = i.CurrentSkinIndex.ToString();
+                flagDic.Add(SkinChanger.SKINFLAGDICKEY, value);
+            }
+            else if (flagDic.TryGetValue(SkinChanger.SKINFLAGDICKEY, out value))
+            {
+                int skinIndex = int.Parse(value);
+                i.SelectSkin(skinIndex);
             }
         }
 

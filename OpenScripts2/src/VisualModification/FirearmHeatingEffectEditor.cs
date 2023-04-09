@@ -41,7 +41,9 @@ namespace OpenScripts2
             f.FireArm = (FVRFireArm)EditorGUILayout.ObjectField(new GUIContent("Firearm", "Use this if you plan to use the script on a firearm."), f.FireArm, typeof(FVRFireArm), true);
 
             f.Attachment = (FVRFireArmAttachment)EditorGUILayout.ObjectField(new GUIContent("Attachment", "Use this if you plan to use the script on an attachment."), f.Attachment, typeof(FVRFireArmAttachment), true);
-            if ((f.FireArm != null || f.Attachment != null) && !(f.FireArm != null && f.Attachment != null))
+
+            f.OnModularPart = EditorGUILayout.Toggle(new GUIContent("Is on Modular Workshop Part", "If this is on a Modular Workshop Part, check this box to continue without adding a FireArm or Attachment."), f.OnModularPart);
+            if (f.OnModularPart || ((f.FireArm != null || f.Attachment != null) && !(f.FireArm != null && f.Attachment != null)))
             {
                 _heatFoldOut = EditorGUILayout.Foldout(_heatFoldOut, "Heat Settings", foldout);
                 if (_heatFoldOut)

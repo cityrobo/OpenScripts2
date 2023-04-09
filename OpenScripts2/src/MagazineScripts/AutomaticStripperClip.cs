@@ -15,6 +15,8 @@ namespace OpenScripts2
         [Tooltip("Delay in Seconds. If equal to 0, all rounds will be loaded at the same time.")]
         public float DelayBetweenRounds = 0f;
 
+        public bool DoesAutoEject = false;
+
         private bool _loadingRounds = false;
 
         public void Update()
@@ -35,6 +37,7 @@ namespace OpenScripts2
                 yield return new WaitForSeconds(DelayBetweenRounds);
             }
             _loadingRounds = false;
+            if (DoesAutoEject) Clip.Release();
         }
 
         private void LoadAllRounds()
@@ -49,6 +52,8 @@ namespace OpenScripts2
                 FireArmRoundClass rClass = Clip.RemoveRoundReturnClass();
                 Clip.FireArm.Magazine.AddRound(rClass, false, true);
             }
+
+            if (DoesAutoEject) Clip.Release();
         }
     }
 }

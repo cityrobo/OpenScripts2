@@ -98,8 +98,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\AttachmentScripts\CustomOpenScripts2MuzzleDevice.cs" />
-    <Compile Include="src\AttachmentScripts\MovingFireArmMuzzleDeviceInterface .cs" />
     <Compile Include="src\AttachmentScripts\MovingFireArmAttachmentInterface.cs" />
     <Compile Include="src\AttachmentScripts\FirearmFeatureChangerAttachment.cs" />
     <Compile Include="src\AttachmentScripts\CustomOpenScripts2Attachment.cs" />
@@ -121,11 +119,6 @@
     <Compile Include="src\FirearmControl\HandgunSpin.cs" />
     <Compile Include="src\FirearmControl\RevolverFireNChambersBack.cs" />
     <Compile Include="src\MagazineScripts\AutomaticStripperClip.cs" />
-    <Compile Include="src\ModularWorkshop\ModularStock.cs" />
-    <Compile Include="src\ModularWorkshop\ModularBarrel.cs" />
-    <Compile Include="src\ModularWorkshop\ModularHandguard.cs" />
-    <Compile Include="src\ModularWorkshop\ModularClosedBoltWeapon.cs" />
-    <Compile Include="src\ModularWorkshop\ModularWeaponPart.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_ClosedBolt.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_OpenBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_ClosedBolt.cs" />
@@ -155,6 +148,7 @@
     <Compile Include="src\OpticScripts\CustomScopeInterface.cs" />
     <Compile Include="src\OpticScripts\ReflexSightButton.cs" />
     <Compile Include="src\OpticScripts\ScopeButton.cs" />
+    <Compile Include="src\OpticScripts\VanillaRedDotMaterialCreator.cs" />
     <Compile Include="src\OpticScripts\VanillaScopeMaterialCreator.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidanceSystem.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidedProjectile.cs" />
@@ -166,6 +160,7 @@
     <Compile Include="src\VisualModification\MovementVisualEffect.cs" />
     <Compile Include="src\VisualModification\InteractionVisualEffect.cs" />
     <Compile Include="src\VisualModification\ManipulateTransforms.cs" />
+    <Compile Include="src\VisualModification\SkinChanger.cs" />
     <Compile Include="src\VisualModification\VisualModifier.cs" />
     <Compile Include="src\VisualModification\FirearmHeatingEffect.cs" />
     <Compile Include="src\VisualModification\VisualModifierEditor.cs" />
@@ -227,6 +222,8 @@
     <PostBuildEvent>if $(ConfigurationName) == Release copy $(TargetPath) $(ProjectDir)$(TargetName).dll
 if $(ConfigurationName) == Release copy $(TargetDir)OpenScripts2.pdb $(ProjectDir)OpenScripts2.pdb
 if $(ConfigurationName) == Release $(ProjectDir)pdb2mdb.exe $(ProjectDir)OpenScripts2.dll
+if $(ConfigurationName) == Release copy $(TargetPath) "C:\Users\Cityrobo\AppData\Roaming\r2modmanPlus-local\H3VR\profiles\Creating Mods Stratum\BepInEx\plugins\cityrobo-OpenScripts2\OpenScripts2.dll"
+if $(ConfigurationName) == Release copy $(ProjectDir)OpenScripts2.dll.mdb "C:\Users\Cityrobo\AppData\Roaming\r2modmanPlus-local\H3VR\profiles\Creating Mods Stratum\BepInEx\plugins\cityrobo-OpenScripts2\OpenScripts2.dll.mdb"
 
 if $(ConfigurationName) == Debug copy $(TargetPath) $(ProjectDir)MeatKitDLL\$(TargetName)_MeatKit.dll
 if $(ConfigurationName) == Debug 7z a $(ProjectDir)MeatKitDLL.zip $(ProjectDir)MeatKitDLL\$(TargetName)_MeatKit.dll</PostBuildEvent>

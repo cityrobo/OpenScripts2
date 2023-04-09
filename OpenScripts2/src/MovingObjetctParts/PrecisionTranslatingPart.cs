@@ -86,7 +86,7 @@ namespace OpenScripts2
         }
         private void TwoDegreesOfFreedom(Vector3 newPosRaw)
         {
-            Vector3 newPosProjected = newPosRaw.ProjectOnPlaneThroughPoint(transform.position, transform.GetLocalDirAxis(LimitingAxis));
+            Vector3 newPosProjected = newPosRaw.ProjectOnPlaneThroughPoint(transform.position, transform.parent.GetLocalDirAxis(LimitingAxis));
             Vector3 newPosClamped = transform.parent.InverseTransformPoint(newPosProjected).Clamp(_lowerLimit, _upperLimit);
             transform.localPosition = newPosClamped;
         }

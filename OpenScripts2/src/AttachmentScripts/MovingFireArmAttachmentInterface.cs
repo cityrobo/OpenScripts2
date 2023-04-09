@@ -30,6 +30,8 @@ namespace OpenScripts2
         public FVRFireArmAttachmentMount OverrideDisableOverrideMount;
 
         public Transform SecondaryPiece;
+        public bool CanRotate;
+        public float RotationStep = 45f;
 
         private Vector3 _lastPos;
         private Vector3 _lastHandPos;
@@ -42,7 +44,9 @@ namespace OpenScripts2
         public GameObject DisableOnHover;
 
         public const string POSITION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Position";
+        public const string ROTATION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Position";
         public const string SECONDARY_POSITION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Secondary Position";
+
 
         public override void Awake()
         {
@@ -133,6 +137,14 @@ namespace OpenScripts2
             {
                 transform.localPosition = _startPos;
             }
+            else if (CanRotate && OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.left))
+            {
+                transform.Rotate(0f, 0f, RotationStep);
+            }
+            else if (CanRotate && OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.right))
+            {
+                transform.Rotate(0f, 0f, -RotationStep);
+            }
 
             _lastPos = transform.position;
             _lastHandPos = hand.Input.FilteredPos;
@@ -145,7 +157,7 @@ namespace OpenScripts2
         }
         private void TwoDegreesOfFreedom(Vector3 newPosRaw)
         {
-            Vector3 newPosProjected = newPosRaw.ProjectOnPlaneThroughPoint(transform.position, transform.GetLocalDirAxis(LimitingAxis));
+            Vector3 newPosProjected = newPosRaw.ProjectOnPlaneThroughPoint(transform.position, transform.parent.GetLocalDirAxis(LimitingAxis));
             Vector3 newPosClamped = transform.parent.InverseTransformPoint(newPosProjected).Clamp(_lowerLimit, _upperLimit);
             transform.localPosition = newPosClamped;
         }

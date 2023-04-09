@@ -18,6 +18,8 @@ namespace OpenScripts2
         [Tooltip("Use this if you plan to use the script on an attachment.")]
         public FVRFireArmAttachment Attachment;
 
+        public bool OnModularPart = false;
+
         // Heat System
         [Header("Heat Config")]
         [Tooltip("Heat added to the effect per shot fired. Heat caps out at 1.")]
@@ -203,29 +205,43 @@ namespace OpenScripts2
         private const string c_IncandescenceScrollSpeedPropertyString = "_IncandescenceMapVelocity";
         private const string c_DetailWeightPropertyString = "_DetailWeight";
 
-
         public void Awake()
         {
-			Hook();
+            if (!OnModularPart) ConfigureHeatingEffect();
+        }
+		public void OnDestroy()
+        {
+			Unhook();
+
+            if (_copyMaterial != null) Destroy(_copyMaterial);
+            if (_copyExplodedMaterial != null) Destroy(_copyExplodedMaterial);
+
+            DetachFromCore();
+        }
+
+        public void Reload()
+        {
+            ConfigureHeatingEffect();
+        }
+
+        public void ConfigureHeatingEffect()
+        {
+            Hook();
 #if !DEBUG
-            _canExplode = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.Value;
-            _canChangeAccuracy = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeAccuracy.Value;
-            _canCookOff = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanCookOff.Value;
-            CanRecoverFromExplosion = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.Value;
-            RevertHeatThreshold = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.Value;
+                _canExplode = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.Value;
+                _canChangeAccuracy = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeAccuracy.Value;
+                _canCookOff = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanCookOff.Value;
+                CanRecoverFromExplosion = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.Value;
+                RevertHeatThreshold = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.Value;
 #endif
             if (FireArm != null)
             {
                 _origInternalMechanicalMOA = FireArm.m_internalMechanicalMOA;
 
-                Core = FireArm.GetComponent<FirearmHeatingEffect_FirearmCore>();
-                if (Core == null)
-                {
-                    Core = FireArm.gameObject.AddComponent<FirearmHeatingEffect_FirearmCore>(); 
-                }
-                Core.FirearmHeatingEffects.Add(this);
+                AttachToCore();
             }
             else if (Attachment != null && Attachment is MuzzleDevice muzzleDevice) _origInternalMechanicalMOA = muzzleDevice.m_mechanicalAccuracy;
+
             if (MeshRenderer != null)
             {
                 _copyMaterial = MeshRenderer.materials[MaterialIndex];
@@ -252,13 +268,6 @@ namespace OpenScripts2
             {
                 StartCoroutine(CookoffSystem());
             }
-        }
-		public void OnDestroy()
-        {
-			Unhook();
-
-            if (_copyMaterial != null) Destroy(_copyMaterial);
-            if (_copyExplodedMaterial != null) Destroy(_copyExplodedMaterial);
         }
 
         public void Update()
@@ -496,12 +505,12 @@ namespace OpenScripts2
             {
                 Core = FireArm.gameObject.AddComponent<FirearmHeatingEffect_FirearmCore>();
             }
-            Core.FirearmHeatingEffects.Add(this);
+            if (Core != null && !Core.FirearmHeatingEffects.Contains(this)) Core.FirearmHeatingEffects.Add(this);
         }
 
         private void DetachFromCore()
         {
-            Core.FirearmHeatingEffects.Remove(this);
+            if (Core != null && Core.FirearmHeatingEffects.Contains(this)) Core.FirearmHeatingEffects.Remove(this);
             Core = null;
         }
         void Unhook()
