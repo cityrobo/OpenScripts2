@@ -36,7 +36,7 @@ namespace OpenScripts2
         private float _currentLerpValue = 0f;
         private bool _effectActive = false;
 
-        private List<E_InteractionType> _currentInteractions;
+        private readonly List<E_InteractionType> _currentInteractions = new();
 
         private VisualModifier _visualModifier;
 
