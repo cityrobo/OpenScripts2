@@ -44,7 +44,7 @@ namespace OpenScripts2
         public GameObject DisableOnHover;
 
         public const string POSITION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Position";
-        public const string ROTATION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Position";
+        public const string ROTATION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Rotation";
         public const string SECONDARY_POSITION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Secondary Position";
 
 

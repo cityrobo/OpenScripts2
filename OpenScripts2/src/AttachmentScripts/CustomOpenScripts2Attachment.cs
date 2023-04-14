@@ -86,7 +86,7 @@ namespace OpenScripts2
                 if (flagDic.TryGetValue(MovingFireArmAttachmentInterface.ROTATION_FLAGDIC_KEY, out value))
                 {
                     split = value.Split(',');
-                    i.SecondaryPiece.localRotation = new Quaternion(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]), float.Parse(split[3]));
+                    i.transform.localRotation = new Quaternion(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]), float.Parse(split[3]));
                 }
 
                 if (flagDic.TryGetValue(MovingFireArmAttachmentInterface.SECONDARY_POSITION_FLAGDIC_KEY, out value) && i.SecondaryPiece != null)
