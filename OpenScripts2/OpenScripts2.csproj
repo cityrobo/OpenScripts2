@@ -150,6 +150,7 @@
     <Compile Include="src\OpticScripts\ScopeButton.cs" />
     <Compile Include="src\OpticScripts\VanillaRedDotMaterialCreator.cs" />
     <Compile Include="src\OpticScripts\VanillaScopeMaterialCreator.cs" />
+    <Compile Include="src\SerializableClasses\TransformProxy.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidanceSystem.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidedProjectile.cs" />
     <Compile Include="src\SmartWeapons\SmartAttachment.cs" />
