@@ -85,14 +85,17 @@ namespace OpenScripts2
                 _currentMenu = 1;
             }
 
-            if (IsIntegrated)
+            if (IsIntegrated && FireArm != null)
             {
                 _muzzlePos = FireArm.MuzzlePos;
                 Vector3 muzzleOffset = _muzzlePos.InverseTransformPoint(ReticleMesh.transform.position);
 
                 ReticleMesh.material.SetFloat(NameOfXOffsetVariable, -muzzleOffset.x);
                 ReticleMesh.material.SetFloat(NameOfYOffsetVariable, -muzzleOffset.y);
+
+                ForceInteractable = true;
             }
+            else if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogWarning(this, "Sight set to \"Is Integrated\" but not FireArm assing. Either implementation error or Modular Weapon Part.");
 
             StartScreen();
 
@@ -172,6 +175,15 @@ namespace OpenScripts2
             _rightEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * +0.032f;
 
             if (!_disableOcclusionCulling && (IsIntegrated || _isAttached)) CheckReticleVisibility();
+        }
+
+        public void OffsetReticle()
+        {
+            _muzzlePos = FireArm.MuzzlePos;
+            Vector3 muzzleOffset = _muzzlePos.InverseTransformPoint(ReticleMesh.transform.position);
+
+            ReticleMesh.material.SetFloat(NameOfXOffsetVariable, -muzzleOffset.x);
+            ReticleMesh.material.SetFloat(NameOfYOffsetVariable, -muzzleOffset.y);
         }
 
         private void ShowNextMenu() 
