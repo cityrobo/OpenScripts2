@@ -204,40 +204,6 @@ namespace OpenScripts2
             return Exponent * Mathf.Pow(X, Exponent - 1f);
         }
     }
-
-    [Serializable]
-    public class TransformProxy
-    {
-        public Transform parent;
-        public Vector3 localPosition;
-        public Quaternion localRotation;
-        public Vector3 localScale;
-
-        public TransformProxy(Transform transform)
-        {
-            localPosition = transform.localPosition;
-            localRotation = transform.localRotation;
-            localScale = transform.localScale;
-
-            parent = transform.parent;
-        }
-
-        public TransformProxy(Transform transform, Transform parent)
-        {
-            localPosition = transform.localPosition;
-            localRotation = transform.localRotation;
-            localScale = transform.localScale;
-
-            this.parent = parent;
-        }
-
-        public Vector3 position => parent.TransformPoint(localPosition); 
-        public Quaternion rotation => parent.TransformRotation(localRotation);
-
-        public Vector3 GetGlobalPositionRelativeToParent(Transform parent) => parent.TransformPoint(localPosition);
-
-        public Quaternion GetGlobalRotationRelativeToParent(Transform parent) => parent.TransformRotation(localRotation);
-    }
 }
 
 namespace UnityEngine
