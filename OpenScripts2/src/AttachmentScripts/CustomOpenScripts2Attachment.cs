@@ -58,7 +58,7 @@ namespace OpenScripts2
             }
 
             SkinChanger skinChanger = GetComponent<SkinChanger>();
-            if (skinChanger != null) SkinChangerFlagDic(f, true, skinChanger);
+            if (skinChanger != null) SkinChangerFlagDic(f, false, skinChanger);
         }
 
         private void MovingFireArmAttachmentInterfaceFlagDic(Dictionary<string,string> flagDic, bool save, MovingFireArmAttachmentInterface i)

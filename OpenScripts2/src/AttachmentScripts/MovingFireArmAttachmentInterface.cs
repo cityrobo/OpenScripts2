@@ -163,7 +163,7 @@ namespace OpenScripts2
         }
         private void ThreeDegreesOfFreedom(Vector3 newPosRaw)
         {
-            transform.localPosition = transform.parent.InverseTransformPoint(transform.position + newPosRaw).Clamp(_lowerLimit, _upperLimit);
+            transform.localPosition = transform.parent.InverseTransformPoint(newPosRaw).Clamp(_lowerLimit, _upperLimit);
         }
 
         [ContextMenu("Copy existing Interface's values")]
