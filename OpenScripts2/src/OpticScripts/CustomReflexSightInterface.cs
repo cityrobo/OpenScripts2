@@ -88,10 +88,12 @@ namespace OpenScripts2
             if (IsIntegrated && FireArm != null)
             {
                 _muzzlePos = FireArm.MuzzlePos;
-                Vector3 muzzleOffset = _muzzlePos.InverseTransformPoint(ReticleMesh.transform.position);
+                Vector3 muzzleOffset = _muzzlePos.position - ReticleMesh.transform.position;
 
-                ReticleMesh.material.SetFloat(NameOfXOffsetVariable, -muzzleOffset.x);
-                ReticleMesh.material.SetFloat(NameOfYOffsetVariable, -muzzleOffset.y);
+                ReticleMesh.material.SetFloat(NameOfXOffsetVariable, muzzleOffset.x);
+                ReticleMesh.material.SetFloat(NameOfYOffsetVariable, muzzleOffset.y);
+
+                ReticleMesh.transform.rotation = Quaternion.LookRotation(_muzzlePos.forward);
 
                 ForceInteractable = true;
             }
@@ -156,10 +158,12 @@ namespace OpenScripts2
                 {
                     _muzzlePos = FireArm.CurrentMuzzle;
 
-                    Vector3 muzzleOffset = _muzzlePos.InverseTransformPoint(ReticleMesh.transform.position);
+                    Vector3 muzzleOffset = _muzzlePos.position - ReticleMesh.transform.position;
 
-                    ReticleMesh.material.SetFloat(NameOfXOffsetVariable, -muzzleOffset.x);
-                    ReticleMesh.material.SetFloat(NameOfYOffsetVariable, -muzzleOffset.y);
+                    ReticleMesh.material.SetFloat(NameOfXOffsetVariable, muzzleOffset.x);
+                    ReticleMesh.material.SetFloat(NameOfYOffsetVariable, muzzleOffset.y);
+
+                    ReticleMesh.transform.rotation = Quaternion.LookRotation(_muzzlePos.forward);
                 }
             }
             else if (!IsIntegrated && Attachment.curMount == null && _isAttached)
@@ -167,6 +171,8 @@ namespace OpenScripts2
                 _isAttached = false;
                 ReticleMesh.material.SetFloat(NameOfXOffsetVariable, 0f);
                 ReticleMesh.material.SetFloat(NameOfYOffsetVariable, 0f);
+
+                ReticleMesh.transform.localRotation = Quaternion.identity;
                 FireArm = null;
                 _muzzlePos = null;
             }
@@ -180,10 +186,12 @@ namespace OpenScripts2
         public void OffsetReticle()
         {
             _muzzlePos = FireArm.MuzzlePos;
-            Vector3 muzzleOffset = _muzzlePos.InverseTransformPoint(ReticleMesh.transform.position);
+            Vector3 muzzleOffset = _muzzlePos.position - ReticleMesh.transform.position;
 
-            ReticleMesh.material.SetFloat(NameOfXOffsetVariable, -muzzleOffset.x);
-            ReticleMesh.material.SetFloat(NameOfYOffsetVariable, -muzzleOffset.y);
+            ReticleMesh.material.SetFloat(NameOfXOffsetVariable, muzzleOffset.x);
+            ReticleMesh.material.SetFloat(NameOfYOffsetVariable, muzzleOffset.y);
+
+            ReticleMesh.transform.rotation = Quaternion.LookRotation(_muzzlePos.forward);
         }
 
         private void ShowNextMenu() 

@@ -14,6 +14,15 @@ namespace OpenScripts2
         public readonly Quaternion localRotation;
         public readonly Vector3 localScale;
 
+
+        public TransformProxy()
+        {
+            parent = null;
+            localPosition = Vector3.zero;
+            localRotation = Quaternion.identity;
+            localScale = Vector3.one;
+        }
+
         public TransformProxy(Transform transform, bool deleteReferenceGameObject = false)
         {
             localPosition = transform.localPosition;

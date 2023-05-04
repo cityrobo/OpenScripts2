@@ -42,6 +42,8 @@ namespace OpenScripts2
 
         [HideInInspector]
         public GameObject DisableOnHover;
+        [HideInInspector]
+        public GameObject EnableOnHover;
 
         public const string POSITION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Position";
         public const string ROTATION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Rotation";
@@ -61,7 +63,7 @@ namespace OpenScripts2
         {
             base.OnAttach();
 
-            if (OverridesDisableOnHoverOfMount)
+            if (OverridesDisableOnHoverOfMount && Attachment.curMount.HasHoverDisablePiece)
             {
                 if (Attachment.curMount.MyObject is CustomOpenScripts2Attachment attachment && attachment.AttachmentInterface is MovingFireArmAttachmentInterface attachmentInterface)
                 {
@@ -76,6 +78,21 @@ namespace OpenScripts2
                     DisableOnHover?.SetActive(true);
                 }
             }
+            if (OverridesDisableOnHoverOfMount && Attachment.curMount.HasHoverEnablePiece)
+            {
+                if (Attachment.curMount.MyObject is CustomOpenScripts2Attachment attachment && attachment.AttachmentInterface is MovingFireArmAttachmentInterface attachmentInterface)
+                {
+                    EnableOnHover = attachmentInterface.EnableOnHover;
+                    attachmentInterface.EnableOnHover = null;
+                    EnableOnHover?.SetActive(false);
+                }
+                else
+                {
+                    EnableOnHover = Attachment.curMount.EnableOnHover;
+                    Attachment.curMount.EnableOnHover = null;
+                    EnableOnHover?.SetActive(false);
+                }
+            }
         }
 
         public override void OnDetach()
@@ -83,12 +100,16 @@ namespace OpenScripts2
             if (Attachment.curMount.MyObject is CustomOpenScripts2Attachment attachment && attachment.AttachmentInterface is MovingFireArmAttachmentInterface attachmentInterface)
             {
                 attachmentInterface.DisableOnHover = DisableOnHover;
+                attachmentInterface.EnableOnHover = EnableOnHover;
             }
             else
             {
                 Attachment.curMount.DisableOnHover = DisableOnHover;
+                Attachment.curMount.EnableOnHover = EnableOnHover;
             }
             DisableOnHover = null;
+            EnableOnHover = null;          
+
             base.OnDetach();
         }
 
@@ -100,6 +121,9 @@ namespace OpenScripts2
             {
                 if (OverrideDisableOverrideMount.HasAttachmentsOnIt()) DisableOnHover?.SetActive(false);
                 else DisableOnHover?.SetActive(true);
+
+                if (OverrideDisableOverrideMount.HasAttachmentsOnIt()) EnableOnHover?.SetActive(true);
+                else EnableOnHover?.SetActive(false);
             }
         }
 

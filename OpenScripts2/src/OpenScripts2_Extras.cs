@@ -74,6 +74,27 @@ namespace OpenScripts2
 		}
 	}
 
+    public static class MiscUtilities
+    {
+        public static Sprite EmptySprite = null;
+
+        public static Sprite CreateEmptySprite()
+        {
+            if (EmptySprite == null)
+            {
+                // Create an empty texture
+                Texture2D emptyTexture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
+                emptyTexture.SetPixel(0, 0, Color.clear);
+                emptyTexture.Apply();
+
+                // Create an empty sprite
+                EmptySprite = Sprite.Create(emptyTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 100);
+                
+            }
+            return EmptySprite;
+        }
+    }
+
     public static class Vector3Utils
     {
         public static Vector3 ProjectOnPlaneThroughPoint(Vector3 vector, Vector3 point, Vector3 planeNormal)

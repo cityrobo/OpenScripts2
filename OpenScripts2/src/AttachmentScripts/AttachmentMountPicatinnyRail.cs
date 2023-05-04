@@ -24,7 +24,8 @@ namespace OpenScripts2
 
         [HideInInspector]
         public static Dictionary<FVRFireArmAttachment, AttachmentPicatinnyRailForwardStop> ExistingForwardStops = new();
-        private static Dictionary<FVRFireArmAttachmentMount, AttachmentMountPicatinnyRail> _exisingAttachmentMountPicatinnyRail = new();
+        [HideInInspector]
+        public static Dictionary<FVRFireArmAttachmentMount, AttachmentMountPicatinnyRail> _exisingAttachmentMountPicatinnyRail = new();
 
         private FVRFireArmAttachment _currentlyPatchedAttachment = null;
         private bool _isPatched = false;
@@ -203,8 +204,9 @@ namespace OpenScripts2
 
             _slotLerpFactor = 1f/(NumberOfPicatinnySlots - 1);
 
-            if (SpecificSlotPositions.Count > 0f)
+            if (SpecificSlotPositions.Count > 0)
             {
+                NumberOfPicatinnySlots = _specificSlotPos.Count;
                 _usesSpecificSlotLerps = true;
                 _specificSlotLerps.AddRange(new float[]{0f, 1f});
             }
@@ -218,8 +220,6 @@ namespace OpenScripts2
                 _specificSlotPos.Add(Mount.transform.InverseTransformPoint(Vector3.Lerp(Mount.Point_Front.position, Mount.Point_Rear.position, specificLerp)));
             }
 
-            NumberOfPicatinnySlots = _specificSlotPos.Count;
-
             for (int i = 0; i < SpecificSlotPositions.Count; i++)
             {
                 Destroy(SpecificSlotPositions[i].gameObject);
@@ -227,7 +227,7 @@ namespace OpenScripts2
             SpecificSlotPositions.Clear();
         }
 
-        public void OnDestoy()
+        public void OnDestroy()
         {
             _exisingAttachmentMountPicatinnyRail.Remove(Mount);
         }
@@ -286,7 +286,7 @@ namespace OpenScripts2
                     }
                     else
                     {
-                        posIndex = (int)Mathf.Round(inverseLerp / _slotLerpFactor);
+                        posIndex = Mathf.RoundToInt(inverseLerp / _slotLerpFactor);
                     }
 
                     if (ExistingForwardStops.TryGetValue(self, out AttachmentPicatinnyRailForwardStop forwardStop))
@@ -310,13 +310,12 @@ namespace OpenScripts2
                         }
                         else
                         {
-                            posIndexLimit = (int)Mathf.Round(inverseLerpUnclamped / _slotLerpFactor);
+                            posIndexLimit = Mathf.RoundToInt(inverseLerpUnclamped / _slotLerpFactor);
                         }
-
                         if (posIndexLimit < 0) posIndex -= posIndexLimit;
                         else if (posIndexLimit >= NumberOfPicatinnySlots) posIndex -= (posIndexLimit - (NumberOfPicatinnySlots - 1));
                     }
-
+                    
                     Vector3 snapPos;
                     if (_usesSpecificSlotLerps)
                     {

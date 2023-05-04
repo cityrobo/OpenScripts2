@@ -28,7 +28,7 @@ namespace OpenScripts2
 		public FVRFireArmAttachmentMount AttachmentMount;
 		public ForeignAttachmentSet[] ForeignAttachmentSets;
 
-		private List<FVRFireArmAttachment> _spawnedAttachments = new();
+		private readonly List<FVRFireArmAttachment> _spawnedAttachments = new();
 
 #if !DEBUG
 		public void Start()
@@ -84,6 +84,8 @@ namespace OpenScripts2
 						LogWarning($"Item ID {foreignAttachmentSet.BackupItemID} not found; continuing with next attachment in list!");
 					}
 				}
+
+				Destroy(foreignAttachmentSet.AttachmentPoint.gameObject);
 			}
 		}
 #endif

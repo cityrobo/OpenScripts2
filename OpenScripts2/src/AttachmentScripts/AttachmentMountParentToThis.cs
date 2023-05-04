@@ -13,13 +13,11 @@ namespace OpenScripts2
     {
         public FVRFireArmAttachmentMount Mount => GetComponent<FVRFireArmAttachmentMount>();
 
-        private static List<FVRFireArmAttachmentMount> _exisingAttachmentMountParentToThis = new();
+        private static readonly List<FVRFireArmAttachmentMount> _exisingAttachmentMountParentToThis = new();
 
 #if!DEBUG
         static AttachmentMountParentToThis()
         {
-            //On.FistVR.FVRFireArmAttachmentMount.GetRootMount += FVRFireArmAttachmentMount_GetRootMount;
-
             On.FistVR.FVRFireArmAttachment.AttachToMount += FVRFireArmAttachment_AttachToMount;
         }
 
@@ -55,14 +53,6 @@ namespace OpenScripts2
         public void OnDestoy()
         {
             _exisingAttachmentMountParentToThis.Remove(Mount);
-        }
-        private static FVRFireArmAttachmentMount FVRFireArmAttachmentMount_GetRootMount(On.FistVR.FVRFireArmAttachmentMount.orig_GetRootMount orig, FVRFireArmAttachmentMount self)
-        {
-            if (_exisingAttachmentMountParentToThis.Contains(self))
-            {
-                return self;
-            }
-            else return orig(self);
         }
 #endif
     }
