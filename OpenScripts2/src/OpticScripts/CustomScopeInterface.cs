@@ -138,11 +138,12 @@ namespace OpenScripts2
 
             ScopeEnabled(ActiveWithoutMount);
 
-            if (!_initialZero && IsIntegrated)
+            if (!_initialZero && IsIntegrated && FireArm != null)
             {
                 Zero();
                 _initialZero = true;
             }
+            else if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogWarning(this, "Scope set to \"Is Integrated\" but not FireArm assigned. Either implementation error or Modular Weapon Part.");
 
             if (ZoomTextField == null) 
             { 
@@ -409,6 +410,13 @@ namespace OpenScripts2
             if (WindageTextField != null) WindageTextField.text = WindagePrefix + _windageStep + " MOA";
             if (ReticleTextField != null) ReticleTextField.text = ReticlePrefix + ReticleNames[CurrentSelectedReticleIndex];
         }
+
+        public void Initialize()
+        {
+            _initialZero = true;
+            Zero();
+        }
+
         public void Zero()
         {
             if (IsIntegrated || (_attachment != null && _attachment.curMount != null && _attachment.curMount.Parent != null && _attachment.curMount.Parent is FVRFireArm))

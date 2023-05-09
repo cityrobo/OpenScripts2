@@ -97,7 +97,7 @@ namespace OpenScripts2
 
                 ForceInteractable = true;
             }
-            else if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogWarning(this, "Sight set to \"Is Integrated\" but not FireArm assing. Either implementation error or Modular Weapon Part.");
+            else if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogWarning(this, "Sight set to \"Is Integrated\" but not FireArm assigned. Either implementation error or Modular Weapon Part.");
 
             StartScreen();
 

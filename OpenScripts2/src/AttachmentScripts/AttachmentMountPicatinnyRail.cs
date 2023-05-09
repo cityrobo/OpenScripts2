@@ -206,25 +206,25 @@ namespace OpenScripts2
 
             if (SpecificSlotPositions.Count > 0)
             {
-                NumberOfPicatinnySlots = _specificSlotPos.Count;
                 _usesSpecificSlotLerps = true;
                 _specificSlotLerps.AddRange(new float[]{0f, 1f});
-            }
+                foreach (Transform slotPos in SpecificSlotPositions)
+                {
+                    _specificSlotLerps.Add(Vector3Utils.InverseLerp(Mount.Point_Front.position, Mount.Point_Rear.position, slotPos.position));
+                }
+                foreach (float specificLerp in _specificSlotLerps)
+                {
+                    _specificSlotPos.Add(Mount.transform.InverseTransformPoint(Vector3.Lerp(Mount.Point_Front.position, Mount.Point_Rear.position, specificLerp)));
+                }
 
-            foreach (Transform slotPos in SpecificSlotPositions)
-            {
-                _specificSlotLerps.Add(Vector3Utils.InverseLerp(Mount.Point_Front.position, Mount.Point_Rear.position, slotPos.position));
-            }
-            foreach (float specificLerp in _specificSlotLerps)
-            {
-                _specificSlotPos.Add(Mount.transform.InverseTransformPoint(Vector3.Lerp(Mount.Point_Front.position, Mount.Point_Rear.position, specificLerp)));
-            }
+                NumberOfPicatinnySlots = _specificSlotPos.Count;
 
-            for (int i = 0; i < SpecificSlotPositions.Count; i++)
-            {
-                Destroy(SpecificSlotPositions[i].gameObject);
+                for (int i = 0; i < SpecificSlotPositions.Count; i++)
+                {
+                    Destroy(SpecificSlotPositions[i].gameObject);
+                }
+                SpecificSlotPositions.Clear();
             }
-            SpecificSlotPositions.Clear();
         }
 
         public void OnDestroy()
@@ -296,14 +296,23 @@ namespace OpenScripts2
                         int posIndexLimit = 0;
                         if (_usesSpecificSlotLerps)
                         {
+                            if (inverseLerpUnclamped > 1f)
+                            {
+                                inverseLerp -= (inverseLerpUnclamped - 1f);
+                            }
+                            else if (inverseLerpUnclamped < 0f)
+                            {
+                                inverseLerp -= inverseLerpUnclamped;
+                            }
+
                             float min = float.MaxValue;
                             float diff;
                             for (int i = 0; i < _specificSlotLerps.Count; i++)
                             {
-                                diff = Mathf.Abs(_specificSlotLerps[i] - inverseLerpUnclamped);
+                                diff = Mathf.Abs(_specificSlotLerps[i] - inverseLerp);
                                 if (diff < min)
                                 {
-                                    posIndexLimit = i;
+                                    posIndex = i;
                                     min = diff;
                                 }
                             }
@@ -314,6 +323,8 @@ namespace OpenScripts2
                         }
                         if (posIndexLimit < 0) posIndex -= posIndexLimit;
                         else if (posIndexLimit >= NumberOfPicatinnySlots) posIndex -= (posIndexLimit - (NumberOfPicatinnySlots - 1));
+
+                        posIndex = Mathf.Clamp(posIndex, 0, NumberOfPicatinnySlots - 1);
                     }
                     
                     Vector3 snapPos;
