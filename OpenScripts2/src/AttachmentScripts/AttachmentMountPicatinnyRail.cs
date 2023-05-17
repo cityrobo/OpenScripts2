@@ -27,7 +27,6 @@ namespace OpenScripts2
         [HideInInspector]
         public static Dictionary<FVRFireArmAttachmentMount, AttachmentMountPicatinnyRail> _exisingAttachmentMountPicatinnyRail = new();
 
-        private FVRFireArmAttachment _currentlyPatchedAttachment = null;
         private bool _isPatched = false;
 
         private float _slotLerpFactor = 0f;
@@ -45,25 +44,12 @@ namespace OpenScripts2
             _methodPointer = _methodInfo.MethodHandle.GetFunctionPointer();
 
 #if !DEBUG
-            On.FistVR.FVRFireArmAttachmentSensor.SetHoveredMount += FVRFireArmAttachmentSensor_SetHoveredMount;
             On.FistVR.FVRFireArmAttachment.AttachToMount += FVRFireArmAttachment_AttachToMount;
             On.FistVR.FVRFireArmAttachment.DetachFromMount += FVRFireArmAttachment_DetachFromMount;
+            On.FistVR.FVRFireArmAttachment.GetPosTarget += FVRFireArmAttachment_GetPosTarget;
 #endif
         }
 #if !DEBUG
-        private static void FVRFireArmAttachmentSensor_SetHoveredMount(On.FistVR.FVRFireArmAttachmentSensor.orig_SetHoveredMount orig, FVRFireArmAttachmentSensor self, FVRFireArmAttachmentMount newMount)
-        {
-            if (newMount != null && _exisingAttachmentMountPicatinnyRail.TryGetValue(newMount, out AttachmentMountPicatinnyRail attachmentMountPicatinnyRail))
-            {
-                attachmentMountPicatinnyRail._currentlyPatchedAttachment = self.Attachment;
-            }
-            else if (newMount == null && _exisingAttachmentMountPicatinnyRail.TryGetValue(self.CurHoveredMount, out attachmentMountPicatinnyRail))
-            {
-                attachmentMountPicatinnyRail._currentlyPatchedAttachment = null;
-            }
-            orig(self, newMount);
-        }
-
         private static void FVRFireArmAttachment_AttachToMount(On.FistVR.FVRFireArmAttachment.orig_AttachToMount orig, FVRFireArmAttachment self, FVRFireArmAttachmentMount m, bool playSound)
         {
             if (_exisingAttachmentMountPicatinnyRail.TryGetValue(m, out AttachmentMountPicatinnyRail picatinnyRail))
@@ -93,7 +79,7 @@ namespace OpenScripts2
                 Vector3 front = self.curMount.Point_Front.position;
                 Vector3 rear = self.curMount.Point_Rear.position;
 
-                int posIndex = picatinnyRail.GetPosIndex(self);
+                int posIndex = picatinnyRail.GetPosIndex(self, false);
 
                 Vector3 snapPos = picatinnyRail._usesSpecificSlotLerps
                     ? m.transform.TransformPoint(picatinnyRail._specificSlotPos[posIndex])
@@ -118,7 +104,6 @@ namespace OpenScripts2
                 }
                 self.SetTriggerState(false);
                 self.DisableOnAttached?.SetActive(false);
-                picatinnyRail._currentlyPatchedAttachment = null;
             }
             else orig(self, m, playSound);
         }
@@ -127,9 +112,48 @@ namespace OpenScripts2
         {
             if (_exisingAttachmentMountPicatinnyRail.TryGetValue(self.curMount, out AttachmentMountPicatinnyRail attachmentMountPicatinnyRail))
             {
-                attachmentMountPicatinnyRail._currentlyPatchedAttachment = self;
+                attachmentMountPicatinnyRail._lastPosIndex = -1;
             }
             orig(self);
+        }
+        private static Vector3 FVRFireArmAttachment_GetPosTarget(On.FistVR.FVRFireArmAttachment.orig_GetPosTarget orig, FVRFireArmAttachment self)
+        {
+            if (self.Sensor.CurHoveredMount != null && _exisingAttachmentMountPicatinnyRail.TryGetValue(self.Sensor.CurHoveredMount, out AttachmentMountPicatinnyRail rail))
+            {
+                Func<Vector3> func = (Func<Vector3>)Activator.CreateInstance(typeof(Func<Vector3>), self, _methodPointer);
+
+                if (self.Sensor.CurHoveredMount == null)
+                {
+                    return func();
+                }
+                Vector3 front = self.Sensor.CurHoveredMount.Point_Front.position;
+                Vector3 rear = self.Sensor.CurHoveredMount.Point_Rear.position;
+                Vector3 closestValidPoint = self.GetClosestValidPoint(front, rear, self.m_handPos);
+
+                if (Vector3.Distance(closestValidPoint, self.m_handPos) < 0.15f)
+                {
+                    int posIndex = rail.GetPosIndex(self, true);
+
+                    Vector3 snapPos;
+                    if (rail._usesSpecificSlotLerps)
+                    {
+                        snapPos = rail.Mount.transform.TransformPoint(rail._specificSlotPos[posIndex]);
+                    }
+                    else
+                    {
+                        snapPos = Vector3.Lerp(front, rear, posIndex * rail._slotLerpFactor);
+                    }
+
+                    if (posIndex != rail._lastPosIndex)
+                    {
+                        SM.PlayGenericSound(rail.SlotSound, self.transform.position);
+                    }
+                    rail._lastPosIndex = posIndex;
+                    return snapPos;
+                }
+                return func();
+            }
+            return orig(self);
         }
 #endif
         public void Awake()
@@ -166,71 +190,11 @@ namespace OpenScripts2
             _exisingAttachmentMountPicatinnyRail.Remove(Mount);
         }
 
-        public void Update()
+        private int GetPosIndex(FVRFireArmAttachment attachment, bool useHandPos)
         {
-            if (!_isPatched && _currentlyPatchedAttachment != null)
-            {
-#if !DEBUG
-                On.FistVR.FVRFireArmAttachment.GetPosTarget += FVRFireArmAttachment_GetPosTarget;
-#endif
-                _isPatched = true;
-            }
-            else if (_isPatched && _currentlyPatchedAttachment == null)
-            {
-#if !DEBUG
-                On.FistVR.FVRFireArmAttachment.GetPosTarget -= FVRFireArmAttachment_GetPosTarget;
-#endif
-                _isPatched = false;
-                _lastPosIndex = -1;
-            }
-        }
-#if !DEBUG
-        private Vector3 FVRFireArmAttachment_GetPosTarget(On.FistVR.FVRFireArmAttachment.orig_GetPosTarget orig, FVRFireArmAttachment self)
-        {
-            if (_currentlyPatchedAttachment == self)
-            {
-                var func = (Func<Vector3>)Activator.CreateInstance(typeof(Func<Vector3>), self, _methodPointer);
-
-                if (self.Sensor.CurHoveredMount == null)
-                {
-                    return func();
-                }
-                Vector3 front = self.Sensor.CurHoveredMount.Point_Front.position;
-                Vector3 rear = self.Sensor.CurHoveredMount.Point_Rear.position;
-                Vector3 closestValidPoint = self.GetClosestValidPoint(front, rear, self.m_handPos);
-
-                if (Vector3.Distance(closestValidPoint, self.m_handPos) < 0.15f)
-                {
-                    int posIndex = GetPosIndex(self);
-                    
-                    Vector3 snapPos;
-                    if (_usesSpecificSlotLerps)
-                    {
-                        snapPos = Mount.transform.TransformPoint(_specificSlotPos[posIndex]);
-                    }
-                    else
-                    {
-                        snapPos = Vector3.Lerp(front, rear, posIndex * _slotLerpFactor);
-                    }
-
-                    if (posIndex != _lastPosIndex)
-                    {
-                        SM.PlayGenericSound(SlotSound, self.transform.position);
-                    }
-                    _lastPosIndex = posIndex;
-                    return snapPos;
-                }
-                return func();
-            }
-
-            return orig(self);
-        }
-
-        private int GetPosIndex(FVRFireArmAttachment attachment)
-        {
-            Vector3 front = attachment.curMount.Point_Front.position;
-            Vector3 rear = attachment.curMount.Point_Rear.position;
-            Vector3 closestValidPoint = attachment.GetClosestValidPoint(front, rear, attachment.transform.position);
+            Vector3 front = attachment.Sensor.CurHoveredMount.Point_Front.position;
+            Vector3 rear = attachment.Sensor.CurHoveredMount.Point_Rear.position;
+            Vector3 closestValidPoint = useHandPos ? attachment.GetClosestValidPoint(front, rear, attachment.m_handPos) : attachment.GetClosestValidPoint(front, rear, attachment.transform.position);
             float inverseLerp = Vector3Utils.InverseLerp(front, rear, closestValidPoint);
 
             int posIndex = 0;
@@ -292,6 +256,5 @@ namespace OpenScripts2
             }
             return posIndex;
         }
-#endif
     }
 }
