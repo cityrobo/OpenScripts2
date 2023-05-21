@@ -14,8 +14,6 @@ namespace OpenScripts2
         // Emission weight system
         [Header("Emission modification config")]
         public MeshRenderer MeshRenderer;
-        [Tooltip("Index of the material in the MeshRenderer's materials list.")]
-        public int MaterialIndex = 0;
         [Tooltip("Anton uses the squared value of the VisualModifier to determine the emission weight. If you wanna replicate that behavior, leave the value as is, but feel free to go crazy if you wanna mix things up.")]
         public float EmissionExponent = 2f;
         public float EmissionStartsAt = 0f;
@@ -96,8 +94,6 @@ namespace OpenScripts2
         public float InputValue = 0f;
 
         // Private variables
-        private Material _copyMaterial;
-
         private bool _soundEnabled = false;
 
         private float _evaluatedValue;
@@ -107,14 +103,10 @@ namespace OpenScripts2
         private const string c_IncandescenceScrollSpeedPropertyString = "_IncandescenceMapVelocity";
         private const string c_DetailWeightPropertyString = "_DetailWeight";
 
+        private MaterialPropertyBlock _materialPropertyBlock = new();
 
         public void Awake()
         {
-            if (MeshRenderer != null)
-            {
-                _copyMaterial = MeshRenderer.materials[MaterialIndex];
-            }
-
             if (ParticleSystem != null) ChangeParticleEmissionRate(0f);
 
             if (SoundEffectSource != null && SoundEffect != null)
@@ -132,7 +124,6 @@ namespace OpenScripts2
         }
 		public void OnDestroy()
         {
-            if (_copyMaterial != null) Destroy(_copyMaterial);
         }
 
         public void Update()
@@ -149,20 +140,21 @@ namespace OpenScripts2
                 if (AffectsEmissionWeight)
                 {
                     _evaluatedValue = InputValue > EmissionStartsAt ? !EmissionUsesAdvancedCurve ? Mathf.Pow(InputValue, EmissionExponent) : EmissionCurve.Evaluate(InputValue) : 0f;
-                    _copyMaterial.SetFloat(c_EmissionWeightPropertyString, _evaluatedValue);
+                    _materialPropertyBlock.SetFloat(c_EmissionWeightPropertyString, _evaluatedValue);
                 }
                 if (AffectsEmissionScrollSpeed)
                 {
                     Vector4 ScrollSpeed = Vector4.zero;
                     ScrollSpeed.x = InputValue > EmissionStartsAt ? !EmissionUsesAdvancedCurve ? Mathf.Lerp(0f, MaxEmissionScrollSpeed_X, _evaluatedValue) : EmissionScrollSpeedCurve_X.Evaluate(InputValue) : 0f;
                     ScrollSpeed.y = InputValue > EmissionStartsAt ? !EmissionUsesAdvancedCurve ? Mathf.Lerp(0f, MaxEmissionScrollSpeed_Y, _evaluatedValue) : EmissionScrollSpeedCurve_Y.Evaluate(InputValue) : 0f;
-                    _copyMaterial.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
+                    _materialPropertyBlock.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
                 }
                 if (AffectsDetailWeight)
                 {
                     _evaluatedValue = InputValue > DetailStartsAt ? !DetailUsesAdvancedCurve ? Mathf.Pow(InputValue, DetailExponent) : DetailCurve.Evaluate(InputValue) : 0f;
-                    _copyMaterial.SetFloat(c_DetailWeightPropertyString, _evaluatedValue);
+                    _materialPropertyBlock.SetFloat(c_DetailWeightPropertyString, _evaluatedValue);
                 }
+                MeshRenderer.SetPropertyBlock(_materialPropertyBlock);
             }
 
             // Particles

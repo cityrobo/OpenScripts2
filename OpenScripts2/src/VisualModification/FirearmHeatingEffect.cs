@@ -49,8 +49,8 @@ namespace OpenScripts2
         // Emission weight system
         [Header("Emission modification config")]
         public MeshRenderer MeshRenderer;
-        [Tooltip("Index of the material in the MeshRenderer's materials list.")]
-        public int MaterialIndex = 0;
+        //[Tooltip("Index of the material in the MeshRenderer's materials list.")]
+        //public int MaterialIndex = 0;
         [Tooltip("Anton uses the squared value of the heat to determine the emission weight. If you wanna replicate that behavior, leave the value as is, but feel free to go crazy if you wanna mix things up.")]
         public float HeatExponent = 2f;
         public bool HeatAffectsEmissionWeight = true;
@@ -185,8 +185,8 @@ namespace OpenScripts2
 
         // Private variables
         private FirearmHeatingEffect_FirearmCore Core;
-        private Material _copyMaterial;
-        private Material _copyExplodedMaterial;
+        //private Material _copyMaterial;
+        //private Material _copyExplodedMaterial;
         
 
         private bool _isAttached = false;
@@ -205,6 +205,8 @@ namespace OpenScripts2
         private const string c_IncandescenceScrollSpeedPropertyString = "_IncandescenceMapVelocity";
         private const string c_DetailWeightPropertyString = "_DetailWeight";
 
+        private MaterialPropertyBlock _propertyBlockNormal = new();
+        private MaterialPropertyBlock _propertyBlockExploded = new();
         public void Awake()
         {
             if (!OnModularPart) ConfigureHeatingEffect();
@@ -212,9 +214,11 @@ namespace OpenScripts2
 		public void OnDestroy()
         {
 			Unhook();
-
-            if (_copyMaterial != null) Destroy(_copyMaterial);
-            if (_copyExplodedMaterial != null) Destroy(_copyExplodedMaterial);
+            //if (!OnModularPart)
+            //{
+            //    if (_copyMaterial != null) Destroy(_copyMaterial);
+            //    if (_copyExplodedMaterial != null) Destroy(_copyExplodedMaterial);
+            //}
 
             DetachFromCore();
         }
@@ -244,7 +248,7 @@ namespace OpenScripts2
 
             if (MeshRenderer != null)
             {
-                _copyMaterial = MeshRenderer.materials[MaterialIndex];
+                //_copyMaterial = MeshRenderer.materials[MaterialIndex];
             }
 
             if (ParticleSystem != null) ChangeParticleEmissionRate(0f);
@@ -259,7 +263,7 @@ namespace OpenScripts2
 
             if (ExplodingPart != null)
             {
-                _copyExplodedMaterial = ExplodingPart.materials[MaterialIndex];
+                //_copyExplodedMaterial = ExplodingPart.materials[MaterialIndex];
                 ExplodingPart.gameObject.SetActive(false);
             }
             else _canExplode = false;
@@ -278,14 +282,14 @@ namespace OpenScripts2
                 if (!_isAttached && Attachment.curMount != null && Attachment.curMount.GetRootMount().MyObject is FVRFireArm fireArm)
                 {
                     FireArm = fireArm;
-                    if (!(Attachment is MuzzleDevice)) _origInternalMechanicalMOA = FireArm.m_internalMechanicalMOA;
+                    if (Attachment is not MuzzleDevice) _origInternalMechanicalMOA = FireArm.m_internalMechanicalMOA;
                     AttachToCore();
                     _isAttached = true;
                 }
                 else if (_isAttached && Attachment.curMount == null)
                 {
                     DetachFromCore();
-                    if (!(Attachment is MuzzleDevice)) FireArm.m_internalMechanicalMOA = _origInternalMechanicalMOA;
+                    if (Attachment is not MuzzleDevice) FireArm.m_internalMechanicalMOA = _origInternalMechanicalMOA;
                     FireArm = null;
                     _isAttached = false;
                 }
@@ -302,24 +306,24 @@ namespace OpenScripts2
                     float pow = Mathf.Pow(Heat, HeatExponent);
                     if (!_hasPartExploded)
                     {
-                        if (HeatAffectsEmissionWeight) _copyMaterial.SetFloat(c_EmissionWeightPropertyString, pow);
+                        if (HeatAffectsEmissionWeight) _propertyBlockNormal.SetFloat(c_EmissionWeightPropertyString, pow);
                         if (HeatAffectsEmissionScrollSpeed)
                         {
                             Vector4 ScrollSpeed = Vector4.zero;
                             ScrollSpeed.x = Mathf.Lerp(0f, MaxEmissionScrollSpeed_X, pow);
                             ScrollSpeed.y = Mathf.Lerp(0f, MaxEmissionScrollSpeed_Y, pow);
-                            _copyMaterial.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
+                            _propertyBlockNormal.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
                         }
                     }
                     else
                     {
-                        if (HeatAffectsEmissionWeight) _copyExplodedMaterial.SetFloat(c_EmissionWeightPropertyString, pow);
+                        if (HeatAffectsEmissionWeight) _propertyBlockExploded.SetFloat(c_EmissionWeightPropertyString, pow);
                         if (HeatAffectsEmissionScrollSpeed)
                         {
                             Vector4 ScrollSpeed = Vector4.zero;
                             ScrollSpeed.x = Mathf.Lerp(0f, MaxEmissionScrollSpeed_X, pow);
                             ScrollSpeed.y = Mathf.Lerp(0f, MaxEmissionScrollSpeed_Y, pow);
-                            _copyExplodedMaterial.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
+                            _propertyBlockExploded.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
                         }
                     }
                 }
@@ -327,34 +331,43 @@ namespace OpenScripts2
                 {
                     if (!_hasPartExploded)
                     {
-                        if (HeatAffectsEmissionWeight) _copyMaterial.SetFloat(c_EmissionWeightPropertyString, EmissionCurve.Evaluate(Heat));
+                        if (HeatAffectsEmissionWeight) _propertyBlockNormal.SetFloat(c_EmissionWeightPropertyString, EmissionCurve.Evaluate(Heat));
                         if (HeatAffectsEmissionScrollSpeed)
                         {
                             Vector4 ScrollSpeed = Vector4.zero;
                             ScrollSpeed.x = EmissionScrollSpeedCurve_X.Evaluate(Heat);
                             ScrollSpeed.y = EmissionScrollSpeedCurve_Y.Evaluate(Heat);
-                            _copyMaterial.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
+                            _propertyBlockNormal.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
                         }
                     }
                     else
                     {
-                        if (HeatAffectsEmissionWeight) _copyExplodedMaterial.SetFloat(c_EmissionWeightPropertyString, EmissionCurve.Evaluate(Heat));
+                        if (HeatAffectsEmissionWeight) _propertyBlockExploded.SetFloat(c_EmissionWeightPropertyString, EmissionCurve.Evaluate(Heat));
                         if (HeatAffectsEmissionScrollSpeed)
                         {
                             Vector4 ScrollSpeed = Vector4.zero;
                             ScrollSpeed.x = EmissionScrollSpeedCurve_X.Evaluate(Heat);
                             ScrollSpeed.y = EmissionScrollSpeedCurve_Y.Evaluate(Heat);
-                            _copyExplodedMaterial.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
+                            _propertyBlockExploded.SetVector(c_IncandescenceScrollSpeedPropertyString, ScrollSpeed);
                         }
                     }
                 }
 
-                Log(MeshRenderer.materials[MaterialIndex].GetFloat(c_EmissionWeightPropertyString));
+                //Log(MeshRenderer.materials[MaterialIndex].GetFloat(c_EmissionWeightPropertyString));
                 if (HeatAffectsDetailWeight)
                 {
-                    if (!DetailUsesAdvancedCurve) _copyMaterial.SetFloat(c_DetailWeightPropertyString, Mathf.Pow(Heat, DetailExponent));
-                    else _copyMaterial.SetFloat(c_DetailWeightPropertyString, DetailCurve.Evaluate(Heat));
+                    if (!DetailUsesAdvancedCurve)
+                    {
+                        _propertyBlockNormal.SetFloat(c_DetailWeightPropertyString, Mathf.Pow(Heat, DetailExponent));
+                    }
+                    else
+                    {
+                        _propertyBlockNormal.SetFloat(c_DetailWeightPropertyString, DetailCurve.Evaluate(Heat));
+                    }
                 }
+
+                MeshRenderer.SetPropertyBlock(_propertyBlockNormal);
+                if (_hasPartExploded && ExplodingPart != null) ExplodingPart.SetPropertyBlock(_propertyBlockExploded);
             }
 
             // Particles

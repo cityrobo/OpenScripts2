@@ -64,7 +64,7 @@ namespace OpenScripts2
                     f.MeshRenderer = (MeshRenderer)EditorGUILayout.ObjectField(new GUIContent("Mesh Renderer", "Affected Mesh Renderer."), f.MeshRenderer, typeof(MeshRenderer), true);
                     if (f.MeshRenderer != null)
                     {
-                        f.MaterialIndex = EditorGUILayout.IntField(new GUIContent("Material Index", "Index of the material in the MeshRenderer's materials list."), f.MaterialIndex);
+                        //f.MaterialIndex = EditorGUILayout.IntField(new GUIContent("Material Index", "Index of the material in the MeshRenderer's materials list."), f.MaterialIndex);
                         f.HeatExponent = EditorGUILayout.FloatField(new GUIContent("Heat Exponent", "Anton uses the squared value of the heat to determine the emission weight. If you wanna replicate that behavior, leave the value as is, but feel free to go crazy if you wanna mix things up."), f.HeatExponent);
                         f.HeatAffectsEmissionWeight = EditorGUILayout.Toggle("Does Heat affect Emission Weight?", f.HeatAffectsEmissionWeight);
                         f.HeatAffectsEmissionScrollSpeed = EditorGUILayout.Toggle("Does Heat affect Emission Scroll Speed?", f.HeatAffectsEmissionScrollSpeed);

@@ -44,7 +44,6 @@ namespace OpenScripts2
                 f.MeshRenderer = (MeshRenderer)EditorGUILayout.ObjectField(new GUIContent("Mesh Renderer", "Affected Mesh Renderer."), f.MeshRenderer, typeof(MeshRenderer), true);
                 if (f.MeshRenderer != null)
                 {
-                    f.MaterialIndex = EditorGUILayout.IntField(new GUIContent("Material Index", "Index of the material in the MeshRenderer's materials list."), f.MaterialIndex);
                     f.EmissionExponent = EditorGUILayout.FloatField(new GUIContent("Emission Exponent", "Anton uses the squared value of heat to determine the emission weight. If you wanna replicate that behavior, leave the value as is, but feel free to go crazy if you wanna mix things up."), f.EmissionExponent);
                     f.EmissionStartsAt = EditorGUILayout.FloatField(new GUIContent("Emission Starts At", "InputValue level at which emission starts appearing."), f.EmissionStartsAt);
                     f.AffectsEmissionWeight = EditorGUILayout.Toggle("Does VisualModifier affect Emission Weight?", f.AffectsEmissionWeight);

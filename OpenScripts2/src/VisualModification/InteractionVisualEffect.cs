@@ -43,7 +43,7 @@ namespace OpenScripts2
 
         private static readonly Dictionary<FVRInteractiveObject, InteractionVisualEffect> _extistingInteractionVisualEffects = new();
 
-        public void Awake()
+        public void Start()
         {
             _visualModifier = GetComponent<VisualModifier>();
 
