@@ -30,6 +30,7 @@ namespace OpenScripts2
 
 		public AudioEvent CloseSounds;
 		public AudioEvent OpenSounds;
+		public AudioEvent EndInteractionSounds;
 
 		public bool IsOpen => _state == E_State.Open;
         public bool IsClosed => _state == E_State.Closed;
@@ -99,8 +100,14 @@ namespace OpenScripts2
             if (MovementMode == Mode.Translation) _lastHandPos = m_handPos;
             else if (MovementMode == Mode.Rotation) _lastHandRot = m_handRot;
         }
+        public override void EndInteraction(FVRViveHand hand)
+        {
+            base.EndInteraction(hand);
 
-		public void TranslationMode()
+            SM.PlayGenericSound(EndInteractionSounds, ObjectToMove.position);
+        }
+
+        public void TranslationMode()
         {
 			Vector3 transformedHandPos = Root.InverseTransformPoint(m_handPos);
 			Vector3 lasttransformedHandPos = Root.InverseTransformPoint(_lastHandPos);
