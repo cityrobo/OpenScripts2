@@ -37,7 +37,7 @@ namespace OpenScripts2
                 yield return new WaitForSeconds(DelayBetweenRounds);
             }
             _loadingRounds = false;
-            if (DoesAutoEject) Clip.Release();
+            if (DoesAutoEject) Clip.FireArm.EjectClip();
         }
 
         private void LoadAllRounds()
@@ -53,7 +53,7 @@ namespace OpenScripts2
                 Clip.FireArm.Magazine.AddRound(rClass, false, true);
             }
 
-            if (DoesAutoEject) Clip.Release();
+            if (DoesAutoEject) Clip.FireArm.EjectClip();
         }
     }
 }

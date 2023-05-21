@@ -176,7 +176,10 @@ namespace OpenScripts2
 
         private void OneDegreeOfFreedom(Vector3 newPosRaw)
         {
-            Vector3 newPosProjected = GetClosestValidPoint(_lowerLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition), _upperLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition), transform.parent.InverseTransformPoint(newPosRaw));
+            Vector3 lowLimit = _lowerLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
+            Vector3 highLimit = _upperLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
+            Vector3 newPosProjected = GetClosestValidPoint(lowLimit, highLimit, transform.parent.InverseTransformPoint(newPosRaw));
+            Debug.Log(newPosProjected);
             transform.localPosition = newPosProjected;
         }
         private void TwoDegreesOfFreedom(Vector3 newPosRaw)

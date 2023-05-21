@@ -1,9 +1,11 @@
 using UnityEngine;
 using FistVR;
+using System;
 
 namespace OpenScripts2
 {
-	public class UniversalMagazineGrabTrigger : FVRInteractiveObject
+    [Obsolete("Use Vanilla UniversalMagGrabTrigger instead!")]
+    public class UniversalMagazineGrabTrigger : FVRInteractiveObject
 	{
 		public FVRFireArm FireArm;
 		public bool IsSecondarySlotGrab;
@@ -38,19 +40,5 @@ namespace OpenScripts2
 				magazine2.BeginInteraction(hand);
 			}
 		}
-		/*
-		public override void UpdateInteraction(FVRViveHand hand)
-		{
-			base.UpdateInteraction(hand);
-			if (hand.Input.TouchpadDown && FireArm.Magazine != null)
-			{
-				EndInteraction(hand);
-				FVRFireArmMagazine magazine = FireArm.Magazine;
-				FireArm.EjectMag(false);
-				hand.ForceSetInteractable(magazine);
-				magazine.BeginInteraction(hand);
-			}
-		}
-		*/
 	}
 }

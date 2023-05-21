@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace OpenScripts2
 {	
-    public class QuickBeltArea : StandaloneQBSlot
+    public class QuickBeltArea : FVRQuickBeltSlot
 	{
         public GameObject SubQBSlotPrefab;
         [Tooltip("Any positive number will cause the Area to limit the number of items it can carry.")]
@@ -27,8 +27,8 @@ namespace OpenScripts2
 
         [HideInInspector]
         public bool ItemDidCollide = false;
-		private Dictionary<GameObject, StandaloneQBSlot> _quickBeltSlots;
-        private FVRPhysicalObject.FVRPhysicalObjectSize[] _sizes =
+		private Dictionary<GameObject, FVRQuickBeltSlot> _quickBeltSlots;
+        private readonly FVRPhysicalObject.FVRPhysicalObjectSize[] _sizes =
                     {FVRPhysicalObject.FVRPhysicalObjectSize.Small,
                     FVRPhysicalObject.FVRPhysicalObjectSize.Medium,
                     FVRPhysicalObject.FVRPhysicalObjectSize.Large,
@@ -39,21 +39,21 @@ namespace OpenScripts2
         private int _currentLoad = 0;
         private class SubQBSlot
         {
-            SubQBSlot(StandaloneQBSlot slot, Vector3 localPos, Quaternion localRot)
+            SubQBSlot(FVRQuickBeltSlot slot, Vector3 localPos, Quaternion localRot)
             {
                 this.slot = slot;
                 this.localPos = localPos;
                 this.localRot = localRot;
             }
 
-            public StandaloneQBSlot slot;
+            public FVRQuickBeltSlot slot;
             public Vector3 localPos;
             public Quaternion localRot;
         }
 
         public void Start()
         {
-            _quickBeltSlots = new Dictionary<GameObject, StandaloneQBSlot>();
+            _quickBeltSlots = new Dictionary<GameObject, FVRQuickBeltSlot>();
             SubQBSlotPrefab.SetActive(false);
 
             _SizeRequirements = new Dictionary<FVRPhysicalObject.FVRPhysicalObjectSize, int>();
@@ -79,7 +79,7 @@ namespace OpenScripts2
 
             foreach (var quickBeltSlot in _quickBeltSlots)
             {
-                StandaloneQBSlot slot = quickBeltSlot.Value;
+                FVRQuickBeltSlot slot = quickBeltSlot.Value;
 
                 if (slot.CurObject == null) slotsToDelete.Add(quickBeltSlot.Key);
                 else if (slot.CurObject != null && !slot.CurObject.m_isSpawnLock && !slot.CurObject.m_isHardnessed) slot.HoverGeo.SetActive(false);
@@ -102,8 +102,7 @@ namespace OpenScripts2
                 if (UsesAdvancedSizeMode)
                 {
                     FVRPhysicalObject.FVRPhysicalObjectSize size = slotToDelete.GetComponent<FVRQuickBeltSlot>().SizeLimit;
-                    int sizeRequirement = 0;
-                    _SizeRequirements.TryGetValue(size, out sizeRequirement);
+                    _SizeRequirements.TryGetValue(size, out int sizeRequirement);
 
                     _currentLoad -= sizeRequirement;
                 }
@@ -163,7 +162,7 @@ namespace OpenScripts2
 
             GameObject slotGameObject = Instantiate(SubQBSlotPrefab, pos, rot, this.transform.parent);
             slotGameObject.name = "QuickBeltAreaSubSlot_" + _quickBeltSlots.Count;
-            StandaloneQBSlot slot = slotGameObject.GetComponent<StandaloneQBSlot>();
+            FVRQuickBeltSlot slot = slotGameObject.GetComponent<FVRQuickBeltSlot>();
             slotGameObject.SetActive(true);
             slot.SizeLimit = size;
 
@@ -190,10 +189,5 @@ namespace OpenScripts2
             ItemDidCollide = false;
             CreateNewQBSlotPos(physicalObject);
         }
-    }
-
-    public class StandaloneQBSlot : FVRQuickBeltSlot
-    {
-        
     }
 }

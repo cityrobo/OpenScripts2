@@ -101,6 +101,8 @@
     <Compile Include="src\AttachmentScripts\MovingFireArmAttachmentInterface.cs" />
     <Compile Include="src\AttachmentScripts\FirearmFeatureChangerAttachment.cs" />
     <Compile Include="src\AttachmentScripts\CustomOpenScripts2Attachment.cs" />
+    <Compile Include="src\CustomQuickBeltSlots\HeadQBSlot.cs" />
+    <Compile Include="src\FirearmControl\ClosedBoltRotatingChargingHandle.cs" />
     <Compile Include="src\FirearmControl\FireArmStartBurstFix.cs" />
     <Compile Include="src\FirearmControl\AdditionalBarrel.cs" />
     <Compile Include="src\AttachmentScripts\AttachmentPicatinnyRailForwardStop.cs" />
@@ -119,13 +121,14 @@
     <Compile Include="src\FirearmControl\HandgunSpin.cs" />
     <Compile Include="src\FirearmControl\RevolverFireNChambersBack.cs" />
     <Compile Include="src\MagazineScripts\AutomaticStripperClip.cs" />
+    <Compile Include="src\MagazineScripts\UniversalAdvancedMagazineGrabTrigger.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_ClosedBolt.cs" />
     <Compile Include="src\MountedGuns\AttachableGunControls_OpenBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_ClosedBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_OpenBolt.cs" />
-    <Compile Include="src\MovingObjetctParts\AutomaticallyMovingPart.cs" />
-    <Compile Include="src\MovingObjetctParts\PrecisionTranslatingPart.cs" />
-    <Compile Include="src\MovingObjetctParts\RigidbodyJiggleBones.cs" />
+    <Compile Include="src\MovingObjectParts\AutomaticallyMovingPart.cs" />
+    <Compile Include="src\MovingObjectParts\PrecisionTranslatingPart.cs" />
+    <Compile Include="src\MovingObjectParts\RigidbodyJiggleBones.cs" />
     <Compile Include="src\OpenScripts2_Extras.cs" />
     <Compile Include="src\OpenScripts2_BasePlugin.cs" />
     <Compile Include="src\OpenScripts2_BepInExPlugin.cs" />
@@ -134,7 +137,7 @@
     <Compile Include="src\AttachmentScripts\AttachmentStock.cs" />
     <Compile Include="src\MeatyPages\Booklet.cs" />
     <Compile Include="src\FirearmControl\BreakActionWeaponBarrelSwitch.cs" />
-    <Compile Include="src\MovingObjetctParts\BreakOpenTrigger.cs" />
+    <Compile Include="src\MovingObjectParts\BreakOpenTrigger.cs" />
     <Compile Include="src\CustomObjectTypes\CapAndBallRevolver.cs" />
     <Compile Include="src\CustomObjectTypes\CapAndBallRevolverCylinder.cs" />
     <Compile Include="src\CustomQuickBeltSlots\CustomQBSlotSounds.cs" />
@@ -142,7 +145,7 @@
     <Compile Include="src\AttachmentScripts\FireModeAttachment.cs" />
     <Compile Include="src\MagazineScripts\ForceMagazineMountingToMagMountPos.cs" />
     <Compile Include="src\FirearmControl\HandDependentPoseOverride.cs" />
-    <Compile Include="src\MovingObjetctParts\HingeForegrip.cs" />
+    <Compile Include="src\MovingObjectParts\HingeForegrip.cs" />
     <Compile Include="src\OpticScripts\CustomLinearZoomScopeInterface.cs" />
     <Compile Include="src\OpticScripts\CustomReflexSightInterface.cs" />
     <Compile Include="src\OpticScripts\CustomScopeInterface.cs" />
@@ -150,6 +153,7 @@
     <Compile Include="src\OpticScripts\ScopeButton.cs" />
     <Compile Include="src\OpticScripts\VanillaRedDotMaterialCreator.cs" />
     <Compile Include="src\OpticScripts\VanillaScopeMaterialCreator.cs" />
+    <Compile Include="src\QuickBeltItems\QBArmorHelmet.cs" />
     <Compile Include="src\SerializableClasses\TransformProxy.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidanceSystem.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidedProjectile.cs" />
@@ -180,7 +184,7 @@
     <Compile Include="src\VisualModification\ManipulateBlendShape.cs" />
     <Compile Include="src\CustomObjectTypes\MeatBeatScanner.cs" />
     <Compile Include="src\AttachmentScripts\ModifyWeaponCartrideAndMagazineAttachment.cs" />
-    <Compile Include="src\MovingObjetctParts\MovableObjectPart.cs" />
+    <Compile Include="src\MovingObjectParts\MovableObjectPart.cs" />
     <Compile Include="src\MagazineScripts\MultiCaliberMagazine.cs" />
     <Compile Include="src\AttachmentScripts\MultipleHideOnAttach.cs" />
     <Compile Include="src\AttachmentScripts\MultipleHideOnAttachForAttachments.cs" />

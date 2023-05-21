@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace OpenScripts2
 {
+	[Obsolete("Use Vanilla OpenBoltBurst FireSelectorModes instead!")]
 	public class OpenBoltBurstFire : OpenScripts2_BasePlugin
 	{
 		public OpenBoltReceiver OpenBoltReceiver;

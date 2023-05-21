@@ -29,13 +29,7 @@ namespace OpenScripts2
             this.CopyComponent(GetComponent<FVRQuickBeltSlot>());
         }
 
-        public FVRViveHand Hand
-        {
-            get
-            {
-                return m_hand;
-            }
-        }
+        public FVRViveHand Hand => m_hand;
 
         private FVRViveHand m_hand;
 
@@ -61,11 +55,5 @@ namespace OpenScripts2
             transform.localPosition = WristOffsetPosition;
             transform.localRotation = Quaternion.Euler(WristOffsetRotation);
         }
-
-		public void OnDestroy()
-        {
-
-		}
-
 	}
 }

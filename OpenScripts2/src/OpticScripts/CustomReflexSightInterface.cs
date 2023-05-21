@@ -59,9 +59,9 @@ namespace OpenScripts2
 
         private const string NameOfTextureVariable = "_RedDotTex";
         private const string NameOfColorVariable = "_DotColor";
-        private string NameOfDistanceVariable = "_RedDotDist";
-        private string NameOfXOffsetVariable = "_MuzzleOffsetX";
-        private string NameOfYOffsetVariable = "_MuzzleOffsetY";
+        private const string NameOfDistanceVariable = "_RedDotDist";
+        private const string NameOfXOffsetVariable = "_MuzzleOffsetX";
+        private const string NameOfYOffsetVariable = "_MuzzleOffsetY";
 
         private Transform _muzzlePos;
 
@@ -70,13 +70,18 @@ namespace OpenScripts2
         private Vector3 _leftEyePosition;
         private Vector3 _rightEye;
         private bool _disableOcclusionCulling = false;
+
+        private MaterialPropertyBlock _materialPropertyBlock;
+
         public override void Start()
         {
             base.Start();
+
+            _materialPropertyBlock = new MaterialPropertyBlock();
+
             if (CurrentSelectedReticle >= ReticleTextures.Length) CurrentSelectedReticle = 0;
             if (CurrentZeroDistance >= ZeroDistances.Length) CurrentZeroDistance = 0;
-            if (ReticleTextures.Length != 0) ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
-            ReticleMesh.material.SetFloat(NameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
+            if (ReticleTextures.Length != 0) _materialPropertyBlock.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
 
             if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
 
@@ -87,17 +92,11 @@ namespace OpenScripts2
 
             if (IsIntegrated && FireArm != null)
             {
-                _muzzlePos = FireArm.MuzzlePos;
-                Vector3 muzzleOffset = _muzzlePos.position - ReticleMesh.transform.position;
-
-                ReticleMesh.material.SetFloat(NameOfXOffsetVariable, muzzleOffset.x);
-                ReticleMesh.material.SetFloat(NameOfYOffsetVariable, muzzleOffset.y);
-
-                ReticleMesh.transform.rotation = Quaternion.LookRotation(_muzzlePos.forward);
+                Zero();
 
                 ForceInteractable = true;
             }
-            else if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogWarning(this, "Sight set to \"Is Integrated\" but not FireArm assigned. Either implementation error or Modular Weapon Part.");
+            else if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogWarning(this, "Sight set to \"Is Integrated\" but no FireArm assigned. Either implementation error or Modular Weapon Part.");
 
             StartScreen();
 
@@ -105,6 +104,8 @@ namespace OpenScripts2
             _rightEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * +0.032f;
 
             if (LensCollider == null) _disableOcclusionCulling = true;
+
+            ReticleMesh.SetPropertyBlock(_materialPropertyBlock);
         }
 
         public override void UpdateInteraction(FVRViveHand hand)
@@ -156,42 +157,26 @@ namespace OpenScripts2
                 FireArm = Attachment.curMount.GetRootMount().MyObject as FVRFireArm;
                 if (FireArm != null)
                 {
-                    _muzzlePos = FireArm.CurrentMuzzle;
-
-                    Vector3 muzzleOffset = _muzzlePos.position - ReticleMesh.transform.position;
-
-                    ReticleMesh.material.SetFloat(NameOfXOffsetVariable, muzzleOffset.x);
-                    ReticleMesh.material.SetFloat(NameOfYOffsetVariable, muzzleOffset.y);
-
-                    ReticleMesh.transform.rotation = Quaternion.LookRotation(_muzzlePos.forward);
+                    Zero();
                 }
             }
             else if (!IsIntegrated && Attachment.curMount == null && _isAttached)
             {
                 _isAttached = false;
-                ReticleMesh.material.SetFloat(NameOfXOffsetVariable, 0f);
-                ReticleMesh.material.SetFloat(NameOfYOffsetVariable, 0f);
-
-                ReticleMesh.transform.localRotation = Quaternion.identity;
-                FireArm = null;
-                _muzzlePos = null;
+                Zero(true);
             }
 
             _leftEyePosition = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * -0.032f;
             _rightEye = GM.CurrentPlayerBody.Head.position + GM.CurrentPlayerBody.Head.right * +0.032f;
 
             if (!_disableOcclusionCulling && (IsIntegrated || _isAttached)) CheckReticleVisibility();
+
+            ReticleMesh.SetPropertyBlock(_materialPropertyBlock);
         }
 
         public void OffsetReticle()
         {
-            _muzzlePos = FireArm.MuzzlePos;
-            Vector3 muzzleOffset = _muzzlePos.position - ReticleMesh.transform.position;
-
-            ReticleMesh.material.SetFloat(NameOfXOffsetVariable, muzzleOffset.x);
-            ReticleMesh.material.SetFloat(NameOfYOffsetVariable, muzzleOffset.y);
-
-            ReticleMesh.transform.rotation = Quaternion.LookRotation(_muzzlePos.forward);
+            Zero();
         }
 
         private void ShowNextMenu() 
@@ -256,8 +241,8 @@ namespace OpenScripts2
         {
             CurrentSelectedReticle = (CurrentSelectedReticle + 1) % ReticleTextures.Length;
 
-            ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
-            if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) ReticleMesh.material.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
+            _materialPropertyBlock.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
+            if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) _materialPropertyBlock.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
             if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
 
             if (BrightnessTextScreen != null) UpdateBrightness();
@@ -268,8 +253,8 @@ namespace OpenScripts2
         {
             CurrentSelectedReticle = (CurrentSelectedReticle + ReticleTextures.Length - 1) % ReticleTextures.Length;
 
-            ReticleMesh.material.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
-            if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) ReticleMesh.material.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
+            _materialPropertyBlock.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
+            if (ReticleColors != null && ReticleColors.Length == ReticleTextures.Length) _materialPropertyBlock.SetColor(NameOfColorVariable, ReticleColors[CurrentSelectedReticle]);
             if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
 
             if (BrightnessTextScreen != null) UpdateBrightness();
@@ -279,16 +264,16 @@ namespace OpenScripts2
         public void NextZeroDistance()
         {
             if (CurrentZeroDistance < ZeroDistances.Length - 1) CurrentZeroDistance++;
-            ReticleMesh.material.SetFloat(NameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
-            
+            Zero();
+
             UpdateScreen();
         }
 
         public void PreviousZeroDistance()
         {
             if (CurrentZeroDistance > 0) CurrentZeroDistance--;
-            ReticleMesh.material.SetFloat(NameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
-            
+            Zero();
+
             UpdateScreen();
         }
 
@@ -328,7 +313,7 @@ namespace OpenScripts2
             Color color = new Color(currentReticleColor.r * factor, currentReticleColor.g * factor, currentReticleColor.b * factor, currentReticleColor.a);
             color.a *= BrightnessAlphaLevels[CurrentBrightnessIndex];
 
-            ReticleMesh.material.SetColor(NameOfColorVariable, color);
+            _materialPropertyBlock.SetColor(NameOfColorVariable, color);
         }
 
         private void CheckReticleVisibility()
@@ -375,6 +360,24 @@ namespace OpenScripts2
             {
                 OpenScripts2_BepInExPlugin.LogWarning(this, "No usable colliders for reticle occlusion found! If you are a modmaker, please add colliders or a lens collider, or disable occlusion culling with the checkbox!\n Disabling Occlusion culling now!");
                 _disableOcclusionCulling = true;
+            }
+        }
+
+        private void Zero(bool reset = false)
+        {
+            if (!reset)
+            {
+                _muzzlePos = FireArm.CurrentMuzzle;
+                Vector3 worldPosition = _muzzlePos.position + _muzzlePos.forward * ZeroDistances[CurrentZeroDistance];
+                ReticleMesh.transform.LookAt(worldPosition);
+
+                _materialPropertyBlock.SetFloat(NameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
+            }
+            else
+            {
+                ReticleMesh.transform.localRotation = Quaternion.identity;
+                FireArm = null;
+                _muzzlePos = null;
             }
         }
     }

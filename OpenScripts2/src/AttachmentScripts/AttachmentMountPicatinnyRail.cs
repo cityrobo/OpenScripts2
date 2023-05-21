@@ -192,8 +192,8 @@ namespace OpenScripts2
 
         private int GetPosIndex(FVRFireArmAttachment attachment, bool useHandPos)
         {
-            Vector3 front = attachment.Sensor.CurHoveredMount.Point_Front.position;
-            Vector3 rear = attachment.Sensor.CurHoveredMount.Point_Rear.position;
+            Vector3 front = attachment.curMount != null ? attachment.curMount.Point_Front.position : attachment.Sensor.CurHoveredMount.Point_Front.position;
+            Vector3 rear = attachment.curMount != null ? attachment.curMount.Point_Rear.position : attachment.Sensor.CurHoveredMount.Point_Rear.position;
             Vector3 closestValidPoint = useHandPos ? attachment.GetClosestValidPoint(front, rear, attachment.m_handPos) : attachment.GetClosestValidPoint(front, rear, attachment.transform.position);
             float inverseLerp = Vector3Utils.InverseLerp(front, rear, closestValidPoint);
 

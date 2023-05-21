@@ -29,10 +29,7 @@ namespace OpenScripts2
 				{
 					for (int i = 0; i < AttachmentsList.Count; i++)
 					{
-						if (AttachmentsList[i] != null)
-						{
-							AttachmentsList[i].SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
-						}
+						AttachmentsList[i]?.SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
 					}
 
 					_attachmentCountOnQBSlotEnter = AttachmentsList.Count;
@@ -42,10 +39,7 @@ namespace OpenScripts2
 			{
 				for (int j = 0; j < AttachmentsList.Count; j++)
 				{
-					if (AttachmentsList[j] != null)
-					{
-						AttachmentsList[j].SetAllCollidersToLayer(false, SubAttachmentLayerNameOutsideQBSlot);
-					}
+					AttachmentsList[j]?.SetAllCollidersToLayer(false, SubAttachmentLayerNameOutsideQBSlot);
 				}
 				_attachmentCountOnQBSlotEnter = AttachmentsList.Count;
 			}
@@ -62,29 +56,17 @@ namespace OpenScripts2
 				slot.CurObject = this;
 				slot.IsKeepingTrackWithHead = DoesQuickbeltSlotFollowHead;
 
-                if (IsDisabledInQB != null)
-                {
-					IsDisabledInQB.SetActive(false);
-                }
+                IsDisabledInQB?.SetActive(false);
 
-				if (IsEnabledInQB != null)
-				{
-					IsEnabledInQB.SetActive(true);
-				}
+				IsEnabledInQB?.SetActive(true);
 			}
 			else
 			{
 				SetAllCollidersToLayer(false, MainItemLayerNameOutsideQBSlot);
 
-				if (IsDisabledInQB != null)
-				{
-					IsDisabledInQB.SetActive(true);
-				}
+				IsDisabledInQB?.SetActive(true);
 
-				if (IsEnabledInQB != null)
-				{
-					IsEnabledInQB.SetActive(false);
-				}
+				IsEnabledInQB?.SetActive(false);
 			}
 			m_quickbeltSlot = slot;
 		}
@@ -97,13 +79,42 @@ namespace OpenScripts2
 			{
 				if (AttachmentsList.Count > _attachmentCountOnQBSlotEnter)
 				{
-					if (AttachmentsList[_attachmentCountOnQBSlotEnter] != null)
-					{
-						AttachmentsList[_attachmentCountOnQBSlotEnter].SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
-					}
+					AttachmentsList[_attachmentCountOnQBSlotEnter]?.SetAllCollidersToLayer(false, SubAttachmentLayerNameInsideQBSlot);
 					_attachmentCountOnQBSlotEnter = AttachmentsList.Count;
 				}
 			}
 		}
-	}
+
+        public override Dictionary<string, string> GetFlagDic()
+        {
+            Dictionary<string, string> flagDic = base.GetFlagDic();
+
+            SkinChanger skinChanger = GetComponentInChildren<SkinChanger>();
+            if (skinChanger != null) SkinChangerFlagDic(flagDic, true, skinChanger);
+
+            return flagDic;
+        }
+
+        public override void ConfigureFromFlagDic(Dictionary<string, string> f)
+        {
+            base.ConfigureFromFlagDic(f);
+
+            SkinChanger skinChanger = GetComponentInChildren<SkinChanger>();
+            if (skinChanger != null) SkinChangerFlagDic(f, false, skinChanger);
+        }
+        private void SkinChangerFlagDic(Dictionary<string, string> flagDic, bool save, SkinChanger i)
+        {
+            string value;
+            if (save)
+            {
+                value = i.CurrentSkinIndex.ToString();
+                flagDic.Add(SkinChanger.SKINFLAGDICKEY, value);
+            }
+            else if (flagDic.TryGetValue(SkinChanger.SKINFLAGDICKEY, out value))
+            {
+                int skinIndex = int.Parse(value);
+                i.SelectSkin(skinIndex);
+            }
+        }
+    }
 }

@@ -416,7 +416,7 @@ namespace UnityEngine
                 case OpenScripts2_BasePlugin.Axis.X:
                     return transform.localPosition.x;
                 case OpenScripts2_BasePlugin.Axis.Y:
-                    return transform.localPosition.x;
+                    return transform.localPosition.y;
                 case OpenScripts2_BasePlugin.Axis.Z:
                     return transform.localPosition.z;
                 default:
@@ -431,7 +431,7 @@ namespace UnityEngine
                 case OpenScripts2_BasePlugin.Axis.X:
                     return transform.localScale.x;
                 case OpenScripts2_BasePlugin.Axis.Y:
-                    return transform.localScale.x;
+                    return transform.localScale.y;
                 case OpenScripts2_BasePlugin.Axis.Z:
                     return transform.localScale.z;
                 default:
@@ -568,6 +568,32 @@ namespace UnityEngine
         {
             return Quaternion.Inverse(transform.rotation) * rot;
         }
+
+        public static Vector3 MultiplyComponentWise(this Vector3 v1, Vector3 v2)
+        {
+            float x = v1.x * v2.x;
+            float y = v1.y * v2.y;
+            float z = v1.z * v2.z;
+            return new Vector3(x, y, z);
+        }
+        public static Vector3 ApproximateInfiniteComponent(this Vector3 v1, float infinityApproximation)
+        {
+            Vector3 v2 = v1;
+            if (float.IsInfinity(v2.x))
+            {
+                v2.x = float.IsPositiveInfinity(v2.x) ? infinityApproximation : -infinityApproximation;
+            }
+            if (float.IsInfinity(v2.y))
+            {
+                v2.y = float.IsPositiveInfinity(v2.y) ? infinityApproximation : -infinityApproximation;
+            }
+            if (float.IsInfinity(v2.z))
+            {
+                v2.z = float.IsPositiveInfinity(v2.z) ? infinityApproximation : -infinityApproximation;
+            }
+            return v2;
+        }
+
 
         public static Quaternion Subtract(this Quaternion a, Quaternion b)
         {

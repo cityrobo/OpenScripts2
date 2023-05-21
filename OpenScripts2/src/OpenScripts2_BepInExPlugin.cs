@@ -11,12 +11,17 @@ namespace OpenScripts2
     [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.2.0")]
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {
+        // FirearmHeatingEffect Config Entries
         public static ConfigEntry<bool> FirearmHeatingEffect_CanExplode;
         public static ConfigEntry<bool> FirearmHeatingEffect_CanRecover;
         public static ConfigEntry<float> FirearmHeatingEffect_RecoverThreshold;
         public static ConfigEntry<bool> FirearmHeatingEffect_CanChangeFirerate;
         public static ConfigEntry<bool> FirearmHeatingEffect_CanChangeAccuracy;
         public static ConfigEntry<bool> FirearmHeatingEffect_CanCookOff;
+
+        // Advanced MagGrab Trigger Config Entries
+        public static ConfigEntry<bool> AdvancedMagGrabSimpleMagRelease;
+
 
         public BepInEx.Logging.ManualLogSource Logging
         {
@@ -35,6 +40,9 @@ namespace OpenScripts2
             FirearmHeatingEffect_CanChangeFirerate = Config.Bind("Firearm Heating Effect", "Gun can change firerate", true, "If true, enables firearm firerate changes based on heat.");
             FirearmHeatingEffect_CanChangeAccuracy = Config.Bind("Firearm Heating Effect", "Gun can change accuracy", true, "If true, enables firearm accuracy changes based on heat.");
             FirearmHeatingEffect_CanCookOff = Config.Bind("Firearm Heating Effect", "Gun can cook off", true, "If true, enables firearm cookoff chance based on heat.");
+
+            // Advanced MagGrab Trigger Config Bindings
+            AdvancedMagGrabSimpleMagRelease = Config.Bind("Advanced Magazine Grab Trigger", "Simple Magazine Release", false, "If true, disables input requirements from advanced magazine wells.");
         }
 
         public static void Log(MonoBehaviour plugin, string message)
