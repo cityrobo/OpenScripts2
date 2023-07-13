@@ -170,6 +170,13 @@ namespace OpenScripts2
         [Tooltip("If checked, the cookoff chance starts at 0 when hitting the threshold and hits the max when heat is 1, else the chance is using the threshold heat value as a reference, aka the heat level it gets enabled at.")]
         public bool CookoffChanceStartsAtZero = true;
 
+        // Movement System
+        public ManipulateTransforms.TransformManipulationDefinition ObjectToMove;
+        public float MovementExponent = 1f;
+        public float MovementStartsAt = 0f;
+        public bool MovementUsesAdvancedCurve = false;
+        public AnimationCurve MovementCurve = new();
+
         // Debugging system
         [Header("Debug Messages")]
         public bool DebugEnabled = false;
@@ -205,10 +212,13 @@ namespace OpenScripts2
         private const string c_IncandescenceScrollSpeedPropertyString = "_IncandescenceMapVelocity";
         private const string c_DetailWeightPropertyString = "_DetailWeight";
 
-        private MaterialPropertyBlock _propertyBlockNormal = new();
-        private MaterialPropertyBlock _propertyBlockExploded = new();
+        private MaterialPropertyBlock _propertyBlockNormal;
+        private MaterialPropertyBlock _propertyBlockExploded;
         public void Awake()
         {
+            _propertyBlockNormal = new();
+            _propertyBlockExploded = new();
+
             if (!OnModularPart) ConfigureHeatingEffect();
         }
 		public void OnDestroy()
@@ -458,7 +468,6 @@ namespace OpenScripts2
             }
 
             // Part Explosion
-
             if (!_hasPartExploded && _canExplode && Heat > ExplodingHeatThreshhold)
             {
                 _hasPartExploded = true;
@@ -486,6 +495,14 @@ namespace OpenScripts2
 
                 CurrentBoltRearwardSpeedMultiplier = 1f;
             }
+
+            // Movement
+            if (ObjectToMove != null && ObjectToMove.ManipulatedTransform != null)
+            {
+                float _evaluatedValue = !MovementUsesAdvancedCurve ? Mathf.Pow(Heat > MovementStartsAt ? Mathf.InverseLerp(MovementStartsAt, 1f, Heat) : 0f, MovementExponent) : MovementCurve.Evaluate(Heat);
+                ObjectToMove.SetLerp(_evaluatedValue);
+            }
+
             Log(Heat);
         }
 

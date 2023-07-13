@@ -146,7 +146,7 @@ namespace OpenScripts2
                     f.MovementUsesAdvancedCurve = EditorGUILayout.Toggle(new GUIContent("Does Movement use Advanced Curve?", "Enables movement lerp AnimationCurve system."), f.MovementUsesAdvancedCurve);
                     if (f.MovementUsesAdvancedCurve)
                     {
-                        f.MovementCurve = EditorGUILayout.CurveField(new GUIContent("Movement Lerp Curve", "Advanced movement lerp control. Values from 0 to 1 only! The X-axis is clamped between 0 and 1 and represents the VisualModifier level. The value (Y-axis) acts like a multiplier of the max emission rate, clamped between 0 and 1."), f.AnimationCurve);
+                        f.MovementCurve = EditorGUILayout.CurveField(new GUIContent("Movement Lerp Curve", "Advanced movement lerp control. Values from 0 to 1 only! The X-axis is clamped between 0 and 1 and represents the VisualModifier level. The value (Y-axis) acts like a multiplier of the max emission rate, clamped between 0 and 1."), f.MovementCurve);
                         _invertX = EditorGUILayout.Toggle(new GUIContent("Invert Curve X Axis", "Should the X Axis of the Curve be inverted on calculation? "), _invertX);
                         _invertY = EditorGUILayout.Toggle(new GUIContent("Invert Curve Y Axis", "Should the Y Axis of the Curve be inverted on calculation? "), _invertY);
                         if (GUILayout.Button(new GUIContent("Calculate Animation Curve", "Calculates Curve with set Exponent, start value and inversion modifiers"))) f.MovementCurve = CurveCalculator.GetCurve(f.MovementExponent, f.MovementStartsAt, _invertX, _invertY);

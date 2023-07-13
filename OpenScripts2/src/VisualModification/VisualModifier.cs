@@ -103,10 +103,11 @@ namespace OpenScripts2
         private const string c_IncandescenceScrollSpeedPropertyString = "_IncandescenceMapVelocity";
         private const string c_DetailWeightPropertyString = "_DetailWeight";
 
-        private MaterialPropertyBlock _materialPropertyBlock = new();
+        private MaterialPropertyBlock _materialPropertyBlock;
 
         public void Awake()
         {
+            _materialPropertyBlock = new();
             if (ParticleSystem != null) ChangeParticleEmissionRate(0f);
 
             if (SoundEffectSource != null && SoundEffect != null)

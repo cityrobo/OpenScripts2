@@ -21,7 +21,11 @@ namespace OpenScripts2
         private bool _boltFoldOut;
         private bool _explodingFoldOut;
         private bool _cookoffFoldOut;
+        private bool _movementFoldOut;
         private bool _debugFoldOut;
+
+        private bool _invertX;
+        private bool _invertY;
 
         private SerializedProperty _explosionSound;
         public override void OnInspectorGUI()
@@ -210,6 +214,25 @@ namespace OpenScripts2
                         f.CookoffHeatExponent = EditorGUILayout.FloatField(new GUIContent("Cookoff Heat Exponent", "Same as the normal HeatExponent, but for the bolt speed system."), f.CookoffHeatExponent);
                         f.CookoffHeatThreshold = EditorGUILayout.FloatField(new GUIContent("Cookoff Heat Threshold", "Heat level at which cookoff starts happening."), f.CookoffHeatThreshold);
                         f.CookoffChanceStartsAtZero = EditorGUILayout.Toggle(new GUIContent("Cookoff Chance Starts at Zero", "If checked, the cookoff chance starts at 0 when hitting the threshold and hits the max when heat is 1, else the chance is using the threshold heat value as a reference, aka the heat level it gets enabled at."), f.CookoffChanceStartsAtZero);
+                    }
+                }
+                _movementFoldOut = EditorGUILayout.Foldout(_movementFoldOut, "Movement Control", foldout);
+                if (_movementFoldOut)
+                {
+                    SerializedProperty objectToMove = serializedObject.FindProperty("ObjectToMove");
+                    BetterPropertyField.DrawSerializedProperty(objectToMove, new GUIContent("Object to Move"));
+                    if (f.ObjectToMove != null)
+                    {
+                        f.MovementExponent = EditorGUILayout.FloatField(new GUIContent("Movement Exponent", "Same as the Emission Exponent, but for the movement lerp."), f.MovementExponent);
+                        f.MovementStartsAt = EditorGUILayout.FloatField(new GUIContent("Movement Starts At", "InputValue level at which movement starts."), f.MovementStartsAt);
+                        f.MovementUsesAdvancedCurve = EditorGUILayout.Toggle(new GUIContent("Does Movement use Advanced Curve?", "Enables movement lerp AnimationCurve system."), f.MovementUsesAdvancedCurve);
+                        if (f.MovementUsesAdvancedCurve)
+                        {
+                            f.MovementCurve = EditorGUILayout.CurveField(new GUIContent("Movement Lerp Curve", "Advanced movement lerp control. Values from 0 to 1 only! The X-axis is clamped between 0 and 1 and represents the VisualModifier level. The value (Y-axis) acts like a multiplier of the max emission rate, clamped between 0 and 1."), f.MovementCurve);
+                            _invertX = EditorGUILayout.Toggle(new GUIContent("Invert Curve X Axis", "Should the X Axis of the Curve be inverted on calculation? "), _invertX);
+                            _invertY = EditorGUILayout.Toggle(new GUIContent("Invert Curve Y Axis", "Should the Y Axis of the Curve be inverted on calculation? "), _invertY);
+                            if (GUILayout.Button(new GUIContent("Calculate Animation Curve", "Calculates Curve with set Exponent, start value and inversion modifiers"))) f.MovementCurve = CurveCalculator.GetCurve(f.MovementExponent, f.MovementStartsAt, _invertX, _invertY);
+                        }
                     }
                 }
                 _debugFoldOut = EditorGUILayout.Foldout(_debugFoldOut, "Debugging", foldout);
