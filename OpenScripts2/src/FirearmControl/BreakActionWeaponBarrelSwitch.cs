@@ -178,7 +178,7 @@ namespace OpenScripts2
             if (_existingBreakActionWeaponBarrelSwitches.TryGetValue(self,out breakActionWeaponBarrelSwitch))
             {
                 
-                if (TouchpadDirPressed(hand, Vector2.down))
+                if (TouchpadDirDown(hand, Vector2.down))
                 {
                     breakActionWeaponBarrelSwitch.NextBarrelGroup();
                     self.PlayAudioEvent(FirearmAudioEventType.FireSelector);

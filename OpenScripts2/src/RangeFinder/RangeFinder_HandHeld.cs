@@ -27,15 +27,15 @@ namespace OpenScripts2
             if (hand != null && Attachment.curMount == null)
             {
                 if (hand.Input.TriggerDown && !_lockControls) StartCoroutine(MeasureOnce());
-                else if (TouchpadDirPressed(hand, Vector2.up) && !_lockControls) ToggleMeasure();
+                else if (TouchpadDirDown(hand, Vector2.up) && !_lockControls) ToggleMeasure();
                 else if (hand.Input.TouchpadUp && _lockControls) _lockControls = false;
             }
             else if (Attachment.curMount != null)
             {
                 if (Attachment.AttachmentInterface.m_hand != null)
                 {
-                    if (TouchpadDirPressed(Attachment.AttachmentInterface.m_hand,Vector2.up)) ToggleMeasure();
-                    else if (TouchpadDirPressed( Attachment.AttachmentInterface.m_hand, Vector2.down)) _lockControls = true;
+                    if (TouchpadDirDown(Attachment.AttachmentInterface.m_hand,Vector2.up)) ToggleMeasure();
+                    else if (TouchpadDirDown( Attachment.AttachmentInterface.m_hand, Vector2.down)) _lockControls = true;
                 }
             }
         }

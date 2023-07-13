@@ -70,7 +70,7 @@ namespace OpenScripts2
                         break;
                 }
             }
-            else if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.up))
+            else if (OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.up))
             {
                 transform.localPosition = _startPos;
             }

@@ -83,7 +83,7 @@ namespace OpenScripts2
 			HandgunSpin handgunSpin;
 			if (_existingHandGunSpins.TryGetValue(self, out handgunSpin))
 			{
-				if (TouchpadDirPressed(hand, Vector2.right)) handgunSpin.m_isSpinning = true;
+				if (TouchpadDirDown(hand, Vector2.right)) handgunSpin.m_isSpinning = true;
 				else handgunSpin.m_isSpinning = false;
 			}
         }

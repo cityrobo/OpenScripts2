@@ -157,15 +157,15 @@ namespace OpenScripts2
                         break;
                 }
             }
-            else if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.up))
+            else if (OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.up))
             {
                 transform.localPosition = _startPos;
             }
-            else if (CanRotate && OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.left))
+            else if (CanRotate && OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.left))
             {
                 transform.Rotate(0f, 0f, RotationStep);
             }
-            else if (CanRotate && OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.right))
+            else if (CanRotate && OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.right))
             {
                 transform.Rotate(0f, 0f, -RotationStep);
             }
@@ -179,7 +179,6 @@ namespace OpenScripts2
             Vector3 lowLimit = _lowerLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
             Vector3 highLimit = _upperLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
             Vector3 newPosProjected = GetClosestValidPoint(lowLimit, highLimit, transform.parent.InverseTransformPoint(newPosRaw));
-            Debug.Log(newPosProjected);
             transform.localPosition = newPosProjected;
         }
         private void TwoDegreesOfFreedom(Vector3 newPosRaw)

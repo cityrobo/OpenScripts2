@@ -50,12 +50,12 @@ namespace OpenScripts2
             FVRViveHand hand = InteractiveObject.m_hand;
             if (hand != null) 
             {
-                if (TouchpadDirPressed(hand, Vector2.left))
+                if (TouchpadDirDown(hand, Vector2.left))
                 {
                     NextSkin();
                     if (SkinText != null) SkinText.text = SkinNames[CurrentSkinIndex];
                 }
-                else if (TouchpadDirPressed(hand, Vector2.right))
+                else if (TouchpadDirDown(hand, Vector2.right))
                 {
                     PreviousSkin();
                     if (SkinText != null) SkinText.text = SkinNames[CurrentSkinIndex];

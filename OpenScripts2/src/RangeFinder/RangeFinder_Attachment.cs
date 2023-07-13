@@ -18,8 +18,8 @@ namespace OpenScripts2
             FVRViveHand hand = AttachmentInterface.m_hand;
             if (hand != null)
             {
-                if (TouchpadDirPressed(hand, Vector2.left)) RotateScreenLeft();
-                else if (TouchpadDirPressed(hand, Vector2.right)) RotateScreenRight();
+                if (TouchpadDirDown(hand, Vector2.left)) RotateScreenLeft();
+                else if (TouchpadDirDown(hand, Vector2.right)) RotateScreenRight();
             }
         }
 

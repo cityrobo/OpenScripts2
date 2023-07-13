@@ -99,9 +99,13 @@ namespace OpenScripts2
             return Vector3.zero;
         }
 
-        public static bool TouchpadDirPressed(FVRViveHand hand, Vector2 dir)
+        public static bool TouchpadDirDown(FVRViveHand hand, Vector2 dir)
         {
             return hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, dir) < 45f;
+        }
+        public static bool TouchpadDirPressed(FVRViveHand hand, Vector2 dir)
+        {
+            return hand.Input.TouchpadPressed && Vector2.Angle(hand.Input.TouchpadAxes, dir) < 45f;
         }
 
         public static Quaternion GetTargetQuaternionFromAxis(float value, Axis axis)

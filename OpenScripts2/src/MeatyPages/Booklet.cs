@@ -37,9 +37,9 @@ namespace OpenScripts2
         {
             if (hand != null)
             {
-                if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.left)) FlipLeft();
-                else if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.right)) FlipRight();
-                else if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.up)) CloseBooklet();
+                if (OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.left)) FlipLeft();
+                else if (OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.right)) FlipRight();
+                else if (OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.up)) CloseBooklet();
             }
         }
 

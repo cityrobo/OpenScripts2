@@ -185,8 +185,8 @@ namespace OpenScripts2
         {
             if (!hand.IsInStreamlinedMode)
             {
-                if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.left)) NextRotation();
-                else if (OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.right)) PreviousRotation();
+                if (OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.left)) NextRotation();
+                else if (OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.right)) PreviousRotation();
             }
             else
             {
