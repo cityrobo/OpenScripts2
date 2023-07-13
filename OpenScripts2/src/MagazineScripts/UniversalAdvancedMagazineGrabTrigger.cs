@@ -19,6 +19,16 @@ namespace OpenScripts2
 		public int SecondaryGrabSlot;
 
         public float MagazineReleaseButtonReleaseDelay = 0.5f;
+
+        [Tooltip("If set to false uses the gun's own magazine release button visuals instead")]
+        public bool HasDedicatedMagazineReleaseButtonVisuals = false;
+        public Transform SecondaryMagazineRelease;
+        public FVRPhysicalObject.Axis SecondaryMagazineReleaseAxis;
+        public FVRPhysicalObject.InterpStyle SecondaryMagazineReleaseInterpStyle;
+        public float SecondaryMagazineReleaseReleased;
+        public float SecondaryMagazineReleasePressed;
+
+        public bool AllowExternalInputTypeModification = true;
         private FVRFireArmMagazine _currentMagazine;
 
 		public override bool IsInteractable()
@@ -54,6 +64,14 @@ namespace OpenScripts2
 			}
 		}
 
+        public void SetRequiredInput(E_InputType newInputType)
+        {
+            if (AllowExternalInputTypeModification)
+            {
+                RequiredInput = newInputType;
+            }
+        }
+
         public override void UpdateInteraction(FVRViveHand hand)
         {
             base.UpdateInteraction(hand);
@@ -61,7 +79,7 @@ namespace OpenScripts2
             switch (RequiredInput)
             {
                 case E_InputType.TouchpadUp_BYButton:
-                    if (!hand.IsInStreamlinedMode && OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.up) || hand.IsInStreamlinedMode && hand.Input.BYButtonDown)
+                    if (!hand.IsInStreamlinedMode && OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.up) || hand.IsInStreamlinedMode && hand.Input.BYButtonDown)
                     {
                         StartCoroutine(MoveMagReleaseButton());
                         if (!IsSecondarySlotGrab && FireArm.Magazine != null)
@@ -81,7 +99,7 @@ namespace OpenScripts2
                     }
                     break;
                 case E_InputType.TouchpadDown_AXButton:
-                    if (!hand.IsInStreamlinedMode && OpenScripts2_BasePlugin.TouchpadDirPressed(hand, Vector2.down) || hand.IsInStreamlinedMode && hand.Input.AXButtonDown)
+                    if (!hand.IsInStreamlinedMode && OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.down) || hand.IsInStreamlinedMode && hand.Input.AXButtonDown)
                     {
                         StartCoroutine(MoveMagReleaseButton());
                         if (!IsSecondarySlotGrab && FireArm.Magazine != null)
@@ -111,24 +129,33 @@ namespace OpenScripts2
 
         private IEnumerator MoveMagReleaseButton()
         {
-            switch (FireArm)
+            if (!HasDedicatedMagazineReleaseButtonVisuals)
             {
-                case ClosedBoltWeapon w:
-                    w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleasePressed, w.MagReleaseInterp);
-                    break;
-                case Handgun w:
-                    w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleasePressed, w.MagReleaseInterp, w.MagReleaseAxis);
-                    break;
+                switch (FireArm)
+                {
+                    case ClosedBoltWeapon w:
+                        w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleasePressed, w.MagReleaseInterp);
+                        break;
+                    case Handgun w:
+                        w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleasePressed, w.MagReleaseInterp, w.MagReleaseAxis);
+                        break;
+                }
+                yield return new WaitForSeconds(MagazineReleaseButtonReleaseDelay);
+                switch (FireArm)
+                {
+                    case ClosedBoltWeapon w:
+                        w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleaseUnpressed, w.MagReleaseInterp);
+                        break;
+                    case Handgun w:
+                        w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleaseUnpressed, w.MagReleaseInterp, w.MagReleaseAxis);
+                        break;
+                }
             }
-            yield return new WaitForSeconds(MagazineReleaseButtonReleaseDelay);
-            switch (FireArm)
+            else
             {
-                case ClosedBoltWeapon w:
-                    w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleaseUnpressed, w.MagReleaseInterp);
-                    break;
-                case Handgun w:
-                    w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleaseUnpressed, w.MagReleaseInterp, w.MagReleaseAxis);
-                    break;
+                FireArm.SetAnimatedComponent(SecondaryMagazineRelease, SecondaryMagazineReleasePressed, SecondaryMagazineReleaseInterpStyle, SecondaryMagazineReleaseAxis);
+                yield return new WaitForSeconds(MagazineReleaseButtonReleaseDelay);
+                FireArm.SetAnimatedComponent(SecondaryMagazineRelease, SecondaryMagazineReleaseReleased, SecondaryMagazineReleaseInterpStyle, SecondaryMagazineReleaseAxis);
             }
         }
     }

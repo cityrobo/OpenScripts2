@@ -30,20 +30,21 @@ namespace OpenScripts2
 
 		public AudioEvent CloseSounds;
 		public AudioEvent OpenSounds;
-		public AudioEvent EndInteractionSounds;
+        public AudioEvent BeginInteractionSounds;
+        public AudioEvent EndInteractionSounds;
 
-		public bool IsOpen => _state == E_State.Open;
-        public bool IsClosed => _state == E_State.Closed;
-        public bool IsMid => _state == E_State.Mid;
+		public bool IsOpen => State == E_State.Open;
+        public bool IsClosed => State == E_State.Closed;
+        public bool IsMid => State == E_State.Mid;
 
-        private enum E_State
+        public enum E_State
 		{
 			Open,
 			Mid,
 			Closed
 		}
 
-		private E_State _state;
+		public E_State State;
 		private E_State _lastState;
 
 		private float _currentPositionValue;
@@ -65,7 +66,9 @@ namespace OpenScripts2
 		public override void BeginInteraction(FVRViveHand hand)
 		{
 			base.BeginInteraction(hand);
-			switch (MovementAxis)
+
+            SM.PlayGenericSound(BeginInteractionSounds, ObjectToMove.position);
+            switch (MovementAxis)
 			{
 				case OpenScripts2_BasePlugin.Axis.X:
 					_lastHandPlane = Vector3.ProjectOnPlane(hand.transform.up, Root.right);
@@ -328,26 +331,26 @@ namespace OpenScripts2
         {
 			if (lerp < LimitWiggleRoom)
 			{
-				_state = E_State.Open;
+				State = E_State.Open;
 
 			}
 			else if (lerp > 1f - LimitWiggleRoom)
 			{
-				_state = E_State.Closed;
+				State = E_State.Closed;
 			}
 			else
 			{
-				_state = E_State.Mid;
+				State = E_State.Mid;
 			}
-			if (_state == E_State.Open && _lastState != E_State.Open)
+			if (State == E_State.Open && _lastState != E_State.Open)
 			{
 				SM.PlayGenericSound(OpenSounds, ObjectToMove.position);
 			}
-			if (_state == E_State.Closed && _lastState != E_State.Closed)
+			if (State == E_State.Closed && _lastState != E_State.Closed)
 			{
 				SM.PlayGenericSound(CloseSounds, ObjectToMove.position);
 			}
-			_lastState = _state;
+			_lastState = State;
 		}
 	}
 }

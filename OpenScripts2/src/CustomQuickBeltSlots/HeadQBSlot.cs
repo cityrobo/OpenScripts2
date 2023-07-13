@@ -10,9 +10,9 @@ namespace OpenScripts2
 {
     public class HeadQBSlot : FVRQuickBeltSlot
     {
-        [Header("HeadQBSlot Config")]
-		public Vector3 HeadOffsetPosition;
-        public Vector3 HeadOffsetRotation;
+  //      [Header("HeadQBSlot Config")]
+		//public Vector3 HeadOffsetPosition;
+  //      public Vector3 HeadOffsetRotation;
 
         [ContextMenu("CopyQBSlot")]
         public void CopyQBSlot()
@@ -25,16 +25,16 @@ namespace OpenScripts2
         //private GameObject _geo;
         //private Transform[] _children;
 
-		public void Start()
-        {
-            if (GM.CurrentPlayerBody != null && GM.CurrentPlayerBody.Head != null)
-            {
-                transform.SetParent(GM.CurrentPlayerBody.Head);
-            }
+		//public void Start()
+  //      {
+  //          if (GM.CurrentPlayerBody != null && GM.CurrentPlayerBody.Head != null)
+  //          {
+  //              transform.SetParent(GM.CurrentPlayerBody.Head);
+  //          }
 
-            transform.localPosition = HeadOffsetPosition;
-            transform.localRotation = Quaternion.Euler(HeadOffsetRotation);
-        }
+  //          transform.localPosition = HeadOffsetPosition;
+  //          transform.localRotation = Quaternion.Euler(HeadOffsetRotation);
+  //      }
 
         //public void LateUpdate()
         //{

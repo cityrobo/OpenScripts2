@@ -3,7 +3,7 @@ using FistVR;
 
 namespace OpenScripts2
 {
-    class MagazineSafety : OpenScripts2_BasePlugin
+    public class MagazineSafety : OpenScripts2_BasePlugin
     {
         public FVRFireArm FireArm = null;
         public int SafetyFireModePosition = 0;

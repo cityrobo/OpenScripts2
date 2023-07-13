@@ -16,7 +16,7 @@ namespace OpenScripts2
         public Vector3 HeadOffsetPosition;
 
         [HideInInspector]
-        public bool IsInPlayerSlot = false; 
+        public bool IsInHelmetSlot = false; 
 
 		private readonly List<TransformProxy> _originalHelmetPiecePositions = new();
 
@@ -34,18 +34,18 @@ namespace OpenScripts2
 		{
 			base.SetQuickBeltSlot(slot);
 
-			if (slot != null && slot.IsPlayer)
+			if (slot != null && slot is HeadQBSlot)
 			{
-                IsInPlayerSlot = true;
+                IsInHelmetSlot = true;
                 foreach (Transform piece in HelmetRootPieces)
                 {
                     piece.SetParent(GM.CurrentPlayerBody.Head, false);
                     piece.localPosition += HeadOffsetPosition;
                 }
             }
-            else if (slot == null && IsInPlayerSlot)
+            else if (slot == null && IsInHelmetSlot)
 			{
-                IsInPlayerSlot = false;
+                IsInHelmetSlot = false;
                 for (int i = 0; i < HelmetRootPieces.Length; i++)
                 {
                     HelmetRootPieces[i].SetParent(transform, false);

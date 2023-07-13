@@ -73,9 +73,13 @@ namespace OpenScripts2
 
         private MaterialPropertyBlock _materialPropertyBlock;
 
+        private Quaternion _originalReticleRotation;
+
         public override void Start()
         {
             base.Start();
+
+            _originalReticleRotation = ReticleMesh.transform.localRotation;
 
             _materialPropertyBlock = new MaterialPropertyBlock();
 
@@ -369,13 +373,13 @@ namespace OpenScripts2
             {
                 _muzzlePos = FireArm.CurrentMuzzle;
                 Vector3 worldPosition = _muzzlePos.position + _muzzlePos.forward * ZeroDistances[CurrentZeroDistance];
-                ReticleMesh.transform.LookAt(worldPosition);
+                ReticleMesh.transform.LookAt(worldPosition, ReticleMesh.transform.up);
 
                 _materialPropertyBlock.SetFloat(NameOfDistanceVariable, ZeroDistances[CurrentZeroDistance]);
             }
             else
             {
-                ReticleMesh.transform.localRotation = Quaternion.identity;
+                ReticleMesh.transform.localRotation = _originalReticleRotation;
                 FireArm = null;
                 _muzzlePos = null;
             }
