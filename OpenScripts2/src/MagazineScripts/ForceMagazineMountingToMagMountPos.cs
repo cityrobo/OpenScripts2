@@ -16,7 +16,8 @@ namespace OpenScripts2
             }
             else if (!_posChanged && FireArm.Magazine != null)
             {
-                FireArm.Magazine.SetParentage(FireArm.MagazineMountPos.transform);
+                if (!FireArm.Magazine.IsBeltBox) FireArm.Magazine.SetParentage(FireArm.MagazineMountPos);
+                else FireArm.Magazine.SetParentage(FireArm.BeltBoxMountPos);
                 _posChanged = true;
             }
         }
