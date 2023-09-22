@@ -98,6 +98,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\AttachmentScripts\CustomMuzzleDeviceMuzzleEffects.cs" />
     <Compile Include="src\AttachmentScripts\MovingFireArmAttachmentInterface.cs" />
     <Compile Include="src\AttachmentScripts\FirearmFeatureChangerAttachment.cs" />
     <Compile Include="src\AttachmentScripts\CustomOpenScripts2Attachment.cs" />
@@ -156,6 +157,7 @@
     <Compile Include="src\OpticScripts\VanillaRedDotMaterialCreator.cs" />
     <Compile Include="src\OpticScripts\VanillaScopeMaterialCreator.cs" />
     <Compile Include="src\QuickBeltItems\QBArmorHelmet.cs" />
+    <Compile Include="src\SerializableClasses\CustomMuzzleEffect.cs" />
     <Compile Include="src\SerializableClasses\TransformProxy.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidanceSystem.cs" />
     <Compile Include="src\SmartWeapons\LaserGuidedProjectile.cs" />
@@ -164,6 +166,8 @@
     <Compile Include="src\SmartWeapons\SmartWeapon.cs" />
     <Compile Include="src\SmartWeapons\TopAttackProjectile.cs" />
     <Compile Include="src\SmartWeapons\TopAttackSystem.cs" />
+    <Compile Include="src\VisualModification\CustomMuzzleEffectController.cs" />
+    <Compile Include="src\VisualModification\SimplifiedManipulateFireArmRoundProxy.cs" />
     <Compile Include="src\VisualModification\MovementVisualEffect.cs" />
     <Compile Include="src\VisualModification\InteractionVisualEffect.cs" />
     <Compile Include="src\VisualModification\ManipulateTransforms.cs" />

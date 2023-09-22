@@ -101,18 +101,20 @@ namespace OpenScripts2
             public float ReturnDuration = 1f;
 
             private float _currentValue;
+            private float _lastLerp;
             private bool _oneWayLockEnabled = false;
 
             private float _delayedSnappingLerp = -1f;
 
             public void SetLerp(float lerp)
             {
+                if (lerp == _lastLerp) return;
                 switch (OneWayBehavior)
                 {
                     case EOneWayBehavior.None:
                         _currentValue = !UsesAnimationCurves
                             ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, lerp)
-                            : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, ForwardCurve.Evaluate(lerp));
+                            : ForwardCurve.Evaluate(lerp);
                         ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                         break;
                     case EOneWayBehavior.ForwardReturningAtStart:
@@ -125,14 +127,14 @@ namespace OpenScripts2
                             {
                                 _currentValue = !UsesAnimationCurves
                                     ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, _delayedSnappingLerp != -1f ? Mathf.Clamp(_delayedSnappingLerp, lerp, 1f) : lerp)
-                                    : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, _delayedSnappingLerp != -1f ? ForwardCurve.Evaluate(Mathf.Clamp(_delayedSnappingLerp, lerp, 1f)) : ForwardCurve.Evaluate(lerp));
+                                    : _delayedSnappingLerp != -1f ? ForwardCurve.Evaluate(Mathf.Clamp(_delayedSnappingLerp, lerp, 1f)) : ForwardCurve.Evaluate(lerp);
                                 ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                             }
                             else
                             {
                                 _currentValue = !UsesAnimationCurves
                                     ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, 1f)
-                                    : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, ForwardCurve.Evaluate(1f));
+                                    : ForwardCurve.Evaluate(1f);
                                 ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                                 _oneWayLockEnabled = true;
                             }
@@ -151,14 +153,14 @@ namespace OpenScripts2
                                 
                                 _currentValue = !UsesAnimationCurves
                                     ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, lerp)
-                                    : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, ForwardCurve.Evaluate(lerp));
+                                    : ForwardCurve.Evaluate(lerp);
                                 ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                             }
                             else
                             {
                                 _currentValue = !UsesAnimationCurves 
                                     ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, 1f) 
-                                    : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, ForwardCurve.Evaluate(1f));
+                                    : ForwardCurve.Evaluate(1f);
                                 ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                                 _oneWayLockEnabled = true;
                                 _delayedSnappingLerp = 1f;
@@ -169,8 +171,8 @@ namespace OpenScripts2
                             _delayedSnappingLerp = ReturnDuration > 0f ? Mathf.Clamp01(_delayedSnappingLerp - Time.deltaTime / ReturnDuration) : 0f;
                             _currentValue = !UsesAnimationCurves
                                 ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, Mathf.Clamp(_delayedSnappingLerp, 0f, lerp))
-                                : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, ForwardCurve.Evaluate(Mathf.Clamp(_delayedSnappingLerp, 0f, lerp)));
-                            ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
+                                : ForwardCurve.Evaluate(Mathf.Clamp(_delayedSnappingLerp, 0f, lerp));
+                             ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                             if (lerp <= 0f) _oneWayLockEnabled = false;
                         }
                         break;
@@ -184,14 +186,14 @@ namespace OpenScripts2
                             {
                                 _currentValue = !UsesAnimationCurves
                                     ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, _delayedSnappingLerp != -1f ? Mathf.Clamp(_delayedSnappingLerp, 0f, lerp) : lerp)
-                                    : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, _delayedSnappingLerp != -1f ? BackwardCurve.Evaluate(Mathf.Clamp(_delayedSnappingLerp, 0f, lerp)) : BackwardCurve.Evaluate(lerp));
+                                    : _delayedSnappingLerp != -1f ? BackwardCurve.Evaluate(Mathf.Clamp(_delayedSnappingLerp, 0f, lerp)) : BackwardCurve.Evaluate(lerp);
                                 ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                             }
                             else
                             {
                                 _currentValue = !UsesAnimationCurves
                                     ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, 0f)
-                                    : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, BackwardCurve.Evaluate(0f));
+                                    : BackwardCurve.Evaluate(0f);
                                 ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                                 _oneWayLockEnabled = true;
                             }
@@ -210,14 +212,14 @@ namespace OpenScripts2
                             {
                                 _currentValue = !UsesAnimationCurves
                                     ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, lerp)
-                                    : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, BackwardCurve.Evaluate(lerp));
+                                    : BackwardCurve.Evaluate(lerp);
                                 ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                             }
                             else
                             {
                                 _currentValue = !UsesAnimationCurves
                                     ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, 0f)
-                                    : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, BackwardCurve.Evaluate(0f));
+                                    : BackwardCurve.Evaluate(0f);
                                 ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
                                 _oneWayLockEnabled = true;
                                 _delayedSnappingLerp = 0f;
@@ -228,13 +230,15 @@ namespace OpenScripts2
                             _delayedSnappingLerp = ReturnDuration > 0f ? Mathf.Clamp01(_delayedSnappingLerp + Time.deltaTime / ReturnDuration) : 1f;
                             _currentValue = !UsesAnimationCurves
                                 ? Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, Mathf.Clamp(_delayedSnappingLerp, lerp, 1f))
-                                : Mathf.Lerp(LowerManipulationLimit, UpperManipulationLimit, BackwardCurve.Evaluate(Mathf.Clamp(_delayedSnappingLerp, lerp, 1f)));
+                                : BackwardCurve.Evaluate(Mathf.Clamp(_delayedSnappingLerp, lerp, 1f));
                             ManipulatedTransform.ModifyLocalTransform(ManipulatedTransformParameter, AxisToAffect, _currentValue);
 
                             if (lerp >= 1f) _oneWayLockEnabled = false;
                         }
                         break;
                 }
+
+                _lastLerp = lerp;
             }
         }
         [Serializable]

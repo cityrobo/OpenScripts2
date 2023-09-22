@@ -3,6 +3,7 @@ using UnityEngine;
 using FistVR;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OpenScripts2
 {
@@ -15,13 +16,15 @@ namespace OpenScripts2
 			{
 				PrimaryItemID = primaryItemID;
 				BackupItemID = backupID;
+				
 				AttachmentPoint = attachmentPoint;
 			}
 
 			public string PrimaryItemID;
 			[Tooltip("If your item fails to spawn, it will spawn the backup ID.")]
 			public string BackupItemID;
-			[Tooltip("Position and Rotation to spawn the Attachment at.")]
+            [Header("These points are getting destroyed at the end. Do NOT put anthing important on them.")]
+            [Tooltip("Position and Rotation to spawn the Attachment at.")]
 			public Transform AttachmentPoint;
 		}
 
@@ -41,9 +44,41 @@ namespace OpenScripts2
 		{
 			yield return null;
 
-			foreach (var spawnedAttachment in _spawnedAttachments)
+			FVRPhysicalObject physicalObject = GetComponentInParent<FVRPhysicalObject>();
+			PreattachedAttachment[] preattachedAttachments = physicalObject.GetComponentsInChildren<PreattachedAttachment>();
+            PreattachedAttachments[] multiplePreattachedAttachments = physicalObject.GetComponentsInChildren<PreattachedAttachments>();
+
+			bool attachmentsDone = false;
+			bool multipleAttachmentsDone = false;
+
+			if (preattachedAttachments.Length == 0) attachmentsDone = true;
+			else
 			{
-				spawnedAttachment.AttachToMount(AttachmentMount, false);
+				attachmentsDone = preattachedAttachments.All(a => a.AttachmentDone == true);
+            }
+			if (multiplePreattachedAttachments.Length == 0) multipleAttachmentsDone = true;
+			else
+			{
+                multipleAttachmentsDone = multiplePreattachedAttachments.All(a => a.AttachmentsDone == true);
+            }
+
+			while (!attachmentsDone && !multipleAttachmentsDone)
+			{
+				yield return null;
+                if (!attachmentsDone) 
+                {
+                    attachmentsDone = preattachedAttachments.All(a => a.AttachmentDone == true);
+                }
+                if (!multipleAttachmentsDone) 
+                {
+                    multipleAttachmentsDone = multiplePreattachedAttachments.All(a => a.AttachmentsDone == true);
+                }
+            }
+
+            foreach (var spawnedAttachment in _spawnedAttachments)
+			{
+				spawnedAttachment.gameObject.SetActive(true);
+                spawnedAttachment.AttachToMount(AttachmentMount, false);
 				if (spawnedAttachment is Suppressor suppressor)
 				{
 					suppressor.AutoMountWell();
@@ -68,7 +103,8 @@ namespace OpenScripts2
 					spawnedGameObject = Instantiate(objectReference.GetGameObject(), foreignAttachmentSet.AttachmentPoint.position, foreignAttachmentSet.AttachmentPoint.rotation);
 					spawnedAttachment = spawnedGameObject.GetComponent<FVRFireArmAttachment>();
 					_spawnedAttachments.Add(spawnedAttachment);
-				}
+					spawnedGameObject.SetActive(false);
+                }
 				catch
 				{
 					Log($"Item ID {foreignAttachmentSet.PrimaryItemID} not found; attempting to spawn backupID!");
@@ -78,14 +114,15 @@ namespace OpenScripts2
 						spawnedGameObject = Instantiate(objectReference.GetGameObject(), foreignAttachmentSet.AttachmentPoint.position, foreignAttachmentSet.AttachmentPoint.rotation);
 						spawnedAttachment = spawnedGameObject.GetComponent<FVRFireArmAttachment>();
 						_spawnedAttachments.Add(spawnedAttachment);
-					}
+                        spawnedGameObject.SetActive(false);
+                    }
 					catch
 					{
 						LogWarning($"Item ID {foreignAttachmentSet.BackupItemID} not found; continuing with next attachment in list!");
 					}
 				}
 
-				Destroy(foreignAttachmentSet.AttachmentPoint.gameObject);
+				if (foreignAttachmentSet.AttachmentPoint != AttachmentMount.Point_Front && foreignAttachmentSet.AttachmentPoint != AttachmentMount.Point_Rear) Destroy(foreignAttachmentSet.AttachmentPoint.gameObject);
 			}
 		}
 #endif

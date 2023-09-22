@@ -332,7 +332,6 @@ namespace OpenScripts2
 			if (lerp < LimitWiggleRoom)
 			{
 				State = E_State.Open;
-
 			}
 			else if (lerp > 1f - LimitWiggleRoom)
 			{

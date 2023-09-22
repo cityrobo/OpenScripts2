@@ -9,6 +9,8 @@ namespace OpenScripts2
 		public FVRFireArmAttachment Attachment;
 		public FVRFireArmAttachmentMount AttachmentMount;
 
+		[HideInInspector]
+		public bool AttachmentDone = false;
 		public void Start()
 		{
 			StartCoroutine("AttachToMount");
@@ -22,6 +24,8 @@ namespace OpenScripts2
             {
 				suppressor.AutoMountWell();
             }
+
+			AttachmentDone = true;
 		}
 	}
 }

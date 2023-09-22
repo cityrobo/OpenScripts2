@@ -141,8 +141,8 @@ namespace OpenScripts2
 
             if (hand.Input.TriggerFloat > 0f)
             {
-                Vector3 adjustedHandPosDelta = (hand.Input.FilteredPos - _lastHandPos) * m_hand.Input.TriggerFloat;
-                Vector3 posDelta = (transform.position - _lastPos) * m_hand.Input.TriggerFloat;
+                Vector3 adjustedHandPosDelta = (hand.Input.FilteredPos - _lastHandPos) * hand.Input.TriggerFloat;
+                Vector3 posDelta = (transform.position - _lastPos) * hand.Input.TriggerFloat;
                 Vector3 newPosRaw = transform.position + adjustedHandPosDelta - posDelta;
                 switch (DegreesOfFreedom)
                 {
@@ -185,7 +185,7 @@ namespace OpenScripts2
         {
             Vector3 newPosProjected = newPosRaw.ProjectOnPlaneThroughPoint(transform.position, transform.parent.GetLocalDirAxis(LimitingAxis));
             Vector3 newPosClamped = transform.parent.InverseTransformPoint(newPosProjected).Clamp(_lowerLimit, _upperLimit);
-            transform.localPosition = newPosClamped;
+            transform.localPosition = newPosClamped.ModifyAxisValue(LimitingAxis, _startPos.GetAxisValue(LimitingAxis));
         }
         private void ThreeDegreesOfFreedom(Vector3 newPosRaw)
         {

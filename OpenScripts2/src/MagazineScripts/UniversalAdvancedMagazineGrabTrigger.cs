@@ -1,13 +1,17 @@
 using UnityEngine;
 using FistVR;
 using System.Collections;
+using System.Reflection;
+using System;
 
 namespace OpenScripts2
 {
 	public class UniversalAdvancedMagazineGrabTrigger : FVRInteractiveObject
 	{
 		public FVRFireArm FireArm;
-		public enum E_InputType 
+        public bool IsBeltBoxGrabTrigger;
+
+        public enum E_InputType 
 		{
             Vanilla,
             TouchpadUp_BYButton,
@@ -31,38 +35,38 @@ namespace OpenScripts2
         public bool AllowExternalInputTypeModification = true;
         private FVRFireArmMagazine _currentMagazine;
 
-		public override bool IsInteractable()
+        public override bool IsInteractable()
 		{
 			if (!IsSecondarySlotGrab)
 			{
-				return FireArm.Magazine != null;
-			}
+                return FireArm.Magazine != null && (FireArm.BeltDD == null || !FireArm.BeltDD.isBeltGrabbed()) && (FireArm.Magazine.IsBeltBox == IsBeltBoxGrabTrigger && (!FireArm.ConnectedToBox || FireArm.Magazine.CanBeTornOut));
+            }
 			return FireArm.SecondaryMagazineSlots[SecondaryGrabSlot].Magazine != null;
 		}
 
 		public override void BeginInteraction(FVRViveHand hand)
 		{
-			base.BeginInteraction(hand);
+            base.BeginInteraction(hand);
             _currentMagazine = IsSecondarySlotGrab ? FireArm.SecondaryMagazineSlots[SecondaryGrabSlot].Magazine : FireArm.Magazine;
             if (OpenScripts2_BepInExPlugin.AdvancedMagGrabSimpleMagRelease.Value || RequiredInput == E_InputType.Vanilla)
-			{
+            {
                 StartCoroutine(MoveMagReleaseButton());
                 if (!IsSecondarySlotGrab && FireArm.Magazine != null)
-				{
-					EndInteraction(hand);
-					FireArm.EjectMag(false);
-					hand.ForceSetInteractable(_currentMagazine);
+                {
+                    EndInteraction(hand);
+                    FireArm.EjectMag(false);
+                    hand.ForceSetInteractable(_currentMagazine);
                     _currentMagazine.BeginInteraction(hand);
-				}
-				else if (IsSecondarySlotGrab && FireArm.SecondaryMagazineSlots[SecondaryGrabSlot].Magazine != null)
-				{
-					EndInteraction(hand);
-					FireArm.EjectSecondaryMagFromSlot(SecondaryGrabSlot, false);
-					hand.ForceSetInteractable(_currentMagazine);
+                }
+                else if (IsSecondarySlotGrab && FireArm.SecondaryMagazineSlots[SecondaryGrabSlot].Magazine != null)
+                {
+                    EndInteraction(hand);
+                    FireArm.EjectSecondaryMagFromSlot(SecondaryGrabSlot, false);
+                    hand.ForceSetInteractable(_currentMagazine);
                     _currentMagazine.BeginInteraction(hand);
-				}
-			}
-		}
+                }
+            }
+        }
 
         public void SetRequiredInput(E_InputType newInputType)
         {

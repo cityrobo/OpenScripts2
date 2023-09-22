@@ -24,9 +24,11 @@ namespace OpenScripts2
             AXButton,
             BYButton,
             Trigger,
-            Simple
+            Simple,
+            TriggerTouched,
+            GripPressed
         }
-        [Tooltip("Types of interactions that can trigger the effect. It's a list so you can make it streamline compatible! *shakes fist in touchpad controls!*")]
+        [Tooltip("Types of interactions that can trigger the effect. It's a list so you can make it streamline compatible! *shakes fist in touchpad controls!* (GripPressed probably only works on Index. It's the *hard* press Input.)")]
         public List<E_InteractionType> InteractionTypes = new();
 
         [Tooltip("Should the effect be applied instantanious or gradually? (Binary or linear transition)")]
@@ -81,6 +83,9 @@ namespace OpenScripts2
                     if (input.TouchpadPressed && Vector2.Angle(input.TouchpadAxes, Vector2.right) < 45f) _currentInteractions.Add(E_InteractionType.TouchpadRight);
 
                     if (input.TriggerPressed) _currentInteractions.Add(E_InteractionType.Trigger);
+
+                    if (input.TriggerTouched) _currentInteractions.Add(E_InteractionType.TriggerTouched);
+                    if (input.GripPressed) _currentInteractions.Add(E_InteractionType.GripPressed);
                 }
                 else
                 {

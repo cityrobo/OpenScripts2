@@ -5,6 +5,9 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using OpenScripts2;
+using HarmonyLib;
+using UnityEditor;
+using Valve.Newtonsoft.Json.Linq;
 
 namespace OpenScripts2
 {
@@ -92,6 +95,31 @@ namespace OpenScripts2
                 
             }
             return EmptySprite;
+        }
+
+        public static T ParseEnum<T>(string enumString) where T : Enum
+        {
+            return (T)Enum.Parse(typeof(T), enumString);
+        }
+
+        public static T[] ParseToEnumArray<T>(string CSV) where T : Enum
+        {
+            if (CSV == null || CSV.All(char.IsWhiteSpace))
+            {
+                return new T[0]; // Return an empty array if the CSV is empty or null.
+            }
+
+            // Split the CSV string into individual values (assuming they are separated by commas).
+            string[] values = CSV.Split(',');
+
+            // Parse each value into its corresponding enum value.
+            T[] enumValues = new T[values.Length];
+            for (int i = 0; i < values.Length; i++)
+            {
+                enumValues[i] = ParseEnum<T>(values[i]);
+            }
+
+            return enumValues;
         }
     }
 
@@ -333,6 +361,70 @@ namespace UnityEngine
             return parent.GetComponents<T>();
         }
 
+        // TryGetComponent for Components
+        public static bool TryGetComponent<T>(this Component mainComponent, out T foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponent<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponentInChildren<T>(this Component mainComponent, out T foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponentInChildren<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponentInParent<T>(this Component mainComponent, out T foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponentInParent<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponents<T>(this Component mainComponent, out T[] foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponents<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponentsInChildren<T>(this Component mainComponent, out T[] foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponentsInChildren<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponentsInParent<T>(this Component mainComponent, out T[] foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponentsInParent<T>();
+            return foundComponent != null;
+        }
+
+        // TryGetComponent for GameObjects
+        public static bool TryGetComponent<T>(this GameObject mainComponent, out T foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponent<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponentInChildren<T>(this GameObject mainComponent, out T foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponentInChildren<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponentInParent<T>(this GameObject mainComponent, out T foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponentInParent<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponents<T>(this GameObject mainComponent, out T[] foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponents<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponentsInChildren<T>(this GameObject mainComponent, out T[] foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponentsInChildren<T>();
+            return foundComponent != null;
+        }
+        public static bool TryGetComponentsInParent<T>(this GameObject mainComponent, out T[] foundComponent) where T : Component
+        {
+            foundComponent = mainComponent.GetComponentsInParent<T>();
+            return foundComponent != null;
+        }
+
         public static bool IsGreaterThan(this Vector3 local, Vector3 other)
         {
             if (local.x > other.x && local.y > other.y && local.z > other.z)
@@ -510,14 +602,14 @@ namespace UnityEngine
         {
             Vector3 newPos = transform.position;
             newPos[(int)axis] = value;
-            if (transform.position != newPos) transform.position = newPos;
+            if (VectorsNotEqual(transform.position, newPos)) transform.position = newPos;
         }
 
         public static void ModifyLocalPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newPos = transform.localPosition;
             newPos[(int)axis] = value;
-            if (transform.localPosition != newPos) transform.localPosition = newPos;
+            if (VectorsNotEqual(transform.localPosition, newPos)) transform.localPosition = newPos;
         }
 
         public static void ModifyRotationAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
@@ -529,7 +621,7 @@ namespace UnityEngine
                 newRot.y -= 180f;
                 newRot.z -= 180f;
             }
-            if (transform.rotation != Quaternion.Euler(newRot)) transform.rotation = Quaternion.Euler(newRot);
+            if (QuaternionsNotEqual(transform.rotation, Quaternion.Euler(newRot))) transform.rotation = Quaternion.Euler(newRot);
         }
 
         public static void ModifyLocalRotationAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
@@ -541,15 +633,16 @@ namespace UnityEngine
                 newRot.y -= 180f;
                 newRot.z -= 180f;
             }
-            //Debug.Log(newRot);
-            if (transform.localRotation != Quaternion.Euler(newRot)) transform.localRotation = Quaternion.Euler(newRot);
+            //if (transform.localRotation != Quaternion.Euler(newRot)) transform.localRotation = Quaternion.Euler(newRot);
+
+            if (QuaternionsNotEqual(transform.localRotation, Quaternion.Euler(newRot))) transform.localRotation = Quaternion.Euler(newRot);
         }
 
         public static void ModifyLocalScaleAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newPos = transform.localScale;
             newPos[(int)axis] = value;
-            if (transform.localScale != newPos) transform.localScale = newPos;
+            if (VectorsNotEqual(transform.localScale, newPos)) transform.localScale = newPos;
         }
 
         public static void GoToTransformProxy(this Transform transform, TransformProxy proxy)
@@ -594,10 +687,43 @@ namespace UnityEngine
             return v2;
         }
 
-
         public static Quaternion Subtract(this Quaternion a, Quaternion b)
         {
             return a * Quaternion.Inverse(b);
+        }
+
+        public static bool VectorsNotEqual(Vector3 a, Vector3 b)
+        {
+            bool x = a.x != b.x;
+            bool y = a.y != b.y;
+            bool z = a.z != b.z;
+
+            return x || y || z;
+        }
+
+        public static bool QuaternionsNotEqual(Quaternion a, Quaternion b)
+        {
+            bool x = a.x != b.x;
+            bool y = a.y != b.y;
+            bool z = a.z != b.z;
+            bool w = a.w != b.w;
+
+            return x || y || z || w;
+        }
+    }
+}
+namespace System.Collections.Generic
+{
+    public static class CSharpExtensions
+    {
+        public static string ToCSV<T>(this IEnumerable<T> enumerable)
+        {
+            if (enumerable == null || !enumerable.Any())
+            {
+                return string.Empty;
+            }
+
+            return string.Join(",", enumerable.Select(item => item.ToString()).ToArray());
         }
     }
 }
