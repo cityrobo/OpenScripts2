@@ -31,7 +31,6 @@ namespace OpenScripts2
         private Handgun.FireSelectorMode[] _originalHandgunFireModes;
         private ClosedBoltWeapon.FireSelectorMode[] _originalClosedBoltFireModes;
         private OpenBoltReceiver.FireSelectorMode[] _originalOpenBoltFireModes;
-        private List<OpenBoltBurstFire> _openBoltBursts;
 
         private bool _handgunHadFireSelectorButton = false;
 
@@ -39,8 +38,6 @@ namespace OpenScripts2
 
         public void Awake()
         {
-            _openBoltBursts = new List<OpenBoltBurstFire>();
-
             if (SelectorPositions.Length > 0) _addsSelectorPositions = true;
         }
 
@@ -48,14 +45,12 @@ namespace OpenScripts2
         {
             if (!_attached && Attachment.curMount != null)
             {
-                //Debug.Log(Attachment.curMount);
                 ChangeFireMode(true);
                 _attached = true;
             }
 
             if (_attached && Attachment.curMount == null)
             {
-                //Debug.Log(Attachment.curMount);
                 ChangeFireMode(false);
                 _attached = false;
 
@@ -97,7 +92,7 @@ namespace OpenScripts2
 
                 foreach (var FireSelectorModeType in FireSelectorModeTypes)
                 {
-                    OpenBoltReceiver.FireSelectorMode newFireSelectorMode = new OpenBoltReceiver.FireSelectorMode();
+                    OpenBoltReceiver.FireSelectorMode newFireSelectorMode = new();
                     switch (FireSelectorModeType)
                     {
                         case ClosedBoltWeapon.FireSelectorModeType.Safe:
@@ -107,13 +102,8 @@ namespace OpenScripts2
                             newFireSelectorMode.ModeType = OpenBoltReceiver.FireSelectorModeType.Single;
                             break;
                         case ClosedBoltWeapon.FireSelectorModeType.Burst:
-                            newFireSelectorMode.ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
-                            OpenBoltBurstFire openBoltBurst = openBoltReceiver.gameObject.AddComponent<OpenBoltBurstFire>();
-                            _openBoltBursts.Add(openBoltBurst);
-                            openBoltBurst.OpenBoltReceiver = openBoltReceiver;
-                            openBoltBurst.SelectorSetting = openBoltReceiver.FireSelector_Modes.Length;
-                            openBoltBurst.BurstAmount = BurstAmounts[burstIndex];
-                            //openBoltBurstGM.SetActive(true);
+                            newFireSelectorMode.ModeType = OpenBoltReceiver.FireSelectorModeType.Burst;
+                            newFireSelectorMode.BurstAmount = BurstAmounts[burstIndex];
 
                             burstIndex++;
                             break;
@@ -194,15 +184,6 @@ namespace OpenScripts2
             {
                 openBoltReceiver.m_fireSelectorMode = _originalOpenBoltFireModes.Length - 1;
                 openBoltReceiver.FireSelector_Modes = _originalOpenBoltFireModes;
-                if (_openBoltBursts.Count != 0)
-                {
-                    foreach (var openBoltBurst in _openBoltBursts)
-                    {
-                        Destroy(openBoltBurst);
-                    }
-
-                    _openBoltBursts.Clear();
-                }
             }
         }
 
@@ -216,7 +197,7 @@ namespace OpenScripts2
                 int selectorPosIndex = 0;
                 foreach (var FireSelectorModeType in FireSelectorModeTypes)
                 {
-                    ClosedBoltWeapon.FireSelectorMode newFireSelectorMode = new ClosedBoltWeapon.FireSelectorMode();
+                    ClosedBoltWeapon.FireSelectorMode newFireSelectorMode = new();
                     switch (FireSelectorModeType)
                     {
                         case ClosedBoltWeapon.FireSelectorModeType.Safe:
@@ -273,7 +254,7 @@ namespace OpenScripts2
 
                 foreach (var FireSelectorModeType in FireSelectorModeTypes)
                 {
-                    Handgun.FireSelectorMode newFireSelectorMode = new Handgun.FireSelectorMode();
+                    Handgun.FireSelectorMode newFireSelectorMode = new();
                     switch (FireSelectorModeType)
                     {
                         case ClosedBoltWeapon.FireSelectorModeType.Safe:

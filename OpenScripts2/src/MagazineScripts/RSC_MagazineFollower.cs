@@ -31,7 +31,6 @@ namespace OpenScripts2
         private int _origSafetyPos;
         private float _lastRot;
 
-#if!(UNITY_EDITOR || UNITY_5)
         public override void Start()
         {
             base.Start();
@@ -41,6 +40,7 @@ namespace OpenScripts2
         public override void SimpleInteraction(FVRViveHand hand)
         {
             base.SimpleInteraction(hand);
+
             switch (_open)
             {
                 case false:
@@ -62,11 +62,9 @@ namespace OpenScripts2
             {
                 MagazineWell.SetActive(false);
                 MagazineGrabTrigger.SetActive(false);
-                //Debug.Log("magazine inactive");
 
                 if (FireArm.Magazine == null)
                 {
-                    //Debug.Log("magazine no inserted");
                     StopAllCoroutines();
                     StartCoroutine(SetFollowerRot(RotationalAngles[RotationalAngles.Length-1]));
                 }
@@ -109,32 +107,12 @@ namespace OpenScripts2
             }
         }
 
-
         IEnumerator SetFollowerRot(float rot)
         {
             bool rotDone = false;
-            //lastRot = rot;
             _lastRot = rot;
 
             Quaternion targetRotation = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(rot, RotationalAxis);
-
-            /*
-            switch (rotationalAxis)
-            {
-                case OpenScripts2_BasePlugin.Axis.X:
-                    targetRotation = Quaternion.Euler(rot, 0, 0);
-                    break;
-                case OpenScripts2_BasePlugin.Axis.Y:
-                    targetRotation = Quaternion.Euler(0, rot, 0);
-                    break;
-                case OpenScripts2_BasePlugin.Axis.Z:
-                    targetRotation = Quaternion.Euler(0, 0, rot);
-                    break;
-                default:
-                    targetRotation = Quaternion.Euler(0, 0, 0);
-                    break;
-            }
-            */
 
             while (!rotDone)
             {
@@ -148,6 +126,5 @@ namespace OpenScripts2
                 MagazineGrabTrigger.SetActive(true);
             }
         }
-#endif
     }
 }

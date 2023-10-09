@@ -32,17 +32,16 @@ namespace OpenScripts2
         private int _origSafetyPos;
         private float _lastRot;
 
-#if!(UNITY_EDITOR || UNITY_5)
         public override void Start()
         {
             base.Start();
             StartCoroutine(SetFollowerRot(RotationalAngles[0]));
         }
 
-
         public override void SimpleInteraction(FVRViveHand hand)
         {
             base.SimpleInteraction(hand);
+
             switch (_open)
             {
                 case false:
@@ -116,23 +115,7 @@ namespace OpenScripts2
             _lastRot = rot;
 
             Quaternion targetRotation = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis(rot, RotationalAxis);
-            /*
-            switch (RotationalAxis)
-            {
-                case OpenScripts2_BasePlugin.Axis.X:
-                    targetRotation = Quaternion.Euler(rot, 0, 0);
-                    break;
-                case OpenScripts2_BasePlugin.Axis.Y:
-                    targetRotation = Quaternion.Euler(0, rot, 0);
-                    break;
-                case OpenScripts2_BasePlugin.Axis.Z:
-                    targetRotation = Quaternion.Euler(0, 0, rot);
-                    break;
-                default:
-                    targetRotation = Quaternion.Euler(0, 0, 0);
-                    break;
-            }
-            */
+
             while (!rotDone)
             {
                 Follower.localRotation = Quaternion.RotateTowards(Follower.localRotation, targetRotation, RotSpeed * Time.deltaTime);
@@ -145,6 +128,5 @@ namespace OpenScripts2
                 MagazineGrabTrigger.SetActive(true);
             }
         }
-#endif
     }
 }

@@ -52,7 +52,7 @@ namespace OpenScripts2
         {
             if (SecondaryRoundPos_Ejection == null)
             {
-                GameObject go = new GameObject("Secondary_" + FireArm.RoundPos_Ejection.name);
+                GameObject go = new("Secondary_" + FireArm.RoundPos_Ejection.name);
                 SecondaryRoundPos_Ejection = go.transform;
             }
 
@@ -222,8 +222,6 @@ namespace OpenScripts2
         }
 
 #if !DEBUG
-
-
 #endif
     }
 }

@@ -40,7 +40,7 @@ namespace OpenScripts2
 
         private GameObject _currentSelectedObject;
 
-        private List<GameObject> _storedGameObjects;
+        private readonly List<GameObject> _storedGameObjects = new();
 
         private bool _switchingObject = false;
 
@@ -55,12 +55,7 @@ namespace OpenScripts2
             On.FistVR.FVRQuickBeltSlot.MoveContentsInstant += FVRQuickBeltSlot_MoveContentsInstant;
             On.FistVR.FVRQuickBeltSlot.MoveContentsCheap += FVRQuickBeltSlot_MoveContentsCheap;
         }
-        new public void Awake()
-        {
-            base.Awake();
 
-            _storedGameObjects = new List<GameObject>();
-        }
         private static void FVRQuickBeltSlot_MoveContentsCheap(On.FistVR.FVRQuickBeltSlot.orig_MoveContentsCheap orig, FVRQuickBeltSlot self, Vector3 dir)
         {
             if (self is QuickBottomlessSlot quickBottomlessSlot)
@@ -159,17 +154,20 @@ namespace OpenScripts2
                     quickBottomlessSlot.m_hoverGeoRend.material.SetColor("_RimColor", quickBottomlessSlot.HoverColor);
                 }
 
-                if (quickBottomlessSlot.StoresMagazines && quickBottomlessSlot.CurObject != null && quickBottomlessSlot.CurObject is FVRFireArmMagazine && quickBottomlessSlot._storedGameObjects.Count < quickBottomlessSlot.MaxItems)
+                if (quickBottomlessSlot.CurObject != null && quickBottomlessSlot._storedGameObjects.Count < quickBottomlessSlot.MaxItems)
                 {
-                    quickBottomlessSlot.StoreCurObject();
-                }
-                else if (quickBottomlessSlot.StoresClips && quickBottomlessSlot.CurObject != null && quickBottomlessSlot.CurObject is FVRFireArmClip && quickBottomlessSlot._storedGameObjects.Count < quickBottomlessSlot.MaxItems)
-                {
-                    quickBottomlessSlot.StoreCurObject();
-                }
-                else if (quickBottomlessSlot.StoresSpeedloaders && quickBottomlessSlot.CurObject != null && quickBottomlessSlot.CurObject is Speedloader && quickBottomlessSlot._storedGameObjects.Count < quickBottomlessSlot.MaxItems)
-                {
-                    quickBottomlessSlot.StoreCurObject();
+                    if (quickBottomlessSlot.StoresMagazines && quickBottomlessSlot.CurObject is FVRFireArmMagazine)
+                    {
+                        quickBottomlessSlot.StoreCurObject();
+                    }
+                    else if (quickBottomlessSlot.StoresClips && quickBottomlessSlot.CurObject is FVRFireArmClip)
+                    {
+                        quickBottomlessSlot.StoreCurObject();
+                    }
+                    else if (quickBottomlessSlot.StoresSpeedloaders && quickBottomlessSlot.CurObject is Speedloader)
+                    {
+                        quickBottomlessSlot.StoreCurObject();
+                    }
                 }
                 else if (quickBottomlessSlot.CurObject != null)
                 {
@@ -244,7 +242,6 @@ namespace OpenScripts2
                     if (quickBottomlessSlot.TextTurnsOffOnNoItemsStored) quickBottomlessSlot.TextRoot.SetActive(false);
                     quickBottomlessSlot.NumberOfItemsDisplay.text = quickBottomlessSlot.TextPrefix + quickBottomlessSlot._storedGameObjects.Count.ToString();
                 }
-
             }
             else orig(self);
         }

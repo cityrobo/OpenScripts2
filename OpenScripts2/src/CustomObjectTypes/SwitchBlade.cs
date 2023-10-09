@@ -27,8 +27,10 @@ namespace OpenScripts2
 		public override void UpdateInteraction(FVRViveHand hand)
 		{
 			base.UpdateInteraction(hand);
+
 			if (IsHeld && m_hasTriggeredUpSinceBegin && hand.Input.TriggerDown) ToggleSwitchBladeState();
 		}
+
 		private void ToggleSwitchBladeState()
 		{
 			if (MP.IsJointedToObject) return;
@@ -45,10 +47,12 @@ namespace OpenScripts2
 				StartCoroutine(CloseBlade());
 			}
 		}
+
 		private void SetBladeRot(float f)
 		{
 			Blade.localRotation = OpenScripts2_BasePlugin.GetTargetQuaternionFromAxis( Mathf.Lerp(BladeClosedRot, BladeOpenRot, f),BladeRotAxis );
 		}
+
 		private IEnumerator OpenBlade()
         {
 			_timeElapsed = 0f;
@@ -62,6 +66,7 @@ namespace OpenScripts2
 			SetBladeRot(1f);
 			MP.CanNewStab = true;
 		}
+
 		private IEnumerator CloseBlade()
 		{
 			_timeElapsed = 0f;

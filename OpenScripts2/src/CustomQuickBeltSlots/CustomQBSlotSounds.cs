@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace OpenScripts2
 {
@@ -16,13 +15,20 @@ namespace OpenScripts2
 
 		private FVRQuickBeltSlot _slot;
 		private bool _slotHasItem = false;
-        private bool _isHooked = false;
 
-#if !DEBUG
+        private static readonly Dictionary<FVRQuickBeltSlot, CustomQBSlotSounds> _existingCustomQBSlotSounds = new();
+
         public void Start()
         {
 			_slot = gameObject.GetComponent<FVRQuickBeltSlot>();
             _slotHasItem = false;
+
+            _existingCustomQBSlotSounds.Add(_slot, this);
+        }
+
+        public void OnDestroy()
+        {
+            _existingCustomQBSlotSounds.Remove(_slot);
         }
 
 		public void Update()
@@ -37,35 +43,21 @@ namespace OpenScripts2
                 _slotHasItem = false;
                 SM.PlayGenericSound(ExtractSounds, _slot.transform.position);
             }
-
-            if (!_isHooked && _slotHasItem && _slot.CurObject.m_isSpawnLock == true)
-            {
-                Hook();
-                _isHooked = true;
-            }
-            else if (_isHooked && (!_slotHasItem || _slot.CurObject.m_isSpawnLock == false))
-            {
-                Unhook();
-                _isHooked = false;
-            }
         }
 
-        void Unhook()
-        {
-            On.FistVR.FVRPhysicalObject.DuplicateFromSpawnLock -= FVRPhysicalObject_DuplicateFromSpawnLock;
-        }
-
-        void Hook()
+#if !DEBUG
+        static CustomQBSlotSounds()
         {
             On.FistVR.FVRPhysicalObject.DuplicateFromSpawnLock += FVRPhysicalObject_DuplicateFromSpawnLock;
         }
 
-        private GameObject FVRPhysicalObject_DuplicateFromSpawnLock(On.FistVR.FVRPhysicalObject.orig_DuplicateFromSpawnLock orig, FVRPhysicalObject self, FVRViveHand hand)
+        private static GameObject FVRPhysicalObject_DuplicateFromSpawnLock(On.FistVR.FVRPhysicalObject.orig_DuplicateFromSpawnLock orig, FVRPhysicalObject self, FVRViveHand hand)
         {
             GameObject temp = orig(self, hand);
-            if (self == _slot.CurObject || self == _slot.HeldObject)
+
+            if (_existingCustomQBSlotSounds.TryGetValue(self.QuickbeltSlot, out CustomQBSlotSounds sounds))
             {
-                SM.PlayGenericSound(ExtractSounds, _slot.transform.position);
+                SM.PlayGenericSound(sounds.ExtractSounds, sounds.transform.position);
             }
             return temp;
         }

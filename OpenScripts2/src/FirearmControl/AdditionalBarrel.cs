@@ -15,7 +15,7 @@ namespace OpenScripts2
         [Tooltip("If checked, the additional barrel will also use an additional round from the magazine, and if non available, will fail to fire.")]
         public bool UsesAdditionalRound;
 
-        private static Dictionary<FVRFireArm, AdditionalBarrel> _existingAdditionalBarrels = new();
+        private static readonly Dictionary<FVRFireArm, AdditionalBarrel> _existingAdditionalBarrels = new();
 #if !DEBUG
         static AdditionalBarrel()
         {
@@ -36,9 +36,7 @@ namespace OpenScripts2
         {
             orig(self, chamber, muzzle, doBuzz, velMult, rangeOverride);
 
-            AdditionalBarrel additionalBarrel;
-
-            if (_existingAdditionalBarrels.TryGetValue(self, out additionalBarrel))
+            if (_existingAdditionalBarrels.TryGetValue(self, out AdditionalBarrel additionalBarrel))
             {
                 FVRFireArmRound round = chamber.GetRound();
                 if (additionalBarrel.UsesAdditionalRound)

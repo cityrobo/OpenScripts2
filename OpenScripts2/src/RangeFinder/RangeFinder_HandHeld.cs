@@ -46,7 +46,7 @@ namespace OpenScripts2
             {
                 ToggleMeasure();
             }
-            yield return 0;
+            yield return null;
             ToggleMeasure();
         }
 

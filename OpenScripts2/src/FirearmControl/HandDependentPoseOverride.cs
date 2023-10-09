@@ -17,7 +17,7 @@ namespace OpenScripts2
 
         private bool _hasPoseOverride_Touch = false;
 
-        private static Dictionary<FVRPhysicalObject, HandDependentPoseOverride> _existingHandDependentPoseOverride = new();
+        private static readonly Dictionary<FVRPhysicalObject, HandDependentPoseOverride> _existingHandDependentPoseOverride = new();
 
 #if !DEBUG
         static HandDependentPoseOverride()

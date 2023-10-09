@@ -23,7 +23,7 @@ namespace OpenScripts2
         public GameObject[] Screens;
 		//public LayerMask BlockingMask;
 
-        private Dictionary<SosigLink,GameObject> _pings;
+        private readonly Dictionary<SosigLink,GameObject> _pings = new();
         private GameObject _directionReference;
 
         private int _currentImage;
@@ -33,7 +33,6 @@ namespace OpenScripts2
             base.Awake();
 
             PingDotReference.SetActive(false);
-            _pings = new Dictionary<SosigLink, GameObject>();
 
             _directionReference = new GameObject("MeatBeatScanner DirectionReference");
 
@@ -41,11 +40,6 @@ namespace OpenScripts2
             _directionReference.transform.localPosition = new Vector3();
 
             if (CanRotateScreen) CurrentScreen = Screens[0].GetComponent<RectTransform>();
-        }
-
-        public override void Start()
-        {
-            base.Start();
         }
 
         public override void FVRUpdate()
@@ -77,8 +71,7 @@ namespace OpenScripts2
 
                 Vector3 projectedPos = _directionReference.transform.InverseTransformPoint(sosigPos);
                 float distance = projectedPos.magnitude;
-                GameObject pingObject;
-                if (!_pings.TryGetValue(sosig, out pingObject))
+                if (!_pings.TryGetValue(sosig, out GameObject pingObject))
                 {
                     pingObject = Instantiate(PingDotReference);
                     pingObject.transform.SetParent(CurrentScreen);
@@ -86,7 +79,7 @@ namespace OpenScripts2
                     _pings.Add(sosig, pingObject);
                 }
 
-                Vector3 screenTransform = new Vector3(0f, 0f, -0.0001f);
+                Vector3 screenTransform = new(0f, 0f, -0.0001f);
 
                 float xMax = CurrentScreen.rect.width / 2;
                 float yMax = CurrentScreen.rect.height;
@@ -106,30 +99,30 @@ namespace OpenScripts2
             }
         }
 
-        List<SosigLink> FindSosigs()
+        private List<SosigLink> FindSosigs()
         {
-            List<SosigLink> sosigs = new List<SosigLink>();
+            List<SosigLink> foundSosigHeads = new();
             
-            Collider[] array = Physics.OverlapSphere(transform.position, ScanningRange, LatchingMask);
-			List<Rigidbody> list = new List<Rigidbody>();
-			for (int i = 0; i < array.Length; i++)
+            Collider[] foundColliders = Physics.OverlapSphere(transform.position, ScanningRange, LatchingMask);
+			List<Rigidbody> listOfRigidbodies = new();
+			for (int i = 0; i < foundColliders.Length; i++)
 			{
-				if (array[i].attachedRigidbody != null && !list.Contains(array[i].attachedRigidbody))
+				if (foundColliders[i].attachedRigidbody != null && !listOfRigidbodies.Contains(foundColliders[i].attachedRigidbody))
 				{
-					list.Add(array[i].attachedRigidbody);
+					listOfRigidbodies.Add(foundColliders[i].attachedRigidbody);
 				}
 			}
-			SosigLink sosigLink = null;
+			SosigLink sosigLink;
 			float maxAngle = EngageAngle / 2;
-			for (int j = 0; j < list.Count; j++)
+			for (int j = 0; j < listOfRigidbodies.Count; j++)
 			{
-                SosigLink component = list[j].GetComponent<SosigLink>();
+                SosigLink sosigLinkOnTargetRB = listOfRigidbodies[j].GetComponent<SosigLink>();
                 
-                if (!(component == null))
+                if (!(sosigLinkOnTargetRB == null))
 				{
-					if (component.S.BodyState != Sosig.SosigBodyState.Dead)
+					if (sosigLinkOnTargetRB.S.BodyState != Sosig.SosigBodyState.Dead)
 					{
-                        Vector3 toTarget = component.transform.position - transform.position;
+                        Vector3 toTarget = sosigLinkOnTargetRB.transform.position - transform.position;
                         float angle;
                         try
                         {
@@ -137,26 +130,25 @@ namespace OpenScripts2
                         }
                         catch (Exception)
                         {
-                            angle = 360;
+                            angle = 360f;
                         }
 
                         //Debug.Log("angle: " + angle);
-						Sosig s = component.S;
+						Sosig s = sosigLinkOnTargetRB.S;
 						sosigLink = s.Links[0];
 
                         if (angle < maxAngle)
                         {
-                            if (!sosigs.Contains(sosigLink)) sosigs.Add(sosigLink);
+                            if (!foundSosigHeads.Contains(sosigLink)) foundSosigHeads.Add(sosigLink);
                         }
 					}
 				}
 			}
-			return sosigs;
+			return foundSosigHeads;
 		}
 
-        void ClearPings(List<SosigLink> sosigs)
+        private void ClearPings(List<SosigLink> sosigs)
         {
-            if (_pings == null) _pings = new Dictionary<SosigLink, GameObject>();
             if (sosigs.Count > 0)
             {
                 for (int i = 0; i < _pings.Count; i++)
@@ -164,8 +156,7 @@ namespace OpenScripts2
                     SosigLink toRemove = _pings.ElementAt(i).Key;
                     if (!sosigs.Contains(toRemove))
                     {
-                        GameObject toRemoveValue;
-                        _pings.TryGetValue(toRemove, out toRemoveValue);
+                        _pings.TryGetValue(toRemove, out GameObject toRemoveValue);
                         Destroy(toRemoveValue);
                         _pings.Remove(toRemove);
                     }
@@ -181,7 +172,7 @@ namespace OpenScripts2
             }
         }
 
-        void UpdateInputs(FVRViveHand hand)
+        private void UpdateInputs(FVRViveHand hand)
         {
             if (!hand.IsInStreamlinedMode)
             {
@@ -194,7 +185,7 @@ namespace OpenScripts2
             }
         }
 
-        void NextRotation()
+        private void NextRotation()
         {
             _currentImage++;
             if (_currentImage >= Screens.Length) _currentImage = 0;
@@ -214,7 +205,7 @@ namespace OpenScripts2
             }
         }
 
-        void PreviousRotation()
+        private void PreviousRotation()
         {
             _currentImage--;
             if (_currentImage < 0) _currentImage = Screens.Length - 1;

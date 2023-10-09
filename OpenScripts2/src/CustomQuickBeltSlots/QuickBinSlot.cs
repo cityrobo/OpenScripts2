@@ -83,7 +83,7 @@ namespace OpenScripts2
                     SM.PlayGenericSound(quickBinSlot.DeleteSounds, quickBinSlot.transform.position);
                 }
 
-                if (quickBinSlot.CurObject != null && !(quickBinSlot.CurObject is FVRFireArmMagazine))
+                if (quickBinSlot.CurObject != null && quickBinSlot.CurObject is not FVRFireArmMagazine)
                 {
                     quickBinSlot.CurObject.SetQuickBeltSlot(null);
                     quickBinSlot.CurObject = null;

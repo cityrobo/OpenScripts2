@@ -20,11 +20,11 @@ namespace OpenScripts2
         public float DoubleFeedXPosOffset;
         public float DoubleFeedYRotOffset;
 
-        private static Dictionary<ClosedBoltWeapon, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyClosedBolts = new();
-        private static Dictionary<Handgun, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyHandGuns = new();
-        private static Dictionary<TubeFedShotgun, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyTubeFedShotguns = new();
-        private static Dictionary<OpenBoltReceiver, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyOpenBoltReceivers = new();
-        private static Dictionary<BoltActionRifle, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyBoltActionRifles = new();
+        private static readonly Dictionary<ClosedBoltWeapon, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyClosedBolts = new();
+        private static readonly Dictionary<Handgun, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyHandGuns = new();
+        private static readonly Dictionary<TubeFedShotgun, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyTubeFedShotguns = new();
+        private static readonly Dictionary<OpenBoltReceiver, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyOpenBoltReceivers = new();
+        private static readonly Dictionary<BoltActionRifle, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyBoltActionRifles = new();
 
         static SimplifiedManipulateFireArmRoundProxy()
         {

@@ -21,16 +21,11 @@ namespace OpenScripts2
         private bool _isCoolingDown = false;
         private bool _shouldCoolDown = false;
 
-        private static Dictionary<FVRFireArm, ForcedBurst> _existingForceBurst = new();
+        private static readonly Dictionary<FVRFireArm, ForcedBurst> _existingForceBurst = new();
 
 #if !DEBUG
 
         static ForcedBurst()
-        {
-            StaticHooks();
-        }
-
-        private static void StaticHooks()
         {
             On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
             On.FistVR.ClosedBoltWeapon.FVRUpdate += ClosedBoltWeapon_FVRUpdate;
@@ -44,13 +39,11 @@ namespace OpenScripts2
             if (!_isHooked)
                 switch (FireArm)
                 {
-                    case ClosedBoltWeapon w:
-                        //HookClosedBolt();
+                    case ClosedBoltWeapon:
                         _isHooked = true;
                         _existingForceBurst.Add(FireArm, this);
                         break;
-                    case Handgun w:
-                        //HookHandgun();
+                    case Handgun:
                         _isHooked = true;
                         _existingForceBurst.Add(FireArm, this);
                         break;
@@ -65,13 +58,11 @@ namespace OpenScripts2
             if (_isHooked)
                 switch (FireArm)
                 {
-                    case ClosedBoltWeapon w:
-                        //UnhookClosedBolt();
+                    case ClosedBoltWeapon:
                         _isHooked = false;
                         _existingForceBurst.Remove(FireArm);
                         break;
-                    case Handgun w:
-                        //UnhookHandgun();
+                    case Handgun:
                         _isHooked = false;
                         _existingForceBurst.Remove(FireArm);
                         break;
@@ -80,23 +71,11 @@ namespace OpenScripts2
                 }
         }
 
-        // ClosedBoltWeapon Hooks and Coroutine
-        private void UnhookClosedBolt()
-        {
-            On.FistVR.ClosedBoltWeapon.DropHammer -= ClosedBoltWeapon_DropHammer;
-            On.FistVR.ClosedBoltWeapon.FVRUpdate -= ClosedBoltWeapon_FVRUpdate;
-        }
-        private void HookClosedBolt()
-        {
-            On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
-            On.FistVR.ClosedBoltWeapon.FVRUpdate += ClosedBoltWeapon_FVRUpdate;
-        }
         private static void ClosedBoltWeapon_FVRUpdate(On.FistVR.ClosedBoltWeapon.orig_FVRUpdate orig, ClosedBoltWeapon self)
         {
             orig(self);
 
-            ForcedBurst forcedBurst;
-            if (_existingForceBurst.TryGetValue(self,out forcedBurst))
+            if (_existingForceBurst.TryGetValue(self, out ForcedBurst forcedBurst))
             {
                 ClosedBoltWeapon.FireSelectorModeType modeType = self.FireSelector_Modes[self.m_fireSelectorMode].ModeType;
                 if (forcedBurst._isBurstFiring && forcedBurst._burstAmount > 0 && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold) && self.Bolt.CurPos == ClosedBolt.BoltPos.Forward && modeType == ClosedBoltWeapon.FireSelectorModeType.Burst)
@@ -113,8 +92,7 @@ namespace OpenScripts2
 
         private static void ClosedBoltWeapon_DropHammer(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
-            ForcedBurst forcedBurst;
-            if (_existingForceBurst.TryGetValue(self, out forcedBurst) && (forcedBurst._shouldCoolDown || forcedBurst._isCoolingDown)) return;
+            if (_existingForceBurst.TryGetValue(self, out ForcedBurst forcedBurst) && (forcedBurst._shouldCoolDown || forcedBurst._isCoolingDown)) return;
 
             orig(self);
 
@@ -146,23 +124,11 @@ namespace OpenScripts2
             _shouldCoolDown = false;
         }
 
-        // Handgun Hooks and Coroutine
-        private void UnhookHandgun()
-        {
-            On.FistVR.Handgun.ReleaseSeer -= Handgun_ReleaseSeer;
-            On.FistVR.Handgun.FVRUpdate -= Handgun_FVRUpdate;
-        }
-        private void HookHandgun()
-        {
-            On.FistVR.Handgun.ReleaseSeer += Handgun_ReleaseSeer;
-            On.FistVR.Handgun.FVRUpdate += Handgun_FVRUpdate;
-        }
         private static void Handgun_FVRUpdate(On.FistVR.Handgun.orig_FVRUpdate orig, Handgun self)
         {
             orig(self);
 
-            ForcedBurst forcedBurst;
-            if (_existingForceBurst.TryGetValue(self, out forcedBurst))
+            if (_existingForceBurst.TryGetValue(self, out ForcedBurst forcedBurst))
             {
                 Handgun.FireSelectorModeType modeType = self.FireSelectorModes[self.m_fireSelectorMode].ModeType;
                 if (forcedBurst._isBurstFiring && forcedBurst._burstAmount > 0 && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold) && self.Slide.CurPos == HandgunSlide.SlidePos.Forward && modeType == Handgun.FireSelectorModeType.Burst)
@@ -179,8 +145,7 @@ namespace OpenScripts2
 
         private static void Handgun_ReleaseSeer(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
         {
-            ForcedBurst forcedBurst = null;
-            if (_existingForceBurst.TryGetValue(self, out forcedBurst) && (forcedBurst._shouldCoolDown || forcedBurst._isCoolingDown)) return;
+            if (_existingForceBurst.TryGetValue(self, out ForcedBurst forcedBurst) && (forcedBurst._shouldCoolDown || forcedBurst._isCoolingDown)) return;
 
             if (forcedBurst != null && self.m_isHammerCocked && self.m_isSeerReady)
             {

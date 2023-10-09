@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using HarmonyLib;
 using FistVR;
 
 namespace OpenScripts2
@@ -17,20 +16,18 @@ namespace OpenScripts2
 
         private bool _safetyEngaged = true;
 
-        private static Dictionary<AttachableBreakActions, AttachableBreakActionSafety> _existingGL_Safeties = new Dictionary<AttachableBreakActions, AttachableBreakActionSafety>();
+        private static readonly Dictionary<AttachableBreakActions, AttachableBreakActionSafety> _existingGL_Safeties = new();
 
+#if !DEBUG
         static AttachableBreakActionSafety()
         {
-#if !DEBUG
             On.FistVR.AttachableBreakActions.Fire += AttachableBreakActions_Fire;
             On.FistVR.AttachableBreakActions.ProcessInput += AttachableBreakActions_ProcessInput;
-#endif
         }
-#if !DEBUG
+
         private static void AttachableBreakActions_ProcessInput(On.FistVR.AttachableBreakActions.orig_ProcessInput orig, AttachableBreakActions self, FVRViveHand hand, bool fromInterface, FVRInteractiveObject o)
         {
-            AttachableBreakActionSafety safety;
-            if (_existingGL_Safeties.TryGetValue(self, out safety) && hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, Vector2.up) < 45f)
+            if (_existingGL_Safeties.TryGetValue(self, out AttachableBreakActionSafety safety) && OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.up))
             {
                 safety._safetyEngaged = !safety._safetyEngaged;
                 safety.GL.PlayAudioEvent(FirearmAudioEventType.Safety);
@@ -38,10 +35,10 @@ namespace OpenScripts2
 
             orig(self, hand, fromInterface, o);
         }
+
         private static void AttachableBreakActions_Fire(On.FistVR.AttachableBreakActions.orig_Fire orig, AttachableBreakActions self, bool firedFromInterface)
         {
-            AttachableBreakActionSafety safety;
-            if (_existingGL_Safeties.TryGetValue(self, out safety) && safety._safetyEngaged) return;
+            if (_existingGL_Safeties.TryGetValue(self, out AttachableBreakActionSafety safety) && safety._safetyEngaged) return;
             else orig(self, firedFromInterface);
         }
 #endif
@@ -49,15 +46,18 @@ namespace OpenScripts2
         public override void Awake()
         {
             base.Awake();
+
             IsSimpleInteract = true;
             _existingGL_Safeties.Add(GL, this);
         }
 
         public override void OnDestroy()
         {
-            base.OnDestroy();
             _existingGL_Safeties.Remove(GL);
+
+            base.OnDestroy();
         }
+
         public override void SimpleInteraction(FVRViveHand hand)
         {
             base.SimpleInteraction(hand);
@@ -69,14 +69,9 @@ namespace OpenScripts2
         public override void FVRUpdate()
         {
             base.FVRUpdate();
-            if (_safetyEngaged)
-            {
-                GL.Attachment.SetAnimatedComponent(Safety, SafetyOn, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
-            }
-            else
-            {
-                GL.Attachment.SetAnimatedComponent(Safety, SafetyOff, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
-            }
+
+            float target = _safetyEngaged ? SafetyOn : SafetyOff;
+            GL.Attachment.SetAnimatedComponent(Safety, target, FVRPhysicalObject.InterpStyle.Rotation, FVRPhysicalObject.Axis.X);
         }
     }
 }

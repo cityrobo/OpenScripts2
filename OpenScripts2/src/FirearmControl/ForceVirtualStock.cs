@@ -12,7 +12,7 @@ namespace OpenScripts2
         public FVRPhysicalObject PhysicalObject = null;
 		public Transform StockPos = null;
 
-        private static Dictionary<FVRPhysicalObject,ForceVirtualStock> _existingForceVirtualStock = new();
+        private static readonly Dictionary<FVRPhysicalObject,ForceVirtualStock> _existingForceVirtualStock = new();
 #if !DEBUG
 
         static ForceVirtualStock()
@@ -33,10 +33,9 @@ namespace OpenScripts2
 
         private static Transform FVRPhysicalObject_GetStockPos(On.FistVR.FVRPhysicalObject.orig_GetStockPos orig, FVRPhysicalObject self)
         {
-            ForceVirtualStock forceVirtualStock;
-            if (_existingForceVirtualStock.TryGetValue(self, out forceVirtualStock)) return forceVirtualStock.StockPos;
+            if (_existingForceVirtualStock.TryGetValue(self, out ForceVirtualStock forceVirtualStock)) return forceVirtualStock.StockPos;
             else return orig(self);
-		}
+        }
 
         private static bool FVRPhysicalObject_HasStockPos(On.FistVR.FVRPhysicalObject.orig_HasStockPos orig, FVRPhysicalObject self)
         {

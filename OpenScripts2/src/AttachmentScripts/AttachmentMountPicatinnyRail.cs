@@ -27,16 +27,16 @@ namespace OpenScripts2
         [HideInInspector]
         public static Dictionary<FVRFireArmAttachmentMount, AttachmentMountPicatinnyRail> _exisingAttachmentMountPicatinnyRail = new();
 
-        private bool _isPatched = false;
+        //private bool _isPatched = false;
 
         private float _slotLerpFactor = 0f;
-        private static IntPtr _methodPointer;
+        private static readonly IntPtr _methodPointer;
 
         private int _lastPosIndex = -1;
 
         private bool _usesSpecificSlotLerps = false;
-        private List<float> _specificSlotLerps = new();
-        private List<Vector3> _specificSlotPos = new();
+        private readonly List<float> _specificSlotLerps = new();
+        private readonly List<Vector3> _specificSlotPos = new();
 
         static AttachmentMountPicatinnyRail()
         {
