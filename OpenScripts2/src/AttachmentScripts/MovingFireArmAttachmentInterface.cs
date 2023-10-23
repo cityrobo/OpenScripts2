@@ -1,6 +1,8 @@
 using FistVR;
+using Steamworks;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using UnityEngine;
@@ -29,9 +31,31 @@ namespace OpenScripts2
         [Tooltip("Something placed on this mount will disabled the hover on disable piece again.")]
         public FVRFireArmAttachmentMount OverrideDisableOverrideMount;
 
+        [Tooltip("This transforms position will be vaulted as well")]
         public Transform SecondaryPiece;
         public bool CanRotate;
         public float RotationStep = 45f;
+
+        public bool CanSwitchModes = false;
+        public Text ModeDisplay;
+
+        [Serializable]
+        public class MovementMode
+        {
+            public string ModeText;
+            public EDegreesOfFreedom DegreesOfFreedom;
+            public OpenScripts2_BasePlugin.Axis LimitingAxis;
+        }
+
+        public MovementMode[] MovementModes = new MovementMode[]
+        {
+            new MovementMode { ModeText = "All", DegreesOfFreedom = EDegreesOfFreedom.Spacial, LimitingAxis = OpenScripts2_BasePlugin.Axis.X },
+            new MovementMode { ModeText = "X Limited", DegreesOfFreedom = EDegreesOfFreedom.Planar, LimitingAxis = OpenScripts2_BasePlugin.Axis.X },
+            new MovementMode { ModeText = "Y Limited", DegreesOfFreedom = EDegreesOfFreedom.Planar, LimitingAxis = OpenScripts2_BasePlugin.Axis.Y },
+            new MovementMode { ModeText = "Z Limited", DegreesOfFreedom = EDegreesOfFreedom.Planar, LimitingAxis = OpenScripts2_BasePlugin.Axis.Z },
+        };
+
+        private int _currentMode = 0;
 
         private Vector3 _lastPos;
         private Vector3 _lastHandPos;
@@ -57,6 +81,8 @@ namespace OpenScripts2
             _upperLimit = new Vector3(XLimits.y, YLimits.y, ZLimits.y);
 
             _startPos = Attachment.ObjectWrapper.GetGameObject().GetComponent<FVRFireArmAttachment>().AttachmentInterface.transform.localPosition;
+
+            if (ModeDisplay != null) ModeDisplay.text = MovementModes[_currentMode].ModeText;
         }
 
         public override void OnAttach()
@@ -169,6 +195,10 @@ namespace OpenScripts2
             {
                 transform.Rotate(0f, 0f, -RotationStep);
             }
+            else if (CanSwitchModes && OpenScripts2_BasePlugin.TouchpadDirDown(hand, Vector2.down))
+            {
+                SwitchMode();
+            }
 
             _lastPos = transform.position;
             _lastHandPos = hand.Input.FilteredPos;
@@ -176,14 +206,31 @@ namespace OpenScripts2
 
         private void OneDegreeOfFreedom(Vector3 newPosRaw)
         {
-            Vector3 lowLimit = _lowerLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
-            Vector3 highLimit = _upperLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
-            Vector3 newPosProjected = GetClosestValidPoint(lowLimit, highLimit, transform.parent.InverseTransformPoint(newPosRaw));
+
+            Vector3 newPosProjected;
+            if (CanSwitchModes)
+            {
+                Vector3 lowLimit = _lowerLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
+                Vector3 highLimit = _upperLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
+                newPosProjected = GetClosestValidPoint(lowLimit, highLimit, transform.parent.InverseTransformPoint(newPosRaw));
+            }
+            else
+            {
+                newPosProjected = transform.parent.InverseTransformPoint(newPosRaw).GetAxisVector(LimitingAxis).Clamp(_lowerLimit, _upperLimit);
+            }
             transform.localPosition = newPosProjected;
         }
         private void TwoDegreesOfFreedom(Vector3 newPosRaw)
         {
-            Vector3 newPosProjected = newPosRaw.ProjectOnPlaneThroughPoint(transform.position, transform.parent.GetLocalDirAxis(LimitingAxis));
+            Vector3 newPosProjected;
+            if (CanSwitchModes)
+            {
+                newPosProjected = newPosRaw.ProjectOnPlaneThroughPoint(transform.position, transform.parent.GetLocalDirAxis(LimitingAxis));
+            }
+            else
+            {
+                newPosProjected = transform.parent.InverseTransformPoint(newPosRaw).RemoveAxisValue(LimitingAxis);
+            }
             Vector3 newPosClamped = transform.parent.InverseTransformPoint(newPosProjected).Clamp(_lowerLimit, _upperLimit);
             transform.localPosition = newPosClamped.ModifyAxisValue(LimitingAxis, _startPos.GetAxisValue(LimitingAxis));
         }
@@ -202,6 +249,15 @@ namespace OpenScripts2
             toCopy.Attachment.AttachmentInterface = this;
 
             this.CopyComponent(toCopy);
+        }
+
+        private void SwitchMode()
+        {
+            _currentMode = (_currentMode + 1) % MovementModes.Length;
+
+            if (ModeDisplay != null) ModeDisplay.text = MovementModes[_currentMode].ModeText;
+            DegreesOfFreedom = MovementModes[_currentMode].DegreesOfFreedom;
+            LimitingAxis = MovementModes[_currentMode].LimitingAxis;
         }
     }
 }

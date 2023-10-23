@@ -582,6 +582,12 @@ namespace UnityEngine
             vector[(int)axis] = value;
             return vector;
         }
+
+        public static Vector3 RemoveAxisValue(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis)
+        {
+            return vector.ModifyAxisValue(axis, 0f);
+        }
+
         public static void ModifyLocalTransform(this Transform transform, OpenScripts2_BasePlugin.TransformType type, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             switch (type)

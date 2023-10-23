@@ -9,13 +9,19 @@ using UnityEngine;
 
 namespace OpenScripts2
 {
-    public class SmartWeapon : OpenScripts2_BasePlugin
+    public class SmartMultiBarrelWeapon : OpenScripts2_BasePlugin
     {
         [Header("SmartWeapon Config")]
         public FVRFireArm FireArm;
-		[Tooltip("Use this to add more muzzles, and more bullets comming out the front.")]
-        public Transform[] AdditionalMuzzles;
-        public GameObject ReplacementRoundPrefab;
+
+        [Serializable]
+        public class BarrelMuzzleConfiguration
+        {
+            public Transform[] AdditionalMuzzles;
+        }
+
+        public BarrelMuzzleConfiguration[] BarrelMuzzleConfigurations;
+		public GameObject ReplacementRoundPrefab;
 
 		public float EngageRange = 15f;
 		[Range(1f,179f)]
@@ -37,8 +43,8 @@ namespace OpenScripts2
         public MeshRenderer ReticleMesh;
         public bool DisableReticleWithoutTarget = true;
         [Tooltip("Object that will be turned on when a target has been locked on.")]
-        public GameObject TargetLockedIndicator;
-		public AudioEvent TargetLockedSounds;
+		public GameObject TargetLockedIndicator;
+        public AudioEvent TargetLockedSounds;
 
         [HideInInspector]
 		public bool WasManuallyAdded = false;
@@ -57,12 +63,12 @@ namespace OpenScripts2
 
 		private bool _timeoutStarted = false;
 
-		private static readonly Dictionary<FVRFireArm, SmartWeapon> _existingSmartWeapon = new();
+		private static readonly Dictionary<FVRFireArm, SmartMultiBarrelWeapon> _existingSmartWeapon = new();
 
         private FVRFireArmRound _replacementRound;
 
 #if !(DEBUG || MEATKIT)
-        static SmartWeapon()
+        static SmartMultiBarrelWeapon()
         {
 			On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
 		}
@@ -75,7 +81,7 @@ namespace OpenScripts2
 			_origMuzzlePos.transform.localPosition = FireArm.MuzzlePos.localPosition;
 			_origMuzzlePos.transform.localRotation = FireArm.MuzzlePos.localRotation;
 
-            if (ReplacementRoundPrefab != null) _replacementRound = ReplacementRoundPrefab.GetComponent<FVRFireArmRound>();
+			if (ReplacementRoundPrefab != null) _replacementRound = ReplacementRoundPrefab.GetComponent<FVRFireArmRound>();
         }
 		public void OnDestroy()
         {
@@ -84,9 +90,9 @@ namespace OpenScripts2
 
         private static void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
         {
-            if (_existingSmartWeapon.TryGetValue(self, out SmartWeapon smartWeapon))
+            if (_existingSmartWeapon.TryGetValue(self, out SmartMultiBarrelWeapon smartMultiBarrelWeapon))
             {
-                smartWeapon.RandomizeMuzzles();
+                smartMultiBarrelWeapon.RandomizeMuzzles();
 
                 if (doBuzz && self.m_hand != null)
                 {
@@ -106,7 +112,7 @@ namespace OpenScripts2
                     GM.CurrentPlayerBody.VisibleEvent(2f);
                 }
 
-                FVRFireArmRound roundToUse = smartWeapon._replacementRound ?? chamber.GetRound();
+				FVRFireArmRound roundToUse = smartMultiBarrelWeapon._replacementRound ?? chamber.GetRound();
 
                 float chamberVelMult = AM.GetChamberVelMult(roundToUse.RoundType, Vector3.Distance(chamber.transform.position, muzzle.position));
                 float num = self.GetCombinedFixedDrop(self.AccuracyClass) * 0.0166667f;
@@ -123,30 +129,30 @@ namespace OpenScripts2
                         BallisticProjectile component = gameObject.GetComponent<BallisticProjectile>();
 
                         float baseVelocity = component.MuzzleVelocityBase * chamber.ChamberVelocityMultiplier * velMult * chamberVelMult;
-                        component.Fire(baseVelocity * smartWeapon.BulletVelocityModifier, gameObject.transform.forward, self, true);
+                        component.Fire(baseVelocity * smartMultiBarrelWeapon.BulletVelocityModifier, gameObject.transform.forward, self, true);
 
                         SmartProjectile smartProjectile = gameObject.GetComponent<SmartProjectile>();
-                        if (smartProjectile == null && smartWeapon.WasManuallyAdded)
+                        if (smartProjectile == null && smartMultiBarrelWeapon.WasManuallyAdded)
                         {
                             smartProjectile = gameObject.AddComponent<SmartProjectile>();
                             smartProjectile.Projectile = component;
-                            smartProjectile.ConfigureFromData(smartWeapon.ProjectileData);
+                            smartProjectile.ConfigureFromData(smartMultiBarrelWeapon.ProjectileData);
                         }
                         if (smartProjectile != null)
                         {
-                            smartProjectile.TargetLink = smartWeapon._lastTarget;
+                            smartProjectile.TargetLink = smartMultiBarrelWeapon._lastTarget;
                         }
                         if (rangeOverride > 0f)
                         {
                             component.ForceSetMaxDist(rangeOverride);
                         }
-                        if (smartWeapon.BulletVelocityModifier != 1f)
+                        if (smartMultiBarrelWeapon.BulletVelocityModifier != 1f)
                         {
-                            component.Mass = (Mathf.Pow(baseVelocity, 2f) * component.Mass) / Mathf.Pow(baseVelocity * smartWeapon.BulletVelocityModifier, 2f);
+                            component.Mass = (Mathf.Pow(baseVelocity, 2f) * component.Mass) / Mathf.Pow(baseVelocity * smartMultiBarrelWeapon.BulletVelocityModifier, 2f);
                         }
-                        if (smartWeapon.AdditionalMuzzles != null)
+                        if (self is BreakActionWeapon breakAction && smartMultiBarrelWeapon.BarrelMuzzleConfigurations[breakAction.m_curBarrel].AdditionalMuzzles != null)
                         {
-                            foreach (var additionalMuzzle in smartWeapon.AdditionalMuzzles)
+                            foreach (var additionalMuzzle in smartMultiBarrelWeapon.BarrelMuzzleConfigurations[breakAction.m_curBarrel].AdditionalMuzzles)
                             {
                                 Vector3 b2 = muzzle.forward * 0.005f;
                                 GameObject projectileGameObject = Instantiate(roundToUse.BallisticProjectilePrefab, additionalMuzzle.position - b2, additionalMuzzle.rotation);
@@ -154,26 +160,26 @@ namespace OpenScripts2
                                 projectileGameObject.transform.Rotate(new Vector3(firingDirection.x + firingDirection.y + num, firingDirection.y + firingDirection.x, 0f));
                                 BallisticProjectile projectile = projectileGameObject.GetComponent<BallisticProjectile>();
 
-                                projectile.Fire(baseVelocity * smartWeapon.BulletVelocityModifier, projectileGameObject.transform.forward, self, true);
+                                projectile.Fire(baseVelocity * smartMultiBarrelWeapon.BulletVelocityModifier, projectileGameObject.transform.forward, self, true);
 
                                 SmartProjectile smartProjectile2 = projectileGameObject.GetComponent<SmartProjectile>();
-                                if (smartProjectile2 == null && smartWeapon.WasManuallyAdded)
+                                if (smartProjectile2 == null && smartMultiBarrelWeapon.WasManuallyAdded)
                                 {
                                     smartProjectile2 = projectileGameObject.AddComponent<SmartProjectile>();
                                     smartProjectile2.Projectile = projectile;
-                                    smartProjectile2.ConfigureFromData(smartWeapon.ProjectileData);
+                                    smartProjectile2.ConfigureFromData(smartMultiBarrelWeapon.ProjectileData);
                                 }
                                 if (smartProjectile2 != null)
                                 {
-                                    smartProjectile2.TargetLink = smartWeapon._lastTarget;
+                                    smartProjectile2.TargetLink = smartMultiBarrelWeapon._lastTarget;
                                 }
                                 if (rangeOverride > 0f)
                                 {
                                     projectile.ForceSetMaxDist(rangeOverride);
                                 }
-                                if (smartWeapon.BulletVelocityModifier != 1f)
+                                if (smartMultiBarrelWeapon.BulletVelocityModifier != 1f)
                                 {
-                                    projectile.Mass = (Mathf.Pow(baseVelocity, 2f) * projectile.Mass) / Mathf.Pow(baseVelocity * smartWeapon.BulletVelocityModifier, 2f);
+                                    projectile.Mass = (Mathf.Pow(baseVelocity, 2f) * projectile.Mass) / Mathf.Pow(baseVelocity * smartMultiBarrelWeapon.BulletVelocityModifier, 2f);
                                 }
                             }
                         }
@@ -197,9 +203,9 @@ namespace OpenScripts2
 						StopCoroutine("LastTargetTimeoutCoroutine");
 						_timeoutStarted = false;
 					}
+                    if (_lastTarget != _target) SM.PlayGenericSound(TargetLockedSounds, FireArm.transform.position);
 
-					if (_lastTarget != _target) SM.PlayGenericSound(TargetLockedSounds,FireArm.transform.position);
-					_lastTarget = _target;
+                    _lastTarget = _target;
 				}
 				else
                 {
@@ -232,6 +238,8 @@ namespace OpenScripts2
 					if (DisableReticleWithoutTarget) ReticleMesh.gameObject.SetActive(false);
                     TargetLockedIndicator?.gameObject.SetActive(false);
                 }
+
+
 			}
 			else
 			{
@@ -248,21 +256,18 @@ namespace OpenScripts2
         {
             if (DoesRandomRotationOfBarrelForCinematicBulletTrails)
             {
-                Vector3 randRot = Vector3.zero;
+                Vector3 randRot = new();
                 randRot.x = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
                 randRot.y = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
 
                 FireArm.CurrentMuzzle.localEulerAngles = randRot;
 
-                if (AdditionalMuzzles != null)
+                foreach (var additionalMuzzle in BarrelMuzzleConfigurations.SelectMany(b => b.AdditionalMuzzles))
                 {
-                    foreach (var additionalMuzzle in AdditionalMuzzles)
-                    {
-                        randRot.x = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
-                        randRot.y = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
+                    randRot.x = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
+                    randRot.y = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
 
-                        additionalMuzzle.localEulerAngles = randRot;
-                    }
+                    additionalMuzzle.localEulerAngles = randRot;
                 }
             }
         }
@@ -279,7 +284,7 @@ namespace OpenScripts2
         {
 			float radius = EngageRange * Mathf.Tan(0.5f * EngageAngle * Mathf.Deg2Rad);
 			Collider[] colliderArray = Physics.OverlapCapsule(FireArm.CurrentMuzzle.position, FireArm.CurrentMuzzle.position + _origMuzzlePos.transform.forward * EngageRange, radius, LatchingMask);
-			List<Rigidbody> rigidbodyList = new();
+			List<Rigidbody> rigidbodyList = new List<Rigidbody>();
 			for (int i = 0; i < colliderArray.Length; i++)
 			{
 				if (colliderArray[i].attachedRigidbody != null && !rigidbodyList.Contains(colliderArray[i].attachedRigidbody))

@@ -20,9 +20,9 @@ namespace OpenScripts2
             Spacial
         }
         public OpenScripts2_BasePlugin.Axis LimitingAxis;
-        public Vector2 XLimits = new Vector2(float.NegativeInfinity, float.PositiveInfinity);
-        public Vector2 YLimits = new Vector2(float.NegativeInfinity, float.PositiveInfinity);
-        public Vector2 ZLimits = new Vector2(float.NegativeInfinity, float.PositiveInfinity);
+        public Vector2 XLimits = new(float.NegativeInfinity, float.PositiveInfinity);
+        public Vector2 YLimits = new(float.NegativeInfinity, float.PositiveInfinity);
+        public Vector2 ZLimits = new(float.NegativeInfinity, float.PositiveInfinity);
 
         private Vector3 _lastPos;
         private Vector3 _lastHandPos;

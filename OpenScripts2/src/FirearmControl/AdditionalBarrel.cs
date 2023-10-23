@@ -29,7 +29,7 @@ namespace OpenScripts2
 
         public void OnDestroy()
         {
-            _existingAdditionalBarrels?.Remove(FireArm);
+            _existingAdditionalBarrels.Remove(FireArm);
         }
 
         private static void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)

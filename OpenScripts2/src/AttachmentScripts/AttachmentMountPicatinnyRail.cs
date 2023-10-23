@@ -25,7 +25,7 @@ namespace OpenScripts2
         [HideInInspector]
         public static Dictionary<FVRFireArmAttachment, AttachmentPicatinnyRailForwardStop> ExistingForwardStops = new();
         [HideInInspector]
-        public static Dictionary<FVRFireArmAttachmentMount, AttachmentMountPicatinnyRail> _exisingAttachmentMountPicatinnyRail = new();
+        public static Dictionary<FVRFireArmAttachmentMount, AttachmentMountPicatinnyRail> ExistingAttachmentMountPicatinnyRail = new();
 
         //private bool _isPatched = false;
 
@@ -38,28 +38,30 @@ namespace OpenScripts2
         private readonly List<float> _specificSlotLerps = new();
         private readonly List<Vector3> _specificSlotPos = new();
 
+#if !DEBUG
         static AttachmentMountPicatinnyRail()
         {
             MethodInfo _methodInfo = typeof(FVRPhysicalObject).GetMethod(nameof(FVRPhysicalObject.GetPosTarget), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             _methodPointer = _methodInfo.MethodHandle.GetFunctionPointer();
 
-#if !DEBUG
             On.FistVR.FVRFireArmAttachment.AttachToMount += FVRFireArmAttachment_AttachToMount;
             On.FistVR.FVRFireArmAttachment.DetachFromMount += FVRFireArmAttachment_DetachFromMount;
             On.FistVR.FVRFireArmAttachment.GetPosTarget += FVRFireArmAttachment_GetPosTarget;
-#endif
         }
-#if !DEBUG
+
         private static void FVRFireArmAttachment_AttachToMount(On.FistVR.FVRFireArmAttachment.orig_AttachToMount orig, FVRFireArmAttachment self, FVRFireArmAttachmentMount m, bool playSound)
         {
-            if (_exisingAttachmentMountPicatinnyRail.TryGetValue(m, out AttachmentMountPicatinnyRail picatinnyRail))
+            if (ExistingAttachmentMountPicatinnyRail.TryGetValue(m, out AttachmentMountPicatinnyRail picatinnyRail))
             {
                 self.curMount = m;
                 self.StoreAndDestroyRigidbody();
+
+                // AttachmentMountParentToThis compatibility code part
                 if (self.curMount.GetComponent<AttachmentMountParentToThis>() != null)
                 {
                     self.SetParentage(self.curMount.transform);
                 }
+                // Vanilla mount code
                 else if (self.curMount.GetRootMount().ParentToThis)
                 {
                     self.SetParentage(self.curMount.GetRootMount().transform);
@@ -73,9 +75,12 @@ namespace OpenScripts2
                     if (Vector3.Dot(self.transform.forward, self.curMount.transform.forward) >= 0f) self.transform.rotation = self.curMount.transform.rotation;
                     else self.transform.rotation = Quaternion.LookRotation(-self.curMount.transform.forward, self.curMount.transform.up);
                 }
-                else self.transform.rotation = self.curMount.transform.rotation;
+                else
+                {
+                    self.transform.rotation = self.curMount.transform.rotation;
+                }
 
-                // New Code
+                // ---------- New Code -----------
                 Vector3 front = self.curMount.Point_Front.position;
                 Vector3 rear = self.curMount.Point_Rear.position;
 
@@ -87,6 +92,7 @@ namespace OpenScripts2
 
                 self.transform.position = snapPos;
 
+                // ----------- End -----------
                 self.curMount.Parent?.RegisterAttachment(self);
                 self.curMount.RegisterAttachment(self);
                 if (self.curMount.Parent != null && self.curMount.Parent.QuickbeltSlot != null)
@@ -110,22 +116,26 @@ namespace OpenScripts2
 
         private static void FVRFireArmAttachment_DetachFromMount(On.FistVR.FVRFireArmAttachment.orig_DetachFromMount orig, FVRFireArmAttachment self)
         {
-            if (_exisingAttachmentMountPicatinnyRail.TryGetValue(self.curMount, out AttachmentMountPicatinnyRail attachmentMountPicatinnyRail))
+            if (ExistingAttachmentMountPicatinnyRail.TryGetValue(self.curMount, out AttachmentMountPicatinnyRail attachmentMountPicatinnyRail))
             {
+                // reset last index so that the slot sound can play the next time you attach to the same slot
                 attachmentMountPicatinnyRail._lastPosIndex = -1;
             }
             orig(self);
         }
+
         private static Vector3 FVRFireArmAttachment_GetPosTarget(On.FistVR.FVRFireArmAttachment.orig_GetPosTarget orig, FVRFireArmAttachment self)
         {
-            if (self.Sensor.CurHoveredMount != null && _exisingAttachmentMountPicatinnyRail.TryGetValue(self.Sensor.CurHoveredMount, out AttachmentMountPicatinnyRail rail))
+            if (self.Sensor.CurHoveredMount != null && ExistingAttachmentMountPicatinnyRail.TryGetValue(self.Sensor.CurHoveredMount, out AttachmentMountPicatinnyRail rail))
             {
-                Func<Vector3> func = (Func<Vector3>)Activator.CreateInstance(typeof(Func<Vector3>), self, _methodPointer);
+                // create base method FVRPhysicalObject.GetPosTarget() 
+                Func<Vector3> baseMethod = (Func<Vector3>)Activator.CreateInstance(typeof(Func<Vector3>), self, _methodPointer);
 
                 if (self.Sensor.CurHoveredMount == null)
                 {
-                    return func();
+                    return baseMethod();
                 }
+                // making the code more easy to read by creating some local variables
                 Vector3 front = self.Sensor.CurHoveredMount.Point_Front.position;
                 Vector3 rear = self.Sensor.CurHoveredMount.Point_Rear.position;
                 Vector3 closestValidPoint = self.GetClosestValidPoint(front, rear, self.m_handPos);
@@ -151,14 +161,14 @@ namespace OpenScripts2
                     rail._lastPosIndex = posIndex;
                     return snapPos;
                 }
-                return func();
+                return baseMethod();
             }
             return orig(self);
         }
 #endif
         public void Awake()
         {
-            _exisingAttachmentMountPicatinnyRail.Add(Mount, this);
+            ExistingAttachmentMountPicatinnyRail.Add(Mount, this);
 
             _slotLerpFactor = 1f/(NumberOfPicatinnySlots - 1);
 
@@ -187,9 +197,10 @@ namespace OpenScripts2
 
         public void OnDestroy()
         {
-            _exisingAttachmentMountPicatinnyRail.Remove(Mount);
+            ExistingAttachmentMountPicatinnyRail.Remove(Mount);
         }
 
+        // Return the index of the slot to attach to
         private int GetPosIndex(FVRFireArmAttachment attachment, bool useHandPos)
         {
             Vector3 front = attachment.curMount != null ? attachment.curMount.Point_Front.position : attachment.Sensor.CurHoveredMount.Point_Front.position;
@@ -217,6 +228,7 @@ namespace OpenScripts2
                 posIndex = Mathf.RoundToInt(inverseLerp / _slotLerpFactor);
             }
 
+            // If there's a forward stop on the attachment, adjust the index so that the forward stop point does not exceed the rails limits
             if (ExistingForwardStops.TryGetValue(attachment, out AttachmentPicatinnyRailForwardStop forwardStop))
             {
                 Vector3 closestValidPointLimit = closestValidPoint + attachment.transform.forward * Vector3.Distance(forwardStop.transform.position, attachment.transform.position);
@@ -249,9 +261,12 @@ namespace OpenScripts2
                 {
                     posIndexLimit = Mathf.RoundToInt(inverseLerpUnclamped / _slotLerpFactor);
                 }
+
+                // Clamp the index to the limit, in either direction
                 if (posIndexLimit < 0) posIndex -= posIndexLimit;
                 else if (posIndexLimit >= NumberOfPicatinnySlots) posIndex -= (posIndexLimit - (NumberOfPicatinnySlots - 1));
 
+                // If the attachment is too big for the rail, clamp it to either the lowest or highest slot index, depending of direction of attachment
                 posIndex = Mathf.Clamp(posIndex, 0, NumberOfPicatinnySlots - 1);
             }
             return posIndex;

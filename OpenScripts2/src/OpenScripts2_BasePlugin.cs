@@ -25,6 +25,14 @@ namespace OpenScripts2
             Scale
         }
 
+        public enum ETouchpadDir
+        {
+            Up,
+            Down,
+            Left,
+            Right
+        }
+
         public static float GetFloatFromAxis(Vector3 vector, Axis axis) { return vector[(int)axis]; }
 
         public static FVRFireArmChamber GetCurrentChamber(FVRFireArm fireArm)
@@ -85,19 +93,13 @@ namespace OpenScripts2
             }
         }
 
-        public static Vector3 GetVectorFromAxis(Axis axis)
+        public static Vector3 GetVectorFromAxis(Axis axis) => axis switch
         {
-            switch (axis)
-            {
-                case Axis.X:
-                    return Vector3.right;
-                case Axis.Y:
-                    return Vector3.up;
-                case Axis.Z:
-                    return Vector3.forward;
-            }
-            return Vector3.zero;
-        }
+            Axis.X => Vector3.right,
+            Axis.Y => Vector3.up,
+            Axis.Z => Vector3.forward,
+            _ => Vector3.zero,
+        };
 
         public static bool TouchpadDirDown(FVRViveHand hand, Vector2 dir)
         {
@@ -176,5 +178,17 @@ namespace OpenScripts2
         {
             OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{this}: {e.Message}");
         }
+    }
+
+    public static class ETouchpadDir_Extension
+    {
+        public static Vector2 GetDir(this OpenScripts2_BasePlugin.ETouchpadDir dir) => dir switch
+        {
+            OpenScripts2_BasePlugin.ETouchpadDir.Up => Vector2.up,
+            OpenScripts2_BasePlugin.ETouchpadDir.Down => Vector2.down,
+            OpenScripts2_BasePlugin.ETouchpadDir.Left => Vector2.left,
+            OpenScripts2_BasePlugin.ETouchpadDir.Right => Vector2.right,
+            _ => Vector2.zero,
+        };
     }
 }

@@ -71,11 +71,11 @@ namespace OpenScripts2
 
         private const string MULTICALIBER_MAG_ROUNDTYPE_FLAG = "RoundType";
 
-        private static IntPtr _methodPointer;
+        private static readonly IntPtr _methodPointer;
 
-        private static Type _modularWorkshopMagazineExtension;
-
-        private static FieldInfo _additionalRoundsMagExtensionField;
+        // ModularWorkshop compatibility requirements
+        private static readonly Type _modularWorkshopMagazineExtension;
+        private static readonly FieldInfo _additionalRoundsMagExtensionField;
 
         public void Awake()
         {
@@ -232,6 +232,8 @@ namespace OpenScripts2
             CurrentCaliberDefinition = caliberDefinitionIndex;
             CaliberDefinition caliberDefinition = CaliberDefinitions[caliberDefinitionIndex];
             Magazine.RoundType = caliberDefinition.RoundType;
+
+            Magazine.ObjectWrapper.RoundType = caliberDefinition.RoundType;
 
             if (caliberDefinition.MagazineType != FireArmMagazineType.mNone) Magazine.MagazineType = caliberDefinition.MagazineType;
 
@@ -412,10 +414,6 @@ namespace OpenScripts2
             On.FistVR.FVRPhysicalObject.ConfigureFromFlagDic += FVRPhysicalObject_ConfigureFromFlagDic;
             On.FistVR.FVRPhysicalObject.DuplicateFromSpawnLock += FVRPhysicalObject_DuplicateFromSpawnLock;
 
-            MethodInfo _methodInfo = typeof(FVRPhysicalObject).GetMethod(nameof(FVRPhysicalObject.DuplicateFromSpawnLock), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            _methodPointer = _methodInfo.MethodHandle.GetFunctionPointer();
-            //On.FistVR.FVRFireArmMagazine.DuplicateFromSpawnLock += FVRFireArmMagazine_DuplicateFromSpawnLock;
-
             Assembly modularWorkshopAssembly = Assembly.Load("ModularWorkshop");
             if (modularWorkshopAssembly != null)
             {
@@ -430,59 +428,6 @@ namespace OpenScripts2
                 }
                 else Debug.LogError("ModularWorkshop.ModularMagazineExtension not found!");
             }
-        }
-
-        private static GameObject FVRFireArmMagazine_DuplicateFromSpawnLock(On.FistVR.FVRFireArmMagazine.orig_DuplicateFromSpawnLock orig, FVRFireArmMagazine self, FVRViveHand hand)
-        {
-            Func<FVRViveHand, GameObject> func = (Func<FVRViveHand, GameObject>)Activator.CreateInstance(typeof(Func<FVRViveHand, GameObject>), self, _methodPointer);
-            GameObject copy = func(hand);
-            
-            if (_existingMultiCaliberMagazines.TryGetValue(self, out MultiCaliberMagazine multiCaliberMagazine))
-            {
-                FVRFireArmMagazine copyMag2 = copy.GetComponent<FVRFireArmMagazine>();
-
-                Debug.Log("PreVanillaMethod");
-                Debug.Log("Self:");
-                Debug.Log($"LoadedRounds.Length: {self.LoadedRounds.Length}");
-                Debug.Log($"m_capacity: {self.m_capacity}");
-                Debug.Log($"m_numRounds: {self.m_numRounds}");
-                Debug.Log("Copy:");
-                Debug.Log($"LoadedRounds.Length: {copyMag2.LoadedRounds.Length}");
-                Debug.Log($"m_capacity: {copyMag2.m_capacity}");
-                Debug.Log($"m_numRounds: {copyMag2.m_numRounds}");
-
-                int finalIndex = 0;
-
-                for (int i = 0; i < Mathf.Min(self.LoadedRounds.Length, copyMag2.LoadedRounds.Length); i++)
-                {
-                    if (self.LoadedRounds[i] != null && self.LoadedRounds[i].LR_Mesh != null)
-                    {
-                        if (copyMag2.LoadedRounds[i] == null) copyMag2.LoadedRounds[i] = new FVRLoadedRound();
-                        copyMag2.LoadedRounds[i].LR_Class = self.LoadedRounds[i].LR_Class;
-                        copyMag2.LoadedRounds[i].LR_Mesh = self.LoadedRounds[i].LR_Mesh;
-                        copyMag2.LoadedRounds[i].LR_Material = self.LoadedRounds[i].LR_Material;
-                        copyMag2.LoadedRounds[i].LR_ObjectWrapper = self.LoadedRounds[i].LR_ObjectWrapper;
-                    }
-                    finalIndex = i;
-                }
-
-                Debug.Log($"Final index: {finalIndex}");
-                Debug.Log("MidVanillaMethod");
-                Debug.Log($"LoadedRounds.Length: {copyMag2.LoadedRounds.Length}");
-                Debug.Log($"m_capacity: {copyMag2.m_capacity}");
-                Debug.Log($"m_numRounds: {copyMag2.m_numRounds}");
-
-                copyMag2.m_numRounds = self.m_numRounds;
-                copyMag2.UpdateBulletDisplay();
-
-                Debug.Log("PostVanillaMethod");
-                Debug.Log($"LoadedRounds.Length: {copyMag2.LoadedRounds.Length}");
-                Debug.Log($"m_capacity: {copyMag2.m_capacity}");
-                Debug.Log($"m_numRounds: {copyMag2.m_numRounds}");
-
-                return copy;
-            }
-            else return orig(self, hand);
         }
 
         private static GameObject FVRPhysicalObject_DuplicateFromSpawnLock(On.FistVR.FVRPhysicalObject.orig_DuplicateFromSpawnLock orig, FVRPhysicalObject self, FVRViveHand hand)
@@ -523,7 +468,7 @@ namespace OpenScripts2
         {
             Dictionary<string, string> flagDic = orig(self);
 
-            if (self is FVRFireArmMagazine mag && _existingMultiCaliberMagazines.TryGetValue(mag, out MultiCaliberMagazine multiCaliberMagazine))
+            if (self is FVRFireArmMagazine mag && _existingMultiCaliberMagazines.ContainsKey(mag))
             {
                 flagDic.Add(MULTICALIBER_MAG_ROUNDTYPE_FLAG, mag.RoundType.ToString());
             }
@@ -532,7 +477,6 @@ namespace OpenScripts2
         }
 
         // FireArm round type compatibility patch
-
         private static void FVRFireArmReloadTriggerMag_OnTriggerEnter(On.FistVR.FVRFireArmReloadTriggerMag.orig_OnTriggerEnter orig, FVRFireArmReloadTriggerMag self, Collider collider)
         {
             if (_existingMultiCaliberMagazines.TryGetValue(self.Magazine, out MultiCaliberMagazine multiCaliberMagazine))
@@ -589,87 +533,6 @@ namespace OpenScripts2
                 }
             }
             orig(self, collider);
-
-
-            //if (_existingMultiCaliberMagazines.TryGetValue(self.Magazine, out MultiCaliberMagazine multiCaliberMagazine))
-            //{
-            //    if (self.Magazine != null && self.Magazine.FireArm == null && self.Magazine.QuickbeltSlot == null)
-            //    {
-            //        if (collider.gameObject.tag == "FVRFireArmReloadTriggerWell")
-            //        {
-            //            FVRFireArmReloadTriggerWell reloadTriggerWell = collider.gameObject.GetComponent<FVRFireArmReloadTriggerWell>();
-            //            if (reloadTriggerWell != null)
-            //            {
-            //                if (reloadTriggerWell.IsAttachableWell && reloadTriggerWell.AFireArm != null && reloadTriggerWell.AFireArm.Magazine == null)
-            //                {
-            //                    FireArmMagazineType attachableFireArmMagazineType = reloadTriggerWell.AFireArm.MagazineType;
-            //                    if (reloadTriggerWell.UsesTypeOverride)
-            //                    {
-            //                        attachableFireArmMagazineType = reloadTriggerWell.TypeOverride;
-            //                    }
-            //                    if (attachableFireArmMagazineType == self.Magazine.MagazineType && (reloadTriggerWell.AFireArm.EjectDelay <= 0f || self.Magazine != reloadTriggerWell.AFireArm.LastEjectedMag) && reloadTriggerWell.AFireArm.Magazine == null)
-            //                    {
-            //                        if (multiCaliberMagazine.ChecksFirearmCompatibility && multiCaliberMagazine.Magazine.RoundType != reloadTriggerWell.AFireArm.RoundType) return;
-            //                        self.Magazine.Load(reloadTriggerWell.AFireArm);
-            //                    }
-            //                }
-            //                else if (reloadTriggerWell.UsesSecondaryMagSlots && reloadTriggerWell.FireArm != null && reloadTriggerWell.FireArm.SecondaryMagazineSlots[reloadTriggerWell.SecondaryMagSlotIndex].Magazine == null)
-            //                {
-            //                    FireArmMagazineType secondaryMagazineType = reloadTriggerWell.FireArm.MagazineType;
-            //                    if (reloadTriggerWell.UsesTypeOverride)
-            //                    {
-            //                        secondaryMagazineType = reloadTriggerWell.TypeOverride;
-            //                    }
-            //                    if (secondaryMagazineType == self.Magazine.MagazineType && (reloadTriggerWell.FireArm.SecondaryMagazineSlots[reloadTriggerWell.SecondaryMagSlotIndex].m_ejectDelay <= 0f || self.Magazine != reloadTriggerWell.FireArm.SecondaryMagazineSlots[reloadTriggerWell.SecondaryMagSlotIndex].m_lastEjectedMag) && reloadTriggerWell.FireArm.SecondaryMagazineSlots[reloadTriggerWell.SecondaryMagSlotIndex].Magazine == null)
-            //                    {
-            //                        self.Magazine.LoadIntoSecondary(reloadTriggerWell.FireArm, reloadTriggerWell.SecondaryMagSlotIndex);
-            //                    }
-            //                }
-            //                else
-            //                {
-            //                    bool flag = false;
-            //                    if (!self.Magazine.IsBeltBox && reloadTriggerWell.FireArm != null && reloadTriggerWell.FireArm.HasBelt)
-            //                    {
-            //                        flag = true;
-            //                    }
-            //                    if (reloadTriggerWell.IsBeltBox == self.Magazine.IsBeltBox && reloadTriggerWell.FireArm != null && reloadTriggerWell.FireArm.Magazine == null && !flag)
-            //                    {
-            //                        FireArmMagazineType fireArmMagazineType = reloadTriggerWell.FireArm.MagazineType;
-            //                        if (reloadTriggerWell.UsesTypeOverride)
-            //                        {
-            //                            fireArmMagazineType = reloadTriggerWell.TypeOverride;
-            //                        }
-            //                        if (fireArmMagazineType == self.Magazine.MagazineType && (reloadTriggerWell.FireArm.EjectDelay <= 0f || self.Magazine != reloadTriggerWell.FireArm.LastEjectedMag) && reloadTriggerWell.FireArm.Magazine == null)
-            //                        {
-            //                            if (multiCaliberMagazine.ChecksFirearmCompatibility && multiCaliberMagazine.Magazine.RoundType != reloadTriggerWell.FireArm.RoundType) return;
-            //                            self.Magazine.Load(reloadTriggerWell.FireArm);
-            //                        }
-            //                    }
-            //                }
-            //            }
-            //        }
-            //        else if (collider.gameObject.GetComponent<DerringerTrigger>() != null)
-            //        {
-            //            DerringerTrigger derringerTrigger = collider.gameObject.GetComponent<DerringerTrigger>();
-            //            Derringer derringer = derringerTrigger.Derringer;
-            //            if (multiCaliberMagazine.ChecksFirearmCompatibility && multiCaliberMagazine.Magazine.RoundType != derringer.RoundType) return;
-            //            if (derringer.RoundType == self.Magazine.RoundType && derringer.GetHingeState() == Derringer.HingeState.Open)
-            //            {
-            //                for (int i = 0; i < derringer.Barrels.Count; i++)
-            //                {
-            //                    if (self.Magazine.HasARound() && !derringer.Barrels[i].Chamber.IsFull)
-            //                    {
-            //                        FVRLoadedRound fvrloadedRound = self.Magazine.RemoveRound(0);
-            //                        Transform transform = self.Magazine.DisplayBullets[Mathf.Clamp(0, self.Magazine.DisplayBullets.Length - 1, i)].transform;
-            //                        derringer.Barrels[i].Chamber.Autochamber(fvrloadedRound.LR_Class, transform.position, transform.rotation);
-            //                        derringer.PlayAudioEvent(FirearmAudioEventType.MagazineIn, 1f);
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-            //else orig(self, collider);
         }
 
         private static void FVRFireArmRound_OnTriggerEnter(On.FistVR.FVRFireArmRound.orig_OnTriggerEnter orig, FVRFireArmRound self, Collider collider)
@@ -687,48 +550,6 @@ namespace OpenScripts2
                     }
                 }
             }
-
-            //if (self.isManuallyChamberable && !self.IsSpent && self.HoveredOverChamber == null && self.m_hoverOverReloadTrigger == null && !self.IsSpent && collider.gameObject.CompareTag(nameof(FVRFireArmChamber)))
-            //{
-            //    FVRFireArmChamber chamber = collider.gameObject.GetComponent<FVRFireArmChamber>();
-            //    if (chamber.RoundType == self.RoundType && chamber.IsManuallyChamberable && chamber.IsAccessible && !chamber.IsFull)
-            //    {
-            //        self.HoveredOverChamber = chamber;
-            //    }
-            //}
-            //if (self.isMagazineLoadable && self.HoveredOverChamber == null && !self.IsSpent && collider.gameObject.CompareTag(nameof(FVRFireArmMagazineReloadTrigger)))
-            //{
-            //    FVRFireArmMagazineReloadTrigger component = collider.gameObject.GetComponent<FVRFireArmMagazineReloadTrigger>();
-            //    if (component.IsClipTrigger)
-            //    {
-            //        if (component != null && component.Clip != null && component.Clip.RoundType == self.RoundType && !component.Clip.IsFull() && (component.Clip.FireArm == null || component.Clip.IsDropInLoadable))
-            //        {
-            //            self.m_hoverOverReloadTrigger = component;
-            //        }
-            //    }
-            //    else if (component.IsSpeedloaderTrigger)
-            //    {
-            //        if (!component.SpeedloaderChamber.IsLoaded)
-            //        {
-            //            self.m_hoverOverReloadTrigger = component;
-            //        }
-            //    }
-            //    else if (component != null && component.Magazine != null && component.Magazine.RoundType == self.RoundType && !component.Magazine.IsFull() && (component.Magazine.FireArm == null || component.Magazine.IsDropInLoadable))
-            //    {
-            //        self.m_hoverOverReloadTrigger = component;
-            //    }
-            //    else if (component != null && _existingMultiCaliberMagazines.TryGetValue(component.Magazine, out MultiCaliberMagazine multiCaliberMagazine) && !component.Magazine.IsFull() && (component.Magazine.FireArm == null || component.Magazine.IsDropInLoadable))
-            //    {
-            //        if (multiCaliberMagazine.SetCartridge(self.RoundType))
-            //        {
-            //            self.m_hoverOverReloadTrigger = component;
-            //        }
-            //    }
-            //}
-            //if (!self.isPalmable || self.ProxyRounds.Count >= self.MaxPalmedAmount || self.IsSpent || !collider.gameObject.CompareTag(nameof(FVRFireArmRound))) return;
-            //FVRFireArmRound component1 = collider.gameObject.GetComponent<FVRFireArmRound>();
-            //if (component1.RoundType != self.RoundType || component1.IsSpent || component1.QuickbeltSlot != null) return;
-            //self.HoveredOverRound = component1;
 
             orig(self, collider);
         }

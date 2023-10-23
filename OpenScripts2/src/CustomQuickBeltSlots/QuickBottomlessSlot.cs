@@ -56,6 +56,7 @@ namespace OpenScripts2
             On.FistVR.FVRQuickBeltSlot.MoveContentsCheap += FVRQuickBeltSlot_MoveContentsCheap;
         }
 
+        #region QuickBeltMovement patches
         private static void FVRQuickBeltSlot_MoveContentsCheap(On.FistVR.FVRQuickBeltSlot.orig_MoveContentsCheap orig, FVRQuickBeltSlot self, Vector3 dir)
         {
             if (self is QuickBottomlessSlot quickBottomlessSlot)
@@ -109,6 +110,7 @@ namespace OpenScripts2
             }
             else orig(self, dir);
         }
+        #endregion
 
         private static void FVRQuickBeltSlot_Update(On.FistVR.FVRQuickBeltSlot.orig_Update orig, FVRQuickBeltSlot self)
         {
@@ -118,6 +120,7 @@ namespace OpenScripts2
                 {
                     (quickBottomlessSlot.HeldObject as FVRPhysicalObject).m_isSpawnLock = false;
                 }
+                // Color Changing
                 if (quickBottomlessSlot.HeldObject != null)
                 {
                     if ((quickBottomlessSlot.HeldObject as FVRPhysicalObject).m_isSpawnLock)

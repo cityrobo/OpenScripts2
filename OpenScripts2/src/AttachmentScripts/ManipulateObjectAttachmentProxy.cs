@@ -34,7 +34,7 @@ namespace OpenScripts2
         private FVRPhysicalObject _weapon;
         private Transform _proxy = null;
 
-        private bool _debug = false;
+        public bool DebugModeEnabled = false;
 
         public void Update()
         {
@@ -185,10 +185,10 @@ namespace OpenScripts2
                     _proxy = s.MagazineReleaseButton;
                     break;
                 case TargetType.Safety:
-                    if (_debug && s.Safety == null) LogWarning("Handgun.Safety == null");
-                    if (_debug) DebugMessage("Safety: " + s.Safety);
+                    if (DebugModeEnabled && s.Safety == null) LogWarning("Handgun.Safety == null");
+                    if (DebugModeEnabled) DebugMessage("Safety: " + s.Safety);
                     _proxy = s.Safety;
-                    if (_debug) DebugMessage("proxy: " + _proxy);
+                    if (DebugModeEnabled) DebugMessage("proxy: " + _proxy);
                     break;
                 case TargetType.FireSelector:
                     _proxy = s.FireSelector;
@@ -203,7 +203,7 @@ namespace OpenScripts2
                     LogWarning($"TargetType not available for this type of FireArm ({s.GetType()}/{targetType})!");
                     break;
             }
-            if (_debug && _proxy == null) LogWarning("Proxy should be set but isn't!");
+            if (DebugModeEnabled && _proxy == null) LogWarning("Proxy should be set but isn't!");
         }
         private void SetProxy(TubeFedShotgun s)
         {
@@ -265,7 +265,7 @@ namespace OpenScripts2
         }
         private void DebugMessage(string message)
         {
-            if (_debug) Log(message);
+            if (DebugModeEnabled) Log(message);
         }
     }
 }
