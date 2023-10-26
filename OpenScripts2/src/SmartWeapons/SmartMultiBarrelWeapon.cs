@@ -59,7 +59,7 @@ namespace OpenScripts2
 
 		private SosigLink _lastTarget;
 
-		private GameObject _origMuzzlePos;
+		//private GameObject _origMuzzlePos;
 
 		private bool _timeoutStarted = false;
 
@@ -77,22 +77,31 @@ namespace OpenScripts2
         {
 			_existingSmartWeapon.Add(FireArm, this);
 
-			_origMuzzlePos = Instantiate(FireArm.MuzzlePos.gameObject, this.transform);
-			_origMuzzlePos.transform.localPosition = FireArm.MuzzlePos.localPosition;
-			_origMuzzlePos.transform.localRotation = FireArm.MuzzlePos.localRotation;
+			//_origMuzzlePos = Instantiate(FireArm.MuzzlePos.gameObject, FireArm.MuzzlePos.parent);
+			//_origMuzzlePos.transform.localPosition = FireArm.MuzzlePos.localPosition;
+			//_origMuzzlePos.transform.localRotation = FireArm.MuzzlePos.localRotation;
 
 			if (ReplacementRoundPrefab != null) _replacementRound = ReplacementRoundPrefab.GetComponent<FVRFireArmRound>();
         }
+
 		public void OnDestroy()
         {
 			_existingSmartWeapon.Remove(FireArm);
+        }
+
+        public void OnDisable()
+        {
+            _lastTarget = null;
+            if (DisableReticleWithoutTarget && ReticleMesh != null) ReticleMesh.gameObject.SetActive(false);
+            TargetLockedIndicator?.SetActive(false);
+            //FireArm.MuzzlePos.localRotation = _origMuzzlePos.transform.localRotation;
         }
 
         private static void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
         {
             if (_existingSmartWeapon.TryGetValue(self, out SmartMultiBarrelWeapon smartMultiBarrelWeapon))
             {
-                smartMultiBarrelWeapon.RandomizeMuzzles();
+                //smartMultiBarrelWeapon.RandomizeMuzzles();
 
                 if (doBuzz && self.m_hand != null)
                 {
@@ -125,7 +134,7 @@ namespace OpenScripts2
                         Vector3 b = muzzle.forward * 0.005f;
                         GameObject gameObject = Instantiate(roundToUse.BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
                         Vector2 vector2 = (UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle) * 0.33333334f * d;
-                        gameObject.transform.Rotate(new Vector3(vector2.x + vector.y + num, vector2.y + vector.x, 0f));
+                        gameObject.transform.Rotate(new Vector3(vector2.x + vector.y + num, vector2.y + vector.x, 0f) + smartMultiBarrelWeapon.ReturnRandomizedRotationVector());
                         BallisticProjectile component = gameObject.GetComponent<BallisticProjectile>();
 
                         float baseVelocity = component.MuzzleVelocityBase * chamber.ChamberVelocityMultiplier * velMult * chamberVelMult;
@@ -157,7 +166,7 @@ namespace OpenScripts2
                                 Vector3 b2 = muzzle.forward * 0.005f;
                                 GameObject projectileGameObject = Instantiate(roundToUse.BallisticProjectilePrefab, additionalMuzzle.position - b2, additionalMuzzle.rotation);
                                 Vector2 firingDirection = (UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle) * 0.33333334f * d;
-                                projectileGameObject.transform.Rotate(new Vector3(firingDirection.x + firingDirection.y + num, firingDirection.y + firingDirection.x, 0f));
+                                projectileGameObject.transform.Rotate(new Vector3(firingDirection.x + firingDirection.y + num, firingDirection.y + firingDirection.x, 0f) + smartMultiBarrelWeapon.ReturnRandomizedRotationVector());
                                 BallisticProjectile projectile = projectileGameObject.GetComponent<BallisticProjectile>();
 
                                 projectile.Fire(baseVelocity * smartMultiBarrelWeapon.BulletVelocityModifier, projectileGameObject.transform.forward, self, true);
@@ -271,8 +280,19 @@ namespace OpenScripts2
                 }
             }
         }
+        private Vector3 ReturnRandomizedRotationVector()
+        {
+            Vector3 randRot = Vector3.zero;
+            if (DoesRandomRotationOfBarrelForCinematicBulletTrails)
+            {
+                randRot.x = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
+                randRot.y = UnityEngine.Random.Range(-RandomAngleMagnitude, RandomAngleMagnitude);
+            }
 
-		private IEnumerator LastTargetTimeoutCoroutine()
+            return randRot;
+        }
+
+        private IEnumerator LastTargetTimeoutCoroutine()
         {
 			_timeoutStarted = true;
 			yield return new WaitForSeconds(LastTargetTimeout);
@@ -283,7 +303,8 @@ namespace OpenScripts2
 		private SosigLink FindTarget()
         {
 			float radius = EngageRange * Mathf.Tan(0.5f * EngageAngle * Mathf.Deg2Rad);
-			Collider[] colliderArray = Physics.OverlapCapsule(FireArm.CurrentMuzzle.position, FireArm.CurrentMuzzle.position + _origMuzzlePos.transform.forward * EngageRange, radius, LatchingMask);
+			//Collider[] colliderArray = Physics.OverlapCapsule(FireArm.CurrentMuzzle.position, FireArm.CurrentMuzzle.position + _origMuzzlePos.transform.forward * EngageRange, radius, LatchingMask);
+			Collider[] colliderArray = Physics.OverlapCapsule(FireArm.transform.position, FireArm.transform.position + FireArm.transform.forward * EngageRange, radius, LatchingMask);
 			List<Rigidbody> rigidbodyList = new List<Rigidbody>();
 			for (int i = 0; i < colliderArray.Length; i++)
 			{
@@ -304,9 +325,10 @@ namespace OpenScripts2
 					if (true || sosigLinkComponent.S.E.IFFCode == 1)
 					{
 						Vector3 from = rigidbodyList[j].transform.position - FireArm.CurrentMuzzle.position;
-						float angle = Vector3.Angle(from, _origMuzzlePos.transform.forward);
+                        //float angle = Vector3.Angle(from, _origMuzzlePos.transform.forward);
+                        float angle = Vector3.Angle(from, FireArm.transform.forward);
 
-						Sosig s = sosigLinkComponent.S;
+                        Sosig s = sosigLinkComponent.S;
 						if (angle <= PrecisionAngle) tempSosigLink = s.Links[0];
 						else tempSosigLink = s.Links[1];
 

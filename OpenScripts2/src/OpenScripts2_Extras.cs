@@ -486,6 +486,12 @@ namespace UnityEngine
             return Vector3.ProjectOnPlane(vector, planeNormal) + Vector3.Dot(point, planeNormal) * planeNormal;
         }
 
+        /// <summary>
+        /// Return the value of the local position associated with the supplied axis
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <param name="axis">The Axis you want to return the value from.</param>
+        /// <returns>Transform.localPosition.axis</returns>
         public static Vector3 GetLocalDirAxis(this Transform transform, OpenScripts2_BasePlugin.Axis axis)
         {
             switch (axis)
@@ -501,6 +507,12 @@ namespace UnityEngine
             }
         }
 
+        /// <summary>
+        /// Return the value of the local position associated with the supplied axis
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <param name="axis">The Axis you want to return the value from.</param>
+        /// <returns>Transform.localPosition.axis</returns>
         public static float GetLocalPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis)
         {
             switch (axis)
@@ -531,10 +543,23 @@ namespace UnityEngine
             }
         }
 
+        /// <summary>
+        /// Return the value of the vector associated with the supplied axis
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <param name="axis">The Axis you want to return the value from.</param>
+        /// <returns>Transform.localPosition.axis</returns>
         public static float GetAxisValue(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis)
         {
             return vector[(int)axis];
         }
+
+        /// <summary>
+        /// Return a vector that only contains the supplied axis of the vector
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <param name="axis">The Axis you want to return the value from.</param>
+        /// <returns>Vector3(this.vector.axis)</returns>
         public static Vector3 GetAxisVector(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis)
         {
             Vector3 strippedVector = Vector3.zero;
@@ -553,6 +578,13 @@ namespace UnityEngine
             return strippedVector;
         }
 
+        /// <summary>
+        /// Overwrite the axis value of the other vector with this one
+        /// </summary>
+        /// <param name="vector"></param>
+        /// <param name="axis">Axis to overwrite</param>
+        /// <param name="other">The other vector to overwrite the axis value on</param>
+        /// <returns>Return other vector with axis value replaced by this one</returns>
         public static Vector3 GetCombinedAxisVector(this Vector3 vector, OpenScripts2_BasePlugin.Axis axis, Vector3 other)
         {
             Vector3 strippedVector = other;

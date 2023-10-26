@@ -208,18 +208,8 @@ namespace OpenScripts2
         }
         private IEnumerator HammerDropClosedBolt(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
-            _isCharging = true;
-            _timeCharged = 0f;
-            FVRPooledAudioSource audioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, self.transform.position);
-            SteamVR_Action_Vibration handVibration = self.m_hand.Vibration;
-            while (_timeCharged < ChargeTime)
-            {
-                if (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold) break;
-                _timeCharged += Time.deltaTime;
-                yield return null;
-            }
-            _isCharging = false;
-            audioSource.Source.Stop();
+            yield return DropHammer(self);
+
             ClosedBoltWeapon.FireSelectorModeType modeType = self.FireSelector_Modes[self.m_fireSelectorMode].ModeType;
             if (!ChargesUpEveryShot && modeType != ClosedBoltWeapon.FireSelectorModeType.Single) _isAutomaticFire = true;
 
@@ -312,19 +302,8 @@ namespace OpenScripts2
         }
         private IEnumerator SeerReleaseOpenBolt(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
         {
-            _isCharging = true;
-            _timeCharged = 0f;
-            FVRPooledAudioSource audioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, self.transform.position);
-            SteamVR_Action_Vibration handVibration = self.m_hand.Vibration;
-            while (_timeCharged < ChargeTime)
-            {
-                if (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold) break;
-                _timeCharged += Time.deltaTime;
-                handVibration.Execute(0f, Time.fixedDeltaTime, ChargeVibrationFrequency * (1 - (_timeCharged / ChargeTime)), ChargeVibrationAmplitude, self.m_hand.HandSource);
-                yield return null;
-            }
-            _isCharging = false;
-            audioSource.Source.Stop();
+            yield return DropHammer(self);
+
             OpenBoltReceiver.FireSelectorModeType modeType = self.FireSelector_Modes[self.m_fireSelectorMode].ModeType;
             if (!ChargesUpEveryShot && modeType != OpenBoltReceiver.FireSelectorModeType.Single) _isAutomaticFire = true;
 
@@ -427,19 +406,8 @@ namespace OpenScripts2
         }
         private IEnumerator SeerReleaseHandgun(On.FistVR.Handgun.orig_ReleaseSeer orig, Handgun self)
         {
-            _isCharging = true;
-            _timeCharged = 0f;
-            FVRPooledAudioSource audioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, self.transform.position);
-            SteamVR_Action_Vibration handVibration = self.m_hand.Vibration;
-            while (_timeCharged < ChargeTime)
-            {
-                if (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold) break;
-                _timeCharged += Time.deltaTime;
-                handVibration.Execute(0f, Time.fixedDeltaTime, ChargeVibrationFrequency * (1 - (_timeCharged / ChargeTime)), ChargeVibrationAmplitude, self.m_hand.HandSource);
-                yield return null;
-            }
-            _isCharging = false;
-            audioSource.Source.Stop();
+            yield return DropHammer(self);
+
             Handgun.FireSelectorModeType modeType = self.FireSelectorModes[self.m_fireSelectorMode].ModeType;
             if (!ChargesUpEveryShot && modeType != Handgun.FireSelectorModeType.Single) _isAutomaticFire = true;
 
@@ -500,26 +468,14 @@ namespace OpenScripts2
 
         private void BoltActionRifle_DropHammer(On.FistVR.BoltActionRifle.orig_DropHammer orig, BoltActionRifle self)
         {
-            if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull))) StartCoroutine(DropHammerBoltAction(orig, self));
-            else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
+            if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chamber.IsFull && !self.Chamber.IsSpent))) StartCoroutine(DropHammerBoltAction(orig, self));
+            else if (self == FireArm && !_isCharging && StopsOnEmpty && (!self.Chamber.IsFull || self.Chamber.IsSpent)) orig(self);
             else if (self != FireArm) orig(self);
         }
 
         private IEnumerator DropHammerBoltAction(On.FistVR.BoltActionRifle.orig_DropHammer orig, BoltActionRifle self)
         {
-            _isCharging = true;
-            _timeCharged = 0f;
-            FVRPooledAudioSource audioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, self.transform.position);
-            SteamVR_Action_Vibration handVibration = self.m_hand.Vibration;
-            while (_timeCharged < ChargeTime)
-            {
-                if (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold) break;
-                _timeCharged += Time.deltaTime;
-                handVibration.Execute(0f, Time.fixedDeltaTime, ChargeVibrationFrequency * (1 - (_timeCharged / ChargeTime)), ChargeVibrationAmplitude, self.m_hand.HandSource);
-                yield return null;
-            }
-            _isCharging = false;
-            audioSource.Source.Stop();
+            yield return DropHammer(self);
 
             orig(self);
 
@@ -552,7 +508,7 @@ namespace OpenScripts2
                 if (self.PlaysExtraTailOnShot)
                 {
                     AudioEvent tailSet = SM.GetTailSet(self.ExtraTail, currentSoundEnvironment);
-                    self.m_pool_tail.PlayClipVolumePitchOverride(tailSet, base.transform.position, tailSet.VolumeRange * 1f, self.AudioClipSet.TailPitchMod_Main * tailSet.PitchRange.x, null);
+                    self.m_pool_tail.PlayClipVolumePitchOverride(tailSet, self.transform.position, tailSet.VolumeRange * 1f, self.AudioClipSet.TailPitchMod_Main * tailSet.PitchRange.x, null);
                 }
                 if (self.HasReciprocatingBarrel)
                 {
@@ -587,19 +543,7 @@ namespace OpenScripts2
 
         private IEnumerator ReleaseHammerTubeFed(On.FistVR.TubeFedShotgun.orig_ReleaseHammer orig, TubeFedShotgun self)
         {
-            _isCharging = true;
-            _timeCharged = 0f;
-            FVRPooledAudioSource audioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, self.transform.position);
-            SteamVR_Action_Vibration handVibration = self.m_hand.Vibration;
-            while (_timeCharged < ChargeTime)
-            {
-                if (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold) break;
-                _timeCharged += Time.deltaTime;
-                handVibration.Execute(0f, Time.fixedDeltaTime, ChargeVibrationFrequency * (1 - (_timeCharged / ChargeTime)), ChargeVibrationAmplitude, self.m_hand.HandSource);
-                yield return null;
-            }
-            _isCharging = false;
-            audioSource.Source.Stop();
+            yield return DropHammer(self);
 
             orig(self);
 
@@ -657,19 +601,7 @@ namespace OpenScripts2
 
         private IEnumerator FireLeverAction(On.FistVR.LeverActionFirearm.orig_Fire orig, LeverActionFirearm self)
         {
-            _isCharging = true;
-            _timeCharged = 0f;
-            FVRPooledAudioSource audioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, self.transform.position);
-            SteamVR_Action_Vibration handVibration = self.m_hand.Vibration;
-            while (_timeCharged < ChargeTime)
-            {
-                if (!self.IsHeld || self.m_hand.Input.TriggerUp) break;
-                _timeCharged += Time.deltaTime;
-                handVibration.Execute(0f, Time.fixedDeltaTime, ChargeVibrationFrequency * (1 - (_timeCharged / ChargeTime)), ChargeVibrationAmplitude, self.m_hand.HandSource);
-                yield return null;
-            }
-            _isCharging = false;
-            audioSource.Source.Stop();
+            yield return DropHammer(self);
 
             ChargedLeverActionFire(self);
 
@@ -762,19 +694,7 @@ namespace OpenScripts2
         }
         private IEnumerator DropHammerBreakAction(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
         {
-            _isCharging = true;
-            _timeCharged = 0f;
-            FVRPooledAudioSource audioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, self.transform.position);
-            SteamVR_Action_Vibration handVibration = self.m_hand.Vibration;
-            while (_timeCharged < ChargeTime)
-            {
-                if (!self.m_isLatched || !self.IsHeld || self.m_hand.Input.TriggerFloat <= 0.45f) break;
-                _timeCharged += Time.deltaTime;
-                handVibration.Execute(0f, Time.fixedDeltaTime, ChargeVibrationFrequency * (1 - (_timeCharged / ChargeTime)), ChargeVibrationAmplitude, self.m_hand.HandSource);
-                yield return null;
-            }
-            _isCharging = false;
-            audioSource.Source.Stop();
+            yield return DropHammer(self);
 
             orig(self);
 
@@ -819,6 +739,47 @@ namespace OpenScripts2
             else return orig(self, b, FireAllBarrels, index);
         }
         #endregion
+
+        private IEnumerator DropHammer(FVRFireArm fireArm)
+        {
+            _isCharging = true;
+            _timeCharged = 0f;
+            FVRPooledAudioSource audioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, fireArm.transform.position);
+            while (_timeCharged < ChargeTime)
+            {
+                if (!fireArm.IsHeld || CheckTrigger(fireArm)) break;
+                _timeCharged += Time.deltaTime;
+                Vibrate(fireArm.m_hand);
+                yield return null;
+            }
+            _isCharging = false;
+            audioSource?.Source.Stop();
+        }
+
+        private void Vibrate(FVRViveHand hand)
+        {
+            SteamVR_Action_Vibration handVibration = hand.Vibration;
+            if (hand.CMode == ControlMode.Index)
+            {
+                handVibration.Execute(0f, Time.fixedDeltaTime, ChargeVibrationFrequency * (1 - (_timeCharged / ChargeTime)), ChargeVibrationAmplitude, hand.HandSource);
+            }
+            else
+            {
+                handVibration.Execute(0f, Time.fixedDeltaTime, ChargeVibrationFrequency, ChargeVibrationAmplitude * (_timeCharged / ChargeTime), hand.HandSource);
+            }
+        }
+
+        private bool CheckTrigger(FVRFireArm fireArm) => fireArm switch
+        {
+            ClosedBoltWeapon w => fireArm.m_hand.Input.TriggerFloat < w.TriggerResetThreshold,
+            OpenBoltReceiver w => fireArm.m_hand.Input.TriggerFloat < w.TriggerResetThreshold,
+            Handgun w => fireArm.m_hand.Input.TriggerFloat < w.TriggerResetThreshold,
+            TubeFedShotgun w => fireArm.m_hand.Input.TriggerFloat < w.TriggerResetThreshold,
+            BoltActionRifle w => fireArm.m_hand.Input.TriggerFloat < w.TriggerResetThreshold,
+            BreakActionWeapon w => fireArm.m_hand.Input.TriggerFloat < 0.45f,
+            LeverActionFirearm w => fireArm.m_hand.Input.TriggerUp,
+            _ => false,
+        };
 #endif
     }
 }

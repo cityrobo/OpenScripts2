@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace OpenScripts2
 {
-    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.6.0")]
+    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.6.1")]
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {
         // FirearmHeatingEffect Config Entries

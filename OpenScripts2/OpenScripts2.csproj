@@ -172,6 +172,7 @@
     <Compile Include="src\SmartWeapons\TopAttackProjectile.cs" />
     <Compile Include="src\SmartWeapons\TopAttackSystem.cs" />
     <Compile Include="src\VisualModification\CustomMuzzleEffectController.cs" />
+    <Compile Include="src\VisualModification\BreakActionWeaponIndependentEjectors.cs" />
     <Compile Include="src\VisualModification\SimplifiedManipulateFireArmRoundProxy.cs" />
     <Compile Include="src\VisualModification\MovementVisualEffect.cs" />
     <Compile Include="src\VisualModification\InteractionVisualEffect.cs" />
