@@ -32,15 +32,15 @@ namespace OpenScripts2
         {
             public BarrelGroup()
             {
-                this.IndexList = new List<int>();
-                this.Barrels = new List<BreakActionWeapon.BreakActionBarrel>();
+                IndexList = new List<int>();
+                Barrels = new List<BreakActionWeapon.BreakActionBarrel>();
             }
             public List<int> IndexList;
             public List<BreakActionWeapon.BreakActionBarrel> Barrels;
         }
 
-        private BarrelGroup _primaryBarrelGroup = new BarrelGroup();
-        private BarrelGroup _secondaryBarrelGroup = new BarrelGroup();
+        private readonly BarrelGroup _primaryBarrelGroup = new();
+        private readonly BarrelGroup _secondaryBarrelGroup = new();
 
         private SelectedBarrelGroup _selectedBarrelGroup = SelectedBarrelGroup.Primary;
 

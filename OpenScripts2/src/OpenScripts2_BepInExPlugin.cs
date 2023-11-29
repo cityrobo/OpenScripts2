@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using BepInEx;
 using BepInEx.Configuration;
+using MonoMod.Cil;
 using UnityEngine;
+using FistVR;
 
 namespace OpenScripts2
 {
-    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.6.1")]
+    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.7.0")]
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {
         // FirearmHeatingEffect Config Entries
@@ -22,14 +24,14 @@ namespace OpenScripts2
         // Advanced MagGrab Trigger Config Entries
         public static ConfigEntry<bool> AdvancedMagGrabSimpleMagRelease;
 
-
         public BepInEx.Logging.ManualLogSource Logging
         {
             get {return Logger; }
         }
 
         public static OpenScripts2_BepInExPlugin Instance;
-        public OpenScripts2_BepInExPlugin()
+
+        public void Awake()
         {
             Instance = this;
 
@@ -43,6 +45,10 @@ namespace OpenScripts2
 
             // Advanced MagGrab Trigger Config Bindings
             AdvancedMagGrabSimpleMagRelease = Config.Bind("Advanced Magazine Grab Trigger", "Simple Magazine Release", false, "If true, disables input requirements from advanced magazine wells.");
+
+#if !DEBUG
+            IL.FistVR.FVRFireArm.Fire += OpenScripts2_BasePlugin.FVRFireArm_Fire_ProjectileFiredEventHook;
+#endif
         }
 
         public static void Log(MonoBehaviour plugin, string message)
@@ -62,6 +68,9 @@ namespace OpenScripts2
             Instance.Logging.LogError($"{plugin}: {e.Message}");
         }
     }
+
+
+
     /*
     public static class OpenScripts2_Extensions
     {

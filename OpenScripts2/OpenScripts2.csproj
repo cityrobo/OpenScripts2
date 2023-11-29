@@ -107,6 +107,7 @@
     <Compile Include="src\FirearmControl\BoltPointUpdater.cs" />
     <Compile Include="src\FirearmControl\ChargeTriggerBreakActionWeapon.cs" />
     <Compile Include="src\FirearmControl\ClosedBoltRotatingChargingHandle.cs" />
+    <Compile Include="src\FirearmControl\SemiAutoClosedFullAutoOpenBolt.cs" />
     <Compile Include="src\FirearmControl\FireArmStartBurstFix.cs" />
     <Compile Include="src\FirearmControl\AdditionalBarrel.cs" />
     <Compile Include="src\AttachmentScripts\AttachmentPicatinnyRailForwardStop.cs" />

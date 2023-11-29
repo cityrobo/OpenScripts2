@@ -21,6 +21,9 @@ namespace OpenScripts2
         [Header("Only enabled for specific attachment IDs")]
         public List<string> AttachmentIds = new();
 
+        [HideInInspector]
+        public bool ManualOverride = false;
+
         public void Awake()
         {
             attachmentMount.HasHoverDisablePiece = true;
@@ -32,44 +35,54 @@ namespace OpenScripts2
 
         public void Update()
         {
-            if (AttachmentIds.Count == 0)
+            if (!ManualOverride)
             {
-                if (attachmentMount.DisableOnHover.activeInHierarchy == false)
+                if (AttachmentIds.Count == 0)
                 {
-                    foreach (GameObject gameObject in ObjectToHideOrShow)
+                    if (attachmentMount.DisableOnHover.activeSelf == false)
                     {
-                        gameObject.SetActive(ShowOnAttach);
+                        foreach (GameObject gameObject in ObjectToHideOrShow)
+                        {
+                            gameObject.SetActive(ShowOnAttach);
+                        }
+                    }
+                    else
+                    {
+                        foreach (GameObject gameObject in ObjectToHideOrShow)
+                        {
+                            gameObject.SetActive(!ShowOnAttach);
+                        }
                     }
                 }
                 else
                 {
-                    foreach (GameObject gameObject in ObjectToHideOrShow)
+                    bool correctIDFound = false;
+                    foreach (FVRFireArmAttachment attachment in attachmentMount.AttachmentsList)
                     {
-                        gameObject.SetActive(!ShowOnAttach);
+                        if (AttachmentIds.Contains(attachment.ObjectWrapper.ItemID)) correctIDFound = true;
+                    }
+
+                    if (correctIDFound)
+                    {
+                        foreach (GameObject gameObject in ObjectToHideOrShow)
+                        {
+                            gameObject.SetActive(ShowOnAttach);
+                        }
+                    }
+                    else
+                    {
+                        foreach (GameObject gameObject in ObjectToHideOrShow)
+                        {
+                            gameObject.SetActive(!ShowOnAttach);
+                        }
                     }
                 }
             }
             else
             {
-                bool correctIDFound = false;
-                foreach (FVRFireArmAttachment attachment in attachmentMount.AttachmentsList)
+                foreach (GameObject gameObject in ObjectToHideOrShow)
                 {
-                    if (AttachmentIds.Contains(attachment.ObjectWrapper.ItemID)) correctIDFound = true;
-                }
-
-                if (correctIDFound)
-                {
-                    foreach (GameObject gameObject in ObjectToHideOrShow)
-                    {
-                        gameObject.SetActive(ShowOnAttach);
-                    }
-                }
-                else
-                {
-                    foreach (GameObject gameObject in ObjectToHideOrShow)
-                    {
-                        gameObject.SetActive(!ShowOnAttach);
-                    }
+                    gameObject.SetActive(ShowOnAttach);
                 }
             }
         }

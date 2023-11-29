@@ -12,10 +12,15 @@ namespace OpenScripts2
     {
         public FVRFireArmAttachment Attachment;
 
+        private FVRFireArm _fireArm = null;
+
         [Header("Caliber Modification")]
         public bool ChangesCaliber = true;
         [SearchableEnum]
         public FireArmRoundType RoundType;
+
+        private FireArmRoundType _origRoundType;
+        private FireArmMagazineType _origMagType;
 
         [Header("MagazineType Modification")]
         public bool ChangesMagType = true;
@@ -27,18 +32,6 @@ namespace OpenScripts2
         public FVRFireArm TemporaryFirearm;
         public Transform MagMountPos;
         public Transform MagEjectPos;
-
-        [Header("Recoil Manipulation")]
-        public FVRFireArmRecoilProfile RecoilProfile;
-        public FVRFireArmRecoilProfile RecoilProfileStocked;
-
-        [Header("Accuracy Manipulation")]
-        public FVRFireArmMechanicalAccuracyClass AccuracyClass;
-
-        [Header("Sound Manipulation")]
-        public AudioEvent Shots_Main;
-        public AudioEvent Shots_Suppressed;
-        public AudioEvent Shots_LowPressure;
 
         private Vector3 _relativeMagPos;
         private Quaternion _relativeMagRot;
@@ -52,97 +45,114 @@ namespace OpenScripts2
         private Vector3 _origMagEjectPos;
         private Quaternion _origMagEjectRot;
 
-        private FVRFireArm _fireArm = null;
+        [Header("Recoil Manipulation")]       
+        public FVRFireArmRecoilProfile RecoilProfile;
+        public FVRFireArmRecoilProfile RecoilProfileStocked;
 
-        private FireArmRoundType _origRoundType;
-        private FireArmMagazineType _origMagType;
+        public bool UsesRecoilMultiplierInstead = false;
+        public float RecoilMultiplier = 1f;
 
         private FVRFireArmRecoilProfile _origRecoilProfile;
         private FVRFireArmRecoilProfile _origRecoilProfileStocked;
 
+        [Header("Accuracy Manipulation")]
+        public FVRFireArmMechanicalAccuracyClass AccuracyClass;
+
         private FVRFireArmMechanicalAccuracyClass _origAccuracyClass;
+
+        [Header("Sound Manipulation")]
+        public AudioEvent Shots_Main;
+        public AudioEvent Shots_Suppressed;
+        public AudioEvent Shots_LowPressure;
 
         private AudioEvent _orig_Shots_Main;
         private AudioEvent _orig_Shots_Suppressed;
         private AudioEvent _orig_Shots_LowPressure;
+
+        [Header("Round Power")]
+        public bool ChangesChamberVelocityMultiplier = false;
+        public float ChamberVelocityMultiplierOverride = 0f;
+
+        private float _origChamberVelocityMultiplier;
 
         public void Update()
         {
             if (Attachment.curMount != null && _fireArm == null)
             {
                 _fireArm = Attachment.curMount.GetRootMount().MyObject as FVRFireArm;
-
-                if (ChangesMagType)
+                if (_fireArm != null)
                 {
-                    _origMagType = _fireArm.MagazineType;
-                    if (MagMountPos != null)
-                    {
-                        CalculateRelativeMagMountPos(_fireArm);
-                        _origMagPos = _fireArm.MagazineMountPos.localPosition;
-                        _origMagRot = _fireArm.MagazineMountPos.localRotation;
+                    List<FVRFireArmChamber> chambers = _fireArm.GetChambers();
 
-                        _fireArm.MagazineMountPos.localPosition = _relativeMagPos;
-                        _fireArm.MagazineMountPos.localRotation = _relativeMagRot;
-                    }
-                    if (MagEjectPos != null)
+                    if (ChangesMagType)
                     {
-                        CalculateRelativeMagEjectPos(_fireArm);
-                        _origMagEjectPos = _fireArm.MagazineEjectPos.localPosition;
-                        _origMagEjectRot = _fireArm.MagazineEjectPos.localRotation;
+                        _origMagType = _fireArm.MagazineType;
+                        if (MagMountPos != null)
+                        {
+                            CalculateRelativeMagMountPos(_fireArm);
+                            _origMagPos = _fireArm.MagazineMountPos.localPosition;
+                            _origMagRot = _fireArm.MagazineMountPos.localRotation;
 
-                        _fireArm.MagazineEjectPos.localPosition = _relativeMagEjectPos;
-                        _fireArm.MagazineEjectPos.localRotation = _relativeMagEjectRot;
+                            _fireArm.MagazineMountPos.localPosition = _relativeMagPos;
+                            _fireArm.MagazineMountPos.localRotation = _relativeMagRot;
+                        }
+                        if (MagEjectPos != null)
+                        {
+                            CalculateRelativeMagEjectPos(_fireArm);
+                            _origMagEjectPos = _fireArm.MagazineEjectPos.localPosition;
+                            _origMagEjectRot = _fireArm.MagazineEjectPos.localRotation;
+
+                            _fireArm.MagazineEjectPos.localPosition = _relativeMagEjectPos;
+                            _fireArm.MagazineEjectPos.localRotation = _relativeMagEjectRot;
+                        }
+                        _fireArm.MagazineType = MagType;
                     }
-                    _fireArm.MagazineType = MagType;
+                    if (ChangesCaliber)
+                    {
+                        _origRoundType = _fireArm.RoundType;
+
+                        _fireArm.RoundType = RoundType;
+                        chambers.ForEach(c => c.RoundType = RoundType);
+                    }
+
+                    _origRecoilProfile = _fireArm.RecoilProfile;
+                    _origRecoilProfileStocked = _fireArm.RecoilProfileStocked;
+
+                    _origAccuracyClass = _fireArm.AccuracyClass;
+
+                    _orig_Shots_Main = _fireArm.AudioClipSet.Shots_Main;
+                    _orig_Shots_Suppressed = _fireArm.AudioClipSet.Shots_Suppressed;
+                    _orig_Shots_LowPressure = _fireArm.AudioClipSet.Shots_LowPressure;
+
+                    if (!UsesRecoilMultiplierInstead)
+                    {
+                        if (RecoilProfile != null) _fireArm.RecoilProfile = RecoilProfile;
+                        if (RecoilProfileStocked != null) _fireArm.RecoilProfileStocked = RecoilProfileStocked;
+                    }
+                    else
+                    {
+                        _fireArm.RecoilProfile = CopyAndAdjustRecoilProfile(_fireArm.RecoilProfile, RecoilMultiplier);
+                        if (_fireArm.RecoilProfileStocked != null) _fireArm.RecoilProfileStocked = CopyAndAdjustRecoilProfile(_fireArm.RecoilProfileStocked, RecoilMultiplier);
+                    }
+
+                    if (AccuracyClass != 0) _fireArm.AccuracyClass = AccuracyClass;
+
+                    if (Shots_Main.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Main = Shots_Main;
+                    if (Shots_Suppressed.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Suppressed = Shots_Suppressed;
+                    if (Shots_LowPressure.Clips.Count != 0) _fireArm.AudioClipSet.Shots_LowPressure = Shots_LowPressure;
+
+                    if (ChangesChamberVelocityMultiplier)
+                    {
+                        _origChamberVelocityMultiplier = chambers[0].ChamberVelocityMultiplier;
+
+                        chambers.ForEach(c => c.ChamberVelocityMultiplier = ChamberVelocityMultiplierOverride);
+                    }
                 }
-                if (ChangesCaliber)
-                {
-                    _origRoundType = _fireArm.RoundType;
-
-                    _fireArm.RoundType = RoundType;
-
-                    switch (_fireArm)
-                    {
-                        case ClosedBoltWeapon w:
-                            w.Chamber.RoundType = RoundType;
-                            break;
-                        case OpenBoltReceiver w:
-                            w.Chamber.RoundType = RoundType;
-                            break;
-                        case Handgun w:
-                            w.Chamber.RoundType = RoundType;
-                            break;
-                        case BoltActionRifle w:
-                            w.Chamber.RoundType = RoundType;
-                            break;
-                        case TubeFedShotgun w:
-                            w.Chamber.RoundType = RoundType;
-                            break;
-                        default:
-                            LogWarning($"ModifyWeaponCartrideAndMagazineAttachment: FireArm type \"{_fireArm.GetType()}\" not supported!");
-                            break;
-                    }
-                }
-
-                _origRecoilProfile = _fireArm.RecoilProfile;
-                _origRecoilProfileStocked = _fireArm.RecoilProfileStocked;
-
-                _origAccuracyClass = _fireArm.AccuracyClass;
-
-                _orig_Shots_Main = _fireArm.AudioClipSet.Shots_Main;
-                _orig_Shots_Suppressed = _fireArm.AudioClipSet.Shots_Suppressed;
-                _orig_Shots_LowPressure = _fireArm.AudioClipSet.Shots_LowPressure;
-
-                if (RecoilProfile != null) _fireArm.RecoilProfile = RecoilProfile;
-                if (RecoilProfileStocked != null) _fireArm.RecoilProfileStocked = RecoilProfileStocked;
-                if (AccuracyClass != 0) _fireArm.AccuracyClass = AccuracyClass;
-
-                if (Shots_Main.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Main = Shots_Main;
-                if (Shots_Suppressed.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Suppressed = Shots_Suppressed;
-                if (Shots_LowPressure.Clips.Count != 0) _fireArm.AudioClipSet.Shots_LowPressure = Shots_LowPressure;
             }
             else if (Attachment.curMount == null && _fireArm != null)
             {
+                List<FVRFireArmChamber> chambers = _fireArm.GetChambers();
+
                 if (ChangesMagType)
                 {
                     _fireArm.MagazineType = _origMagType;
@@ -159,27 +169,7 @@ namespace OpenScripts2
                 {
                     _fireArm.RoundType = _origRoundType;
 
-                    switch (_fireArm)
-                    {
-                        case ClosedBoltWeapon w:
-                            w.Chamber.RoundType = _origRoundType;
-                            break;
-                        case OpenBoltReceiver w:
-                            w.Chamber.RoundType = _origRoundType;
-                            break;
-                        case Handgun w:
-                            w.Chamber.RoundType = _origRoundType;
-                            break;
-                        case BoltActionRifle w:
-                            w.Chamber.RoundType = _origRoundType;
-                            break;
-                        case TubeFedShotgun w:
-                            w.Chamber.RoundType = _origRoundType;
-                            break;
-                        default:
-                            LogWarning($"ModifyWeaponCartrideAndMagazineAttachment: FireArm type \"{_fireArm.GetType()}\" not supported!");
-                            break;
-                    }
+                    chambers.ForEach(c => c.RoundType = _origRoundType);
                 }
 
                 _fireArm.RecoilProfile = _origRecoilProfile;
@@ -191,21 +181,14 @@ namespace OpenScripts2
                 _fireArm.AudioClipSet.Shots_Suppressed = _orig_Shots_Suppressed;
                 _fireArm.AudioClipSet.Shots_LowPressure = _orig_Shots_LowPressure;
 
+                if (ChangesChamberVelocityMultiplier)
+                {
+                    chambers.ForEach(c => c.ChamberVelocityMultiplier = _origChamberVelocityMultiplier);
+                }
+
                 _fireArm = null;
             }
         }
-
-        /*[ContextMenu("Calculate relative magazine transforms")]
-        public void CalculateRelativeMagPos()
-        {
-            RelativeMagPos = TemporaryFirearm.transform.InverseTransformPoint(MagMountPos.position);
-            //RelativeMagRot = Quaternion.Inverse(TemporaryFirearm.transform.rotation) * MagMountPos.rotation;
-            RelativeMagRot = TemporaryFirearm.transform.InverseTransformRotation(MagMountPos.rotation);
-
-            RelativeMagEjectPos = TemporaryFirearm.transform.InverseTransformPoint(MagEjectPos.position);
-            //RelativeMagEjectRot = Quaternion.Inverse(TemporaryFirearm.transform.rotation) * MagEjectPos.rotation;
-            RelativeMagEjectRot = TemporaryFirearm.transform.InverseTransformRotation(MagEjectPos.rotation);
-        }*/
 
         public void CalculateRelativeMagMountPos(FVRFireArm fireArm)
         {

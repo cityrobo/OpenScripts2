@@ -6,6 +6,9 @@ using System.Text;
 using BepInEx;
 using UnityEngine;
 using FistVR;
+using UnityEditor;
+using MonoMod.Cil;
+using Mono.Cecil.Cil;
 
 namespace OpenScripts2
 {
@@ -34,6 +37,50 @@ namespace OpenScripts2
         }
 
         public static float GetFloatFromAxis(Vector3 vector, Axis axis) { return vector[(int)axis]; }
+
+        public static Vector3 GetVectorFromAxis(Axis axis) => axis switch
+        {
+            Axis.X => Vector3.right,
+            Axis.Y => Vector3.up,
+            Axis.Z => Vector3.forward,
+            _ => Vector3.zero,
+        };
+
+        public static bool TouchpadDirDown(FVRViveHand hand, Vector2 dir)
+        {
+            return hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, dir) < 45f;
+        }
+        public static bool TouchpadDirPressed(FVRViveHand hand, Vector2 dir)
+        {
+            return hand.Input.TouchpadPressed && Vector2.Angle(hand.Input.TouchpadAxes, dir) < 45f;
+        }
+
+        public static Quaternion GetTargetQuaternionFromAxis(float value, Axis axis)
+        {
+            return Quaternion.AngleAxis(value, GetVectorFromAxis(axis));
+        }
+
+        public static FVRViveHand GetLeftHand()
+        {
+            FVRViveHand[] FVRViveHands = GM.CurrentMovementManager.Hands;
+            if (FVRViveHands[0].IsThisTheRightHand) return FVRViveHands[1];
+            else return FVRViveHands[0];
+        }
+        public static FVRViveHand GetRightHand()
+        {
+            FVRViveHand[] FVRViveHands = GM.CurrentMovementManager.Hands;
+            if (FVRViveHands[0].IsThisTheRightHand) return FVRViveHands[0];
+            else return FVRViveHands[1];
+        }
+
+        public static Vector3 GetClosestValidPointUnclamped(Vector3 vA, Vector3 vB, Vector3 vPoint)
+        {
+            Vector3 rhs = vPoint - vA;
+            Vector3 normalized = (vB - vA).normalized;
+            float num2 = Vector3.Dot(normalized, rhs);
+            Vector3 b = normalized * num2;
+            return vA + b;
+        }
 
         public static FVRFireArmChamber GetCurrentChamber(FVRFireArm fireArm)
         {
@@ -93,51 +140,31 @@ namespace OpenScripts2
             }
         }
 
-        public static Vector3 GetVectorFromAxis(Axis axis) => axis switch
+        public static FVRFireArmRecoilProfile CopyAndAdjustRecoilProfile(FVRFireArmRecoilProfile orig, float recoilFactor)
         {
-            Axis.X => Vector3.right,
-            Axis.Y => Vector3.up,
-            Axis.Z => Vector3.forward,
-            _ => Vector3.zero,
-        };
+            FVRFireArmRecoilProfile copy = Instantiate(orig);
+            copy.VerticalRotPerShot *= recoilFactor;
+            copy.MaxVerticalRot_Bipodded *= recoilFactor;
+            copy.MaxVerticalRot *= recoilFactor;
+            copy.VerticalRotRecovery /= recoilFactor;
 
-        public static bool TouchpadDirDown(FVRViveHand hand, Vector2 dir)
-        {
-            return hand.Input.TouchpadDown && Vector2.Angle(hand.Input.TouchpadAxes, dir) < 45f;
-        }
-        public static bool TouchpadDirPressed(FVRViveHand hand, Vector2 dir)
-        {
-            return hand.Input.TouchpadPressed && Vector2.Angle(hand.Input.TouchpadAxes, dir) < 45f;
-        }
+            copy.HorizontalRotPerShot *= recoilFactor;
+            copy.MaxHorizontalRot_Bipodded *= recoilFactor;
+            copy.MaxHorizontalRot *= recoilFactor;
+            copy.HorizontalRotRecovery /= recoilFactor;
+            
+            copy.ZLinearPerShot *= recoilFactor;
+            copy.ZLinearMax *= recoilFactor;
+            copy.ZLinearRecovery /= recoilFactor;
 
-        public static Quaternion GetTargetQuaternionFromAxis(float value, Axis axis)
-        {
-            return Quaternion.AngleAxis(value, GetVectorFromAxis(axis));
-        }
+            copy.XYLinearPerShot *= recoilFactor;
+            copy.XYLinearMax *= recoilFactor;
+            copy.ZLinearRecovery /= recoilFactor;
 
-        public static FVRViveHand GetLeftHand()
-        {
-            FVRViveHand[] FVRViveHands = GM.CurrentMovementManager.Hands;
-            if (FVRViveHands[0].IsThisTheRightHand) return FVRViveHands[1];
-            else return FVRViveHands[0];
-        }
-        public static FVRViveHand GetRightHand()
-        {
-            FVRViveHand[] FVRViveHands = GM.CurrentMovementManager.Hands;
-            if (FVRViveHands[0].IsThisTheRightHand) return FVRViveHands[0];
-            else return FVRViveHands[1];
+            return copy;
         }
 
-        public static Vector3 GetClosestValidPointUnclamped(Vector3 vA, Vector3 vB, Vector3 vPoint)
-        {
-            Vector3 rhs = vPoint - vA;
-            Vector3 normalized = (vB - vA).normalized;
-            float num2 = Vector3.Dot(normalized, rhs);
-            Vector3 b = normalized * num2;
-            return vA + b;
-        }
-
-
+        // Methods for getting a reference to call the base method of something for patching virtual methods.
         public static Action GetBaseAction(Type BaseClass, string MethodName, MonoBehaviour self)
         {
             var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
@@ -152,8 +179,6 @@ namespace OpenScripts2
             return (Action<T>)Activator.CreateInstance(typeof(Action<T>), self, pointer);
         }
 
-
-
         public static Func<T> GetBaseFunc<T>(Type BaseClass, string MethodName, MonoBehaviour self)
         {
             var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
@@ -161,7 +186,7 @@ namespace OpenScripts2
             return (Func<T>)Activator.CreateInstance(typeof(Func<T>), self, pointer);
         }
 
-
+        // Logging
         public void Log(string message)
         {
             OpenScripts2_BepInExPlugin.Instance.Logging.LogMessage($"{this}: {message}");
@@ -178,6 +203,30 @@ namespace OpenScripts2
         {
             OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{this}: {e.Message}");
         }
+
+        public static void ProjectileFired(FVRFireArm fireArm, BallisticProjectile projectile)
+        {
+            ProjectileFiredEvent?.Invoke( fireArm, projectile );
+        }
+
+        public static event ProjectileFired ProjectileFiredEvent;
+
+#if !DEBUG
+        public static void FVRFireArm_Fire_ProjectileFiredEventHook(ILContext il)
+        {
+            ILCursor c = new(il);
+
+            c.GotoNext(
+                MoveType.After,
+                i => i.MatchCallvirt<BallisticProjectile>(nameof(BallisticProjectile.Fire))
+            );
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc, 8);
+            // Same as "c.Emit(OpCodes.Call, typeof(OpenScripts2_BasePlugin).GetMethod(nameof(OpenScripts2_BasePlugin.ProjectileFired), new Type[] { typeof(FVRFireArm), typeof(BallisticProjectile) }));"
+            c.EmitDelegate(ProjectileFired);
+        }
+#endif
     }
 
     public static class ETouchpadDir_Extension
@@ -191,4 +240,6 @@ namespace OpenScripts2
             _ => Vector2.zero,
         };
     }
+
+    public delegate void ProjectileFired(FVRFireArm fireArm, BallisticProjectile projectile);
 }
