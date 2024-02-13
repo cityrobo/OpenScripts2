@@ -34,14 +34,14 @@ namespace FistVR
         public override void UpdateInteraction(FVRViveHand hand)
         {
             base.UpdateInteraction(hand);
-            Vector3 target = Vector3.ProjectOnPlane(m_hand.Input.Pos - Handle.transform.position, ReferenceVector.up);
-            Vector3 v = Vector3.RotateTowards(ReferenceVector.forward, target, 0.017453292f * RotLimit, 1f);
-            float num = AngleSigned(ReferenceVector.forward, v, ReferenceVector.up);
-            m_currentHandleZ = num;
+            Vector3 target = Vector3.ProjectOnPlane(hand.Input.Pos - Handle.transform.position, ReferenceVector.up);
+            Vector3 v = Vector3.RotateTowards(ReferenceVector.forward, target, Mathf.Deg2Rad * RotLimit, 1f);
+            float signedAngle = AngleSigned(ReferenceVector.forward, v, ReferenceVector.up);
+            m_currentHandleZ = signedAngle;
             Vector3 forward = Quaternion.AngleAxis(m_currentHandleZ, ReferenceVector.up) * ReferenceVector.forward;
             Handle.rotation = Quaternion.LookRotation(forward, ReferenceVector.up);
-            float l = Mathf.InverseLerp(RotLimit, -RotLimit, num);
-            Bolt.UpdateHandleHeldState(true,l);
+            float handleInverseLerp = Mathf.InverseLerp(RotLimit, -RotLimit, signedAngle);
+            Bolt.UpdateHandleHeldState(true, handleInverseLerp);
         }
 
         public override void EndInteraction(FVRViveHand hand)
@@ -53,12 +53,12 @@ namespace FistVR
         public override void FVRUpdate()
         {
             base.FVRUpdate();
-            float num = Mathf.InverseLerp(RotLimit, -RotLimit, m_currentHandleZ);
-            if (num < 0.01f)
+            float handleInverseLerp = Mathf.InverseLerp(RotLimit, -RotLimit, m_currentHandleZ);
+            if (handleInverseLerp < 0.01f)
             {
                 m_curPos = Placement.Forward;
             }
-            else if (num > 0.99f)
+            else if (handleInverseLerp > 0.99f)
             {
                 m_curPos = Placement.Rearward;
             }
@@ -85,7 +85,7 @@ namespace FistVR
 
         public float AngleSigned(Vector3 v1, Vector3 v2, Vector3 n)
         {
-            return Mathf.Atan2(Vector3.Dot(n, Vector3.Cross(v1, v2)), Vector3.Dot(v1, v2)) * 57.29578f;
+            return Mathf.Atan2(Vector3.Dot(n, Vector3.Cross(v1, v2)), Vector3.Dot(v1, v2)) * Mathf.Rad2Deg;
         }
     }
 }

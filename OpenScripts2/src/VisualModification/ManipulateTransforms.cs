@@ -31,9 +31,13 @@ namespace OpenScripts2
             public Transform ObservedTransform;
             public TransformType ObservedTransformParameter;
             public Axis AxisToObserve;
+            
             public float LowerObservationLimit;
             public float UpperObservationLimit;
             public TransformManipulationDefinition[] ManipulationDefinitions;
+            [Header("Required for rotation:")]
+            [Tooltip("Starting value needed for correct rotation tracking. This is the angle that the transform on that axis starts out on.")]
+            public float StartingAngle;
 
             private Quaternion _lastRot;
             private float _deltaRotFloat;
@@ -41,6 +45,7 @@ namespace OpenScripts2
 
             public void Initialize()
             {
+                _currentRotation = StartingAngle;
                 _lastRot = ObservedTransform.transform.localRotation;
             }
 

@@ -45,6 +45,7 @@ namespace OpenScripts2
         [Tooltip("Object that will be turned on when a target has been locked on.")]
 		public GameObject TargetLockedIndicator;
         public AudioEvent TargetLockedSounds;
+        public Transform SensorPosition;
 
         [HideInInspector]
 		public bool WasManuallyAdded = false;
@@ -303,8 +304,10 @@ namespace OpenScripts2
 		private SosigLink FindTarget()
         {
 			float radius = EngageRange * Mathf.Tan(0.5f * EngageAngle * Mathf.Deg2Rad);
-			//Collider[] colliderArray = Physics.OverlapCapsule(FireArm.CurrentMuzzle.position, FireArm.CurrentMuzzle.position + _origMuzzlePos.transform.forward * EngageRange, radius, LatchingMask);
-			Collider[] colliderArray = Physics.OverlapCapsule(FireArm.transform.position, FireArm.transform.position + FireArm.transform.forward * EngageRange, radius, LatchingMask);
+            //Collider[] colliderArray = Physics.OverlapCapsule(FireArm.CurrentMuzzle.position, FireArm.CurrentMuzzle.position + _origMuzzlePos.transform.forward * EngageRange, radius, LatchingMask);
+            Transform sensorOrigin = SensorPosition ?? FireArm.transform;
+
+            Collider[] colliderArray = Physics.OverlapCapsule(sensorOrigin.position, sensorOrigin.position + sensorOrigin.forward * EngageRange, radius, LatchingMask);
 			List<Rigidbody> rigidbodyList = new List<Rigidbody>();
 			for (int i = 0; i < colliderArray.Length; i++)
 			{
@@ -324,15 +327,17 @@ namespace OpenScripts2
 				{
 					if (true || sosigLinkComponent.S.E.IFFCode == 1)
 					{
-						Vector3 from = rigidbodyList[j].transform.position - FireArm.CurrentMuzzle.position;
+                        sensorOrigin = SensorPosition ?? FireArm.CurrentMuzzle;
+
+                        Vector3 from = rigidbodyList[j].transform.position - sensorOrigin.position;
                         //float angle = Vector3.Angle(from, _origMuzzlePos.transform.forward);
-                        float angle = Vector3.Angle(from, FireArm.transform.forward);
+                        float angle = Vector3.Angle(from, sensorOrigin.forward);
 
                         Sosig s = sosigLinkComponent.S;
 						if (angle <= PrecisionAngle) tempSosigLink = s.Links[0];
 						else tempSosigLink = s.Links[1];
 
-						if (angle < minAngle && !Physics.Linecast(FireArm.CurrentMuzzle.position, tempSosigLink.transform.position, BlockingMask, QueryTriggerInteraction.Ignore))
+						if (angle < minAngle && !Physics.Linecast(sensorOrigin.position, tempSosigLink.transform.position, BlockingMask, QueryTriggerInteraction.Ignore))
 						{
 							targetSosigLink = tempSosigLink;
 							minAngle = angle;

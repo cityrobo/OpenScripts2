@@ -32,15 +32,16 @@ namespace OpenScripts2
 
             Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         }
+
         public void Update()
         {
-            float pos;
-            if (!IsRotation) pos = Mathf.InverseLerp(Start, End, ObservedObject.transform.localPosition[(int)Direction]);
-            else GetRotPos(out pos);
+            float pos = !IsRotation ? GetPosValue() : GetRotValue();
             Animator.Play(AnimationNodeName, -1, pos);
         }
 
-        private void GetRotPos(out float pos)
+        private float GetPosValue() => Mathf.InverseLerp(Start, End, ObservedObject.transform.GetLocalPositionAxisValue(Direction));
+
+        private float GetRotValue()
         {
             _curRot = ObservedObject.transform.localRotation;
             _deltaRot = _curRot.Subtract(_lastRot);
@@ -50,7 +51,7 @@ namespace OpenScripts2
             _curAngle += _deltaAngle * axis.GetAxisValue(Direction);
             _lastRot = _curRot;
 
-            pos = Mathf.InverseLerp(Start, End, _curAngle);
+            return Mathf.InverseLerp(Start, End, _curAngle);
         }
     }
 }

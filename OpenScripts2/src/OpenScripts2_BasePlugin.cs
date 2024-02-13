@@ -204,12 +204,58 @@ namespace OpenScripts2
             OpenScripts2_BepInExPlugin.Instance.Logging.LogError($"{this}: {e.Message}");
         }
 
-        public static void ProjectileFired(FVRFireArm fireArm, BallisticProjectile projectile)
+        public static void ProjectileFired(FVRFireArm fireArm, ref BallisticProjectile projectile)
         {
-            ProjectileFiredEvent?.Invoke( fireArm, projectile );
+            ProjectileFiredEvent?.Invoke( fireArm, ref projectile );
         }
 
         public static event ProjectileFired ProjectileFiredEvent;
+
+        public static bool IsInEditor
+        {
+            get
+            {
+                if (s_inUnityEditor == null)
+                {
+                    try
+                    {
+                        s_unityEditorAssembly ??= Assembly.Load("UnityEditor");
+                        if (s_unityEditorAssembly != null)
+                        {
+                            s_inUnityEditor = true;
+                        }
+                        else
+                        {
+                            s_inUnityEditor = false;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        s_inUnityEditor = false;
+                    }
+                }
+                return s_inUnityEditor.Value;
+            }
+        }
+
+        public static bool IsInEditorPlayMode
+        {
+            get
+            {
+                if (!IsInEditor) return false;
+
+                if (s_isPlayingPropertyInfo == null)
+                {
+                    Type editorApplicationType = s_unityEditorAssembly.GetType("UnityEditor.EditorApplication");
+                    s_isPlayingPropertyInfo = editorApplicationType.GetProperty("isPlaying", BindingFlags.Static | BindingFlags.Public);
+                }
+                return (bool)s_isPlayingPropertyInfo.GetValue(null, null);
+            }
+        }
+
+        private static Assembly s_unityEditorAssembly;
+        private static PropertyInfo s_isPlayingPropertyInfo;
+        private static bool? s_inUnityEditor = null;
 
 #if !DEBUG
         public static void FVRFireArm_Fire_ProjectileFiredEventHook(ILContext il)
@@ -217,13 +263,17 @@ namespace OpenScripts2
             ILCursor c = new(il);
 
             c.GotoNext(
-                MoveType.After,
-                i => i.MatchCallvirt<BallisticProjectile>(nameof(BallisticProjectile.Fire))
+                MoveType.Before,
+                i => i.MatchLdloc(8),
+                i => i.MatchLdloc(8),
+                i => i.MatchLdfld<BallisticProjectile>(nameof(BallisticProjectile.MuzzleVelocityBase)),
+                i => i.MatchLdarg(1)
+                //i => i.MatchCallvirt<BallisticProjectile>(nameof(BallisticProjectile.Fire))
             );
 
             c.Emit(OpCodes.Ldarg_0);
-            c.Emit(OpCodes.Ldloc, 8);
-            // Same as "c.Emit(OpCodes.Call, typeof(OpenScripts2_BasePlugin).GetMethod(nameof(OpenScripts2_BasePlugin.ProjectileFired), new Type[] { typeof(FVRFireArm), typeof(BallisticProjectile) }));"
+            c.Emit(OpCodes.Ldloca, 8);
+            // Same as "c.Emit(OpCodes.Call, typeof(OpenScripts2_BasePlugin).GetMethod(nameof(OpenScripts2_BasePlugin.ProjectileFired), new Type[] { typeof(FVRFireArm), typeof(BallisticProjectile&) }));"
             c.EmitDelegate(ProjectileFired);
         }
 #endif
@@ -241,5 +291,5 @@ namespace OpenScripts2
         };
     }
 
-    public delegate void ProjectileFired(FVRFireArm fireArm, BallisticProjectile projectile);
+    public delegate void ProjectileFired(FVRFireArm fireArm, ref BallisticProjectile projectile);
 }

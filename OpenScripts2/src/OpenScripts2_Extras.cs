@@ -6,76 +6,76 @@ using System.Text;
 using UnityEngine;
 using OpenScripts2;
 using HarmonyLib;
-using UnityEditor;
-using Valve.Newtonsoft.Json.Linq;
 
 namespace OpenScripts2
 {
-	public static class UniversalCopy
+    public static class UniversalCopy
     {
         public static T CopyComponent<T>(T original, GameObject destination) where T : Component
         {
-            System.Type type = original.GetType();
+            destination.SetActive(false);
+            Type type = original.GetType();
             Component copy = destination.AddComponent(type);
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-            System.Reflection.FieldInfo[] fields = type.GetFields(flags);
-            foreach (System.Reflection.FieldInfo field in fields)
+            FieldInfo[] fields = type.GetFields(flags);
+            foreach (FieldInfo field in fields)
             {
                 field.SetValue(copy, field.GetValue(original));
             }
+            destination.SetActive(true);
             return copy as T;
         }
 
         public static T CopyComponent<T>(this Component target, T reference) where T : Component
-		{
-			Type type = reference.GetType();
-			//if (type != reference.GetType()) return null; // type mis-match
-			BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-			PropertyInfo[] pinfos = type.GetProperties(flags);
-			foreach (var pinfo in pinfos)
-			{
-				if (pinfo.CanWrite)
-				{
-					try
-					{
-						pinfo.SetValue(target, pinfo.GetValue(reference, null), null);
-					}
-					catch { } // In case of NotImplementedException being thrown. For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
-				}
-			}
-			FieldInfo[] finfos = type.GetFields(flags);
-			foreach (var finfo in finfos)
-			{
-				finfo.SetValue(target, finfo.GetValue(reference));
-			}
-			return target as T;
-		}
+        {
+            Type type = reference.GetType();
+            //if (type != reference.GetType()) return null; // type mis-match
+            BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+            PropertyInfo[] pinfos = type.GetProperties(flags);
+            foreach (var pinfo in pinfos)
+            {
+                if (pinfo.CanWrite)
+                {
+                    try
+                    {
+                        pinfo.SetValue(target, pinfo.GetValue(reference, null), null);
+                    }
+                    catch { } // In case of NotImplementedException being thrown. For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
+                }
+            }
+            FieldInfo[] finfos = type.GetFields(flags);
+            foreach (var finfo in finfos)
+            {
+                finfo.SetValue(target, finfo.GetValue(reference));
+            }
+            return target as T;
+        }
 
-		public static T CopyObject<T>(this UnityEngine.Object target, T reference) where T : UnityEngine.Object
-		{
-			Type type = reference.GetType();
-			//if (type != reference.GetType()) return null; // type mis-match
-			BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-			PropertyInfo[] pinfos = type.GetProperties(flags);
-			foreach (var pinfo in pinfos)
-			{
-				if (pinfo.CanWrite)
-				{
-					try
-					{
-						pinfo.SetValue(target, pinfo.GetValue(reference, null), null);
-					}
-					catch { } // In case of NotImplementedException being thrown. For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
-				}
-			}
-			FieldInfo[] finfos = type.GetFields(flags);
-			foreach (var finfo in finfos)
-			{
-				finfo.SetValue(target, finfo.GetValue(reference));
-			}
-			return target as T;
-		}
-	}
+        public static T CopyObject<T>(this UnityEngine.Object target, T reference) where T : UnityEngine.Object
+        {
+            Type type = reference.GetType();
+            //if (type != reference.GetType()) return null; // type mis-match
+            BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+            PropertyInfo[] pinfos = type.GetProperties(flags);
+            foreach (var pinfo in pinfos)
+            {
+                if (pinfo.CanWrite)
+                {
+                    try
+                    {
+                        pinfo.SetValue(target, pinfo.GetValue(reference, null), null);
+                    }
+                    catch { } // In case of NotImplementedException being thrown. For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
+                }
+            }
+            FieldInfo[] finfos = type.GetFields(flags);
+            foreach (var finfo in finfos)
+            {
+                finfo.SetValue(target, finfo.GetValue(reference));
+            }
+            return target as T;
+        }
+    }
 
     public static class MiscUtilities
     {

@@ -26,22 +26,19 @@ namespace OpenScripts2
         private static readonly Dictionary<OpenBoltReceiver, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyOpenBoltReceivers = new();
         private static readonly Dictionary<BoltActionRifle, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyBoltActionRifles = new();
 
-        static SimplifiedManipulateFireArmRoundProxy()
-        {
-#if !DEBUG
-            On.FistVR.ClosedBoltWeapon.UpdateDisplayRoundPositions += ClosedBoltWeapon_UpdateDisplayRoundPositions;
-            On.FistVR.Handgun.UpdateDisplayRoundPositions += Handgun_UpdateDisplayRoundPositions;
-            On.FistVR.TubeFedShotgun.UpdateDisplayRoundPositions += TubeFedShotgun_UpdateDisplayRoundPositions;
-            On.FistVR.OpenBoltReceiver.UpdateDisplayRoundPositions += OpenBoltReceiver_UpdateDisplayRoundPositions;
-            On.FistVR.BoltActionRifle.UpdateBolt += BoltActionRifle_UpdateBolt;
-#endif
-        }
+        private float _lastBoltZ;
+
         public void Awake()
         {
             switch (FireArm)
             {
                 case ClosedBoltWeapon w:
                     _existingManipulateFireArmRoundProxyClosedBolts.Add(w, this);
+
+                    if (BoltRoundChamberingStartPos == null) BoltRoundChamberingStartPos = w.Bolt.Point_Bolt_LockPoint;
+                    if (BoltRoundExtractionEndPos == null) BoltRoundExtractionEndPos = w.Bolt.Point_Bolt_LockPoint;
+
+                    _lastBoltZ = w.Bolt.transform.localPosition.z;
                     break;
                 case Handgun w:
                     _existingManipulateFireArmRoundProxyHandGuns.Add(w, this);
@@ -56,6 +53,47 @@ namespace OpenScripts2
                     _existingManipulateFireArmRoundProxyBoltActionRifles.Add(w, this);
                     break;
             }
+        }
+
+        public void Update()
+        {
+            switch (FireArm)
+            {
+                case ClosedBoltWeapon w:
+                    ClosedBoltUpdate(w.Bolt);
+                    break;
+                case Handgun w:
+                    break;
+                case TubeFedShotgun w:
+                    break;
+                case OpenBoltReceiver w:
+                    break;
+                case BoltActionRifle w:
+                    break;
+            }
+        }
+
+        private void ClosedBoltUpdate(ClosedBolt closedBolt)
+        {
+            if (_lastBoltZ >= closedBolt.transform.parent.InverseTransformPoint(BoltRoundExtractionEndPos.position).z && closedBolt.m_boltZ_current < closedBolt.transform.parent.InverseTransformPoint(BoltRoundExtractionEndPos.position).z)
+            {
+                BoltEvent_EjectRound(closedBolt);
+            }
+            if (!closedBolt.Weapon.Chamber.IsFull && _lastBoltZ <= closedBolt.transform.parent.InverseTransformPoint(BoltRoundChamberingStartPos.position).z && closedBolt.m_boltZ_current > closedBolt.transform.parent.InverseTransformPoint(BoltRoundChamberingStartPos.position).z)
+            {
+                BoltEvent_ExtractRoundFromMag(closedBolt);
+            }
+            _lastBoltZ = closedBolt.m_boltZ_current;
+        }
+
+        private void BoltEvent_ExtractRoundFromMag(ClosedBolt closedBolt)
+        {
+            closedBolt.Weapon.BeginChamberingRound();
+        }
+
+        private void BoltEvent_EjectRound(ClosedBolt closedBolt)
+        {
+            closedBolt.Weapon.EjectExtractedRound();            
         }
 
         public void OnDestroy()
@@ -79,7 +117,22 @@ namespace OpenScripts2
                     break;
             }
         }
+
+        #region Gun Patches
 #if !DEBUG
+        static SimplifiedManipulateFireArmRoundProxy()
+        {
+            On.FistVR.ClosedBoltWeapon.UpdateDisplayRoundPositions += ClosedBoltWeapon_UpdateDisplayRoundPositions;
+            On.FistVR.ClosedBolt.BoltEvent_ExtractRoundFromMag += ClosedBolt_BoltEvent_ExtractRoundFromMag;
+            On.FistVR.ClosedBolt.BoltEvent_EjectRound += ClosedBolt_BoltEvent_EjectRound;
+
+            On.FistVR.Handgun.UpdateDisplayRoundPositions += Handgun_UpdateDisplayRoundPositions;
+            On.FistVR.TubeFedShotgun.UpdateDisplayRoundPositions += TubeFedShotgun_UpdateDisplayRoundPositions;
+            On.FistVR.OpenBoltReceiver.UpdateDisplayRoundPositions += OpenBoltReceiver_UpdateDisplayRoundPositions;
+            On.FistVR.BoltActionRifle.UpdateBolt += BoltActionRifle_UpdateBolt;
+        }
+
+        #region Closed Bolt Patches
         private static void ClosedBoltWeapon_UpdateDisplayRoundPositions(On.FistVR.ClosedBoltWeapon.orig_UpdateDisplayRoundPositions orig, ClosedBoltWeapon self)
         {
             if (_existingManipulateFireArmRoundProxyClosedBolts.TryGetValue(self, out SimplifiedManipulateFireArmRoundProxy manipulateFireArmRoundProxy))
@@ -120,6 +173,30 @@ namespace OpenScripts2
             }
             else orig(self);
         }
+
+        private static void ClosedBolt_BoltEvent_ExtractRoundFromMag(On.FistVR.ClosedBolt.orig_BoltEvent_ExtractRoundFromMag orig, ClosedBolt self)
+        {
+            if (_existingManipulateFireArmRoundProxyClosedBolts.ContainsKey(self.Weapon))
+            {
+
+            }
+            else orig(self);
+        }
+
+        private static void ClosedBolt_BoltEvent_EjectRound(On.FistVR.ClosedBolt.orig_BoltEvent_EjectRound orig, ClosedBolt self)
+        {
+            if (_existingManipulateFireArmRoundProxyClosedBolts.ContainsKey(self.Weapon))
+            {
+                bool flag = false;
+                if (self.IsHeld || self.m_isHandleHeld)
+                {
+                    flag = true;
+                }
+                self.Weapon.CockHammer(flag);
+            }
+            else orig(self);
+        }
+        #endregion
 
         private static void Handgun_UpdateDisplayRoundPositions(On.FistVR.Handgun.orig_UpdateDisplayRoundPositions orig, Handgun self)
         {
@@ -286,5 +363,6 @@ namespace OpenScripts2
             return round;
         }
 #endif
+        #endregion
     }
 }

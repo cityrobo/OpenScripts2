@@ -13,7 +13,7 @@ namespace OpenScripts2
 		public bool AttachmentDone = false;
 		public void Start()
 		{
-			StartCoroutine("AttachToMount");
+			StartCoroutine(AttachToMount());
 		}
 
 		public IEnumerator AttachToMount()

@@ -15,7 +15,7 @@ namespace OpenScripts2
         public int CurrentSelectedReticle = 0;
         [Tooltip("All reticle textures. Default reticle is first entry.")]
         public Texture2D[] ReticleTextures;
-        [ColorUsage(true, true, float.MaxValue, float.MaxValue, 0f, 0f)]
+        [ColorUsage(true, true, 0f, float.MaxValue, 0f, float.MaxValue)]
         public Color[] ReticleColors;
         [Tooltip("Names of all reticles. Default reticle name is first entry.")]
         public string[] ReticleText;
@@ -327,14 +327,13 @@ namespace OpenScripts2
             if (LensCollider != null)
             {
                 // Right Eye Occlusion Test
-                float distance = Vector3.Distance(gameObject.transform.position, GM.CurrentPlayerBody.Head.position) + 0.2f;
-                Vector3 direction = _muzzlePos.position + transform.forward * ZeroDistances[CurrentZeroDistance] - _rightEye;
-                bool angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, transform.forward) < 45f;
+                float distanceHeadSight = Vector3.Distance(ReticleMesh.transform.position, GM.CurrentPlayerBody.Head.position) + 0.2f;
+                Vector3 direction = ReticleMesh.transform.position + ReticleMesh.transform.forward * ZeroDistances[CurrentZeroDistance] - _rightEye;
+                bool angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, ReticleMesh.transform.forward) < 45f;
                 if (angleGood)
                 {
-                    Ray ray = new Ray(_rightEye,direction);
-                    RaycastHit hit;
-                    if (LensCollider.Raycast(ray, out hit, distance))
+                    Ray ray = new(_rightEye, direction);
+                    if (LensCollider.Raycast(ray, out _, distanceHeadSight))
                     {
                         ReticleMesh.gameObject.SetActive(true);
                         scopeHit = true;
@@ -344,13 +343,12 @@ namespace OpenScripts2
                 if (!scopeHit)
                 {
                     // Left Eye Occlusion Test
-                    direction = _muzzlePos.position + transform.forward * ZeroDistances[CurrentZeroDistance] - _leftEyePosition;
-                    angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, transform.forward) < 45f;
+                    direction = ReticleMesh.transform.position + ReticleMesh.transform.forward * ZeroDistances[CurrentZeroDistance] - _leftEyePosition;
+                    angleGood = Vector3.Angle(GM.CurrentPlayerBody.Head.forward, ReticleMesh.transform.forward) < 45f;
                     if (angleGood)
                     {
-                        Ray ray = new Ray(_leftEyePosition, direction);
-                        RaycastHit hit;
-                        if (LensCollider.Raycast(ray, out hit, distance))
+                        Ray ray = new(_leftEyePosition, direction);
+                        if (LensCollider.Raycast(ray, out _, distanceHeadSight))
                         {
                             ReticleMesh.gameObject.SetActive(true);
                             scopeHit = true;

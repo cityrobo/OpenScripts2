@@ -10,7 +10,7 @@ using FistVR;
 
 namespace OpenScripts2
 {
-    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.7.0")]
+    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.8.0")]
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {
         // FirearmHeatingEffect Config Entries
@@ -24,10 +24,7 @@ namespace OpenScripts2
         // Advanced MagGrab Trigger Config Entries
         public static ConfigEntry<bool> AdvancedMagGrabSimpleMagRelease;
 
-        public BepInEx.Logging.ManualLogSource Logging
-        {
-            get {return Logger; }
-        }
+        public BepInEx.Logging.ManualLogSource Logging => Logger;
 
         public static OpenScripts2_BepInExPlugin Instance;
 

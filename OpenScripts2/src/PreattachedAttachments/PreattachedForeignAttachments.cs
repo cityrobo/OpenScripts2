@@ -10,22 +10,14 @@ namespace OpenScripts2
 	public class PreattachedForeignAttachments : OpenScripts2_BasePlugin
 	{
 		[Serializable]
-		public class ForeignAttachmentSet
-		{
-			public ForeignAttachmentSet(string primaryItemID, string backupID, Transform attachmentPoint)
-			{
-				PrimaryItemID = primaryItemID;
-				BackupItemID = backupID;
-				
-				AttachmentPoint = attachmentPoint;
-			}
-
-			public string PrimaryItemID;
+		public class ForeignAttachmentSet(string primaryItemID, string backupID, Transform attachmentPoint)
+        {
+            public string PrimaryItemID = primaryItemID;
 			[Tooltip("If your item fails to spawn, it will spawn the backup ID.")]
-			public string BackupItemID;
+			public string BackupItemID = backupID;
             [Header("These points are getting destroyed at the end. Do NOT put anthing important on them.")]
             [Tooltip("Position and Rotation to spawn the Attachment at.")]
-			public Transform AttachmentPoint;
+			public Transform AttachmentPoint = attachmentPoint;
 		}
 
 		public FVRFireArmAttachmentMount AttachmentMount;

@@ -24,8 +24,7 @@ namespace OpenScripts2
         }
         public void Update()
         {
-            float lerp;
-            lerp = Mathf.InverseLerp(ObservedObject_Start[(int)Direction], ObservedObject_End[(int)Direction], ObservedObject.localPosition[(int)Direction]);
+            float lerp = Mathf.InverseLerp(ObservedObject_Start.GetAxisValue(Direction), ObservedObject_End.GetAxisValue(Direction), ObservedObject.GetLocalPositionAxisValue(Direction));
             if (!Mathf.Approximately(lerp, _lastLerp)) skinnedMeshRenderer.SetBlendShapeWeight(BlendShapeIndex, lerp);
 
             _lastLerp = lerp;

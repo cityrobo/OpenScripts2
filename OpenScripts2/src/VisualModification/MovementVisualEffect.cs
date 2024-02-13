@@ -19,6 +19,7 @@ namespace OpenScripts2
         {
             _visualModifier = GetComponent<VisualModifier>();
         }
+
         public void Update()
         {
             _visualModifier.UpdateVisualEffects(ObjectToMonitor.GetObservationLerp());

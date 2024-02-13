@@ -69,6 +69,10 @@ namespace OpenScripts2
                         HookBreakActionWeapon();
                         _isHooked = true;
                         break;
+                    case Revolver w:
+                        HookRevolver();
+                        _isHooked = true;
+                        break;
                     default:
                         LogWarning($"Firearm type \"{FireArm.GetType()}\" not supported!");
                         break;
@@ -106,6 +110,10 @@ namespace OpenScripts2
                         break;
                     case BreakActionWeapon w:
                         UnhookBreakActionWeapon();
+                        _isHooked = false;
+                        break;
+                    case Revolver w:
+                        UnhookRevolver();
                         _isHooked = false;
                         break;
                     default:
@@ -385,6 +393,220 @@ namespace OpenScripts2
         }
         #endregion
 
+        #region Revolver Hooks and Coroutine
+        // BreakOpenShotgun Hooks and Coroutine
+        private void UnhookRevolver()
+        {
+            On.FistVR.Revolver.UpdateTriggerHammer -= Revolver_UpdateTriggerHammer;
+        }
+
+        private void HookRevolver()
+        {
+            On.FistVR.Revolver.UpdateTriggerHammer += Revolver_UpdateTriggerHammer;
+        }
+
+        private void Revolver_UpdateTriggerHammer(On.FistVR.Revolver.orig_UpdateTriggerHammer orig, Revolver self)
+        {
+            if (self == FireArm)
+            {
+                if (self.m_hasTriggeredUpSinceBegin && !self.m_isSpinning && !self.IsAltHeld && self.isCylinderArmLocked)
+                {
+                    self.m_tarTriggerFloat = self.m_hand.Input.TriggerFloat;
+                    self.m_tarRealTriggerFloat = self.m_hand.Input.TriggerFloat;
+                }
+                else
+                {
+                    self.m_tarTriggerFloat = 0f;
+                    self.m_tarRealTriggerFloat = 0f;
+                }
+                if (self.m_isHammerLocked)
+                {
+                    self.m_tarTriggerFloat += 0.8f;
+                    self.m_triggerCurrentRot = Mathf.Lerp(self.m_triggerForwardRot, self.m_triggerBackwardRot, self.m_curTriggerFloat);
+                }
+                else
+                {
+                    self.m_triggerCurrentRot = Mathf.Lerp(self.m_triggerForwardRot, self.m_triggerBackwardRot, self.m_curTriggerFloat);
+                }
+                self.m_curTriggerFloat = Mathf.MoveTowards(self.m_curTriggerFloat, self.m_tarTriggerFloat, Time.deltaTime * 14f);
+                self.m_curRealTriggerFloat = Mathf.MoveTowards(self.m_curRealTriggerFloat, self.m_tarRealTriggerFloat, Time.deltaTime * 14f);
+                if (Mathf.Abs(self.m_triggerCurrentRot - self.lastTriggerRot) > 0.01f)
+                {
+                    if (self.Trigger != null)
+                    {
+                        self.Trigger.localEulerAngles = new Vector3(self.m_triggerCurrentRot, 0f, 0f);
+                    }
+                    for (int i = 0; i < self.TPieces.Count; i++)
+                    {
+                        self.SetAnimatedComponent(self.TPieces[i].TPiece, Mathf.Lerp(self.TPieces[i].TRange.x, self.TPieces[i].TRange.y, self.m_curTriggerFloat), self.TPieces[i].TInterp, self.TPieces[i].TAxis);
+                    }
+                }
+                self.lastTriggerRot = self.m_triggerCurrentRot;
+                if (self.m_shouldRecock)
+                {
+                    self.m_shouldRecock = false;
+                    self.InitiateRecock();
+                }
+                if (self.CanFan && self.IsHeld && !self.m_isHammerLocked && self.m_recockingState == Revolver.RecockingState.Forward && self.m_hand.OtherHand != null)
+                {
+                    Vector3 velLinearWorld = self.m_hand.OtherHand.Input.VelLinearWorld;
+                    float num = Vector3.Distance(self.m_hand.OtherHand.PalmTransform.position, self.HammerFanDir.position);
+                    if (num < 0.15f && Vector3.Angle(velLinearWorld, self.HammerFanDir.forward) < 60f && velLinearWorld.magnitude > 1f)
+                    {
+                        self.InitiateRecock();
+                        self.PlayAudioEvent(FirearmAudioEventType.Prefire, 1f);
+                    }
+                }
+                if (!self.m_hasTriggerCycled || (!self.IsDoubleActionTrigger && !self.DoesFiringRecock))
+                {
+                    bool flag = false;
+                    if (self.m_recockingState != Revolver.RecockingState.Forward)
+                    {
+                        flag = true;
+                    }
+                    if (!flag && self.m_curTriggerFloat >= 0.95f && (self.m_isHammerLocked || self.IsDoubleActionTrigger) && !self.m_hand.Input.TouchpadPressed && self.m_isCylinderArmLocked)
+                    {
+                        int nextChamber = self.CurChamber + self.ChamberOffset + (self.IsCylinderRotClockwise ? 1 : -1);
+                        if (nextChamber >= self.Cylinder.numChambers)
+                        {
+                            nextChamber -= self.Cylinder.numChambers;
+                        }
+
+                        if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent))) StartCoroutine(DropHammerRevolverDelay(self));
+                        else if (self == FireArm && !_isCharging && StopsOnEmpty && (!self.Chambers[nextChamber].IsFull || self.Chambers[nextChamber].IsFull)) DropHammerRevolver(self);
+                        else if (self != FireArm) DropHammerRevolver(self);
+                    }
+                    else if ((self.m_curTriggerFloat <= 0.14f || !self.IsDoubleActionTrigger) && !self.m_isHammerLocked && self.CanManuallyCockHammer)
+                    {
+                        bool flag2 = false;
+                        if (self.DoesFiringRecock && self.m_recockingState != Revolver.RecockingState.Forward)
+                        {
+                            flag2 = true;
+                        }
+                        if (self.DoesTriggerBlockHammer && self.m_curTriggerFloat > 0.14f)
+                        {
+                            flag2 = true;
+                        }
+                        if (!self.IsAltHeld && !flag2)
+                        {
+                            if (self.m_hand.IsInStreamlinedMode)
+                            {
+                                if (self.m_hand.Input.AXButtonDown)
+                                {
+                                    self.m_isHammerLocked = true;
+                                    self.PlayAudioEvent(FirearmAudioEventType.Prefire, 1f);
+                                }
+                            }
+                            else if (self.m_hand.Input.TouchpadDown && Vector2.Angle(self.TouchPadAxes, Vector2.down) < 45f)
+                            {
+                                self.m_isHammerLocked = true;
+                                self.PlayAudioEvent(FirearmAudioEventType.Prefire, 1f);
+                            }
+                        }
+                    }
+                }
+                else if (self.m_hasTriggerCycled && self.m_curRealTriggerFloat <= 0.08f)
+                {
+                    self.m_hasTriggerCycled = false;
+                    self.PlayAudioEvent(FirearmAudioEventType.TriggerReset, 1f);
+                }
+                if (!self.isChiappaHammer)
+                {
+                    if (self.m_hasTriggerCycled || !self.IsDoubleActionTrigger)
+                    {
+                        if (self.m_isHammerLocked)
+                        {
+                            self.m_hammerCurrentRot = Mathf.Lerp(self.m_hammerCurrentRot, self.m_hammerBackwardRot, Time.deltaTime * 10f);
+                        }
+                        else
+                        {
+                            self.m_hammerCurrentRot = Mathf.Lerp(self.m_hammerCurrentRot, self.m_hammerForwardRot, Time.deltaTime * 30f);
+                        }
+                    }
+                    else if (self.m_isHammerLocked)
+                    {
+                        self.m_hammerCurrentRot = Mathf.Lerp(self.m_hammerCurrentRot, self.m_hammerBackwardRot, Time.deltaTime * 10f);
+                    }
+                    else
+                    {
+                        self.m_hammerCurrentRot = Mathf.Lerp(self.m_hammerForwardRot, self.m_hammerBackwardRot, self.m_curTriggerFloat);
+                    }
+                }
+                if (self.isChiappaHammer)
+                {
+                    bool cockChiappaHammer = false;
+                    if (self.m_hand.IsInStreamlinedMode && self.m_hand.Input.AXButtonPressed)
+                    {
+                        cockChiappaHammer = true;
+                    }
+                    else if (Vector2.Angle(self.m_hand.Input.TouchpadAxes, Vector2.down) < 45f && self.m_hand.Input.TouchpadPressed)
+                    {
+                        cockChiappaHammer = true;
+                    }
+                    if (self.m_curTriggerFloat <= 0.02f && !self.IsAltHeld && cockChiappaHammer)
+                    {
+                        self.m_hammerCurrentRot = Mathf.Lerp(self.m_hammerCurrentRot, self.m_hammerBackwardRot, Time.deltaTime * 15f);
+                    }
+                    else
+                    {
+                        self.m_hammerCurrentRot = Mathf.Lerp(self.m_hammerCurrentRot, self.m_hammerForwardRot, Time.deltaTime * 6f);
+                    }
+                }
+                if (self.Hammer != null)
+                {
+                    self.Hammer.localEulerAngles = new Vector3(self.m_hammerCurrentRot, 0f, 0f);
+                }
+            }
+            else orig(self);
+        }
+
+        private IEnumerator DropHammerRevolverDelay(Revolver self)
+        {
+            yield return DropHammer(self);
+
+            if (_timeCharged >= ChargeTime) DropHammerRevolver(self);
+            else SM.PlayGenericSound(ChargingAbortSounds, self.transform.position);
+
+            _timeCharged = 0f;
+        }
+
+        private void DropHammerRevolver(Revolver self)
+        {
+            self.m_hasTriggerCycled = true;
+            self.m_isHammerLocked = false;
+            if (self.IsCylinderRotClockwise)
+            {
+                self.CurChamber++;
+            }
+            else
+            {
+                self.CurChamber--;
+            }
+            self.m_curChamberLerp = 0f;
+            self.m_tarChamberLerp = 0f;
+            self.PlayAudioEvent(FirearmAudioEventType.HammerHit, 1f);
+            int nextChamber = self.CurChamber + self.ChamberOffset;
+            if (nextChamber >= self.Cylinder.numChambers)
+            {
+                nextChamber -= self.Cylinder.numChambers;
+            }
+            if (self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent)
+            {
+                self.Chambers[nextChamber].Fire();
+                self.Fire();
+                if (GM.CurrentSceneSettings.IsAmmoInfinite || GM.CurrentPlayerBody.IsInfiniteAmmo)
+                {
+                    self.Chambers[nextChamber].IsSpent = false;
+                    self.Chambers[nextChamber].UpdateProxyDisplay();
+                }
+                if (self.DoesFiringRecock)
+                {
+                    self.m_shouldRecock = true;
+                }
+            }
+        }
+        #endregion
+
         private IEnumerator DropHammer(FVRFireArm fireArm)
         {
             _isCharging = true;
@@ -423,6 +645,7 @@ namespace OpenScripts2
             BoltActionRifle w => fireArm.m_hand.Input.TriggerFloat < w.TriggerResetThreshold,
             BreakActionWeapon w => fireArm.m_hand.Input.TriggerFloat < 0.45f,
             LeverActionFirearm w => fireArm.m_hand.Input.TriggerUp,
+            Revolver w => fireArm.m_hand.Input.TriggerFloat < 0.95f,
             _ => false,
         };
 #endif

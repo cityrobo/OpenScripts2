@@ -11,6 +11,7 @@ namespace OpenScripts2
         private int _lastFireMode;
         private bool _lastSafetyState;
         private bool _magSafetyEngaged;
+
         public void Update()
         {
             switch (FireArm)

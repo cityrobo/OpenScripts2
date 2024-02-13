@@ -14,7 +14,7 @@ namespace OpenScripts2
 
 		public void Start()
 		{
-			StartCoroutine("AttachAllToMount");
+			StartCoroutine(AttachAllToMount());
 		}
 
 		public IEnumerator AttachAllToMount()
