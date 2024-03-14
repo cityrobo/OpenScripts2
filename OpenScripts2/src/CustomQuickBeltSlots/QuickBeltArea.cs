@@ -21,6 +21,8 @@ namespace OpenScripts2
         public bool UsesAdvancedSizeMode = false;
         [Tooltip("Capacity requirement for items of size Small, Medium, Large, Massive, CantCarryBig")]
         public int[] Sizes = { 1, 2, 5, 10, 25 };
+        [Tooltip("Capacity requirement for firearms of size Pocket, Pistol, Compact, Carbine, FullSize, Bulky, Oversize")]
+        public int[] FirearmSizes = { 2, 4, 10, 16, 24, 32, 50 };
         public int TotalCapacity = 50;
 
         [Header("Collision Settings")]
@@ -42,7 +44,19 @@ namespace OpenScripts2
             FVRPhysicalObject.FVRPhysicalObjectSize.CantCarryBig
         };
 
+        private readonly FVRObject.OTagFirearmSize[] _firearmsizes =
+        {
+           FVRObject.OTagFirearmSize.Pocket,
+           FVRObject.OTagFirearmSize.Pistol,
+           FVRObject.OTagFirearmSize.Compact,
+           FVRObject.OTagFirearmSize.Carbine,
+           FVRObject.OTagFirearmSize.FullSize,
+           FVRObject.OTagFirearmSize.Bulky,
+           FVRObject.OTagFirearmSize.Oversize
+        };
+
         private readonly Dictionary<FVRPhysicalObject.FVRPhysicalObjectSize, int> _SizeRequirements = new();
+        private readonly Dictionary<FVRObject.OTagFirearmSize, int> _FirearmSizeRequirements = new();
         private int _currentLoad = 0;
         private bool _wasUnvaulted = false;
 
@@ -82,6 +96,11 @@ namespace OpenScripts2
                 for (int i = 0; i < _sizes.Length; i++)
                 {
                     _SizeRequirements.Add(_sizes[i], Sizes[i]);
+                }
+
+                for (int i = 0; i < _firearmsizes.Length; i++)
+                {
+                    _FirearmSizeRequirements.Add(_firearmsizes[i], FirearmSizes[i]);
                 }
 
                 for (int i = 0; i < ItemLimit; i++)
@@ -181,10 +200,20 @@ namespace OpenScripts2
                 if (UsesAdvancedSizeMode)
                 {
                     FVRPhysicalObject.FVRPhysicalObjectSize size = clearQB.SizeLimit;
+                    FVRObject.OTagFirearmSize firearmsize = _subQBSlots[clearQB].ObjectWrapper != null ? _subQBSlots[clearQB].ObjectWrapper.TagFirearmSize : FVRObject.OTagFirearmSize.None;
 
-                    _SizeRequirements.TryGetValue(size, out int sizeRequirement);
+                    if (firearmsize != FVRObject.OTagFirearmSize.None)
+                    {
+                        _FirearmSizeRequirements.TryGetValue(firearmsize, out int firearmsizeRequirement);
 
-                    _currentLoad -= sizeRequirement;
+                        _currentLoad -= firearmsizeRequirement;
+                    }
+                    else
+                    {
+                        _SizeRequirements.TryGetValue(size, out int sizeRequirement);
+
+                        _currentLoad -= sizeRequirement;
+                    }
                 }
 
                 _subQBSlots[clearQB] = null;
@@ -201,6 +230,7 @@ namespace OpenScripts2
         public void CreateNewQBSlotPos(FVRPhysicalObject physicalObject)
         {
             FVRPhysicalObject.FVRPhysicalObjectSize size = physicalObject.Size;
+            FVRObject.OTagFirearmSize firearmsize = physicalObject.ObjectWrapper != null ? physicalObject.ObjectWrapper.TagFirearmSize : FVRObject.OTagFirearmSize.None;
 
             Vector3 pos = physicalObject.transform.position;
             Quaternion rot = physicalObject.transform.rotation;
@@ -226,15 +256,31 @@ namespace OpenScripts2
 
             if (UsesAdvancedSizeMode)
             {
-                _SizeRequirements.TryGetValue(size, out int sizeRequirement);
-                if (_currentLoad + sizeRequirement > TotalCapacity)
+                if (firearmsize != FVRObject.OTagFirearmSize.None)
                 {
-                    physicalObject.ForceObjectIntoInventorySlot(null);
-                    return;
+                    _FirearmSizeRequirements.TryGetValue(firearmsize, out int firearmsizeRequirement);
+                    if (_currentLoad + firearmsizeRequirement > TotalCapacity)
+                    {
+                        physicalObject.ForceObjectIntoInventorySlot(null);
+                        return;
+                    }
+                    else
+                    {
+                        _currentLoad += firearmsizeRequirement;
+                    }
                 }
                 else
                 {
-                    _currentLoad += sizeRequirement;
+                    _SizeRequirements.TryGetValue(size, out int sizeRequirement);
+                    if (_currentLoad + sizeRequirement > TotalCapacity)
+                    {
+                        physicalObject.ForceObjectIntoInventorySlot(null);
+                        return;
+                    }
+                    else
+                    {
+                        _currentLoad += sizeRequirement;
+                    }
                 }
             }
 
