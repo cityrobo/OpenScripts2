@@ -59,6 +59,9 @@ namespace OpenScripts2
         public float ScopeTubeOverlayBlendIn = 0f;
         public float ScopeTubeOverlayBlendOut = 0f;
 
+        [Header("Linear Zoom Ring")]
+        public LinearZoomRing ZoomRing;
+
         private Material _scopeTubeOverlayMaterial = null;
 
         private HolographicSight _scopeTubeOverlayHolographicSightComponent;
@@ -107,8 +110,17 @@ namespace OpenScripts2
                 reticleRenderer.sharedMaterial = _scopeTubeOverlayMaterial;
 
                 _scopeTubeOverlayHolographicSightComponent = ScopeTubeOverlayReticle.GetComponent<HolographicSight>();
-                _scopeTubeOverlayStartScaleNormalized = _scopeTubeOverlayHolographicSightComponent.Scale * AmplifierComponent.ZoomSettings[AmplifierComponent.m_zoomSettingIndex].Magnification;
             }
+        }
+
+        public void Start()
+        {
+            if (ScopeTubeOverlayReticle != null)
+            {
+                float magnificationAtStart = ZoomRing == null ? AmplifierComponent.ZoomSettings[AmplifierComponent.m_zoomSettingIndex].Magnification : ZoomRing.GetCurrentlySelectedMagnification();
+                _scopeTubeOverlayStartScaleNormalized = _scopeTubeOverlayHolographicSightComponent.Scale * magnificationAtStart;
+            }
+            AmplifierComponent.UI.UpdateUI(AmplifierComponent);
         }
 
         public void OnDestroy()
@@ -120,6 +132,13 @@ namespace OpenScripts2
         public void Update()
         {
             ScopeTubeOverlayReticle?.SetActive(AmplifierComponent.ScopeCam.MagnificationEnabled);
+
+            if (ZoomRing != null)
+            {
+                AmplifierComponent.ScopeCam.Magnification = ZoomRing.GetCurrentlySelectedMagnification();
+                UpdateScopeTubeOverlay();
+                AmplifierComponent.UI.UpdateUI(AmplifierComponent);
+            }
         }
 
         #region Brightness Changing
@@ -170,7 +189,7 @@ namespace OpenScripts2
         {
             if (_scopeTubeOverlayHolographicSightComponent != null)
             {
-                float currentMagnification = AmplifierComponent.ZoomSettings[AmplifierComponent.m_zoomSettingIndex].Magnification;
+                float currentMagnification = ZoomRing == null ? AmplifierComponent.ZoomSettings[AmplifierComponent.m_zoomSettingIndex].Magnification : ZoomRing.GetCurrentlySelectedMagnification();
                 _scopeTubeOverlayHolographicSightComponent.Scale = _scopeTubeOverlayStartScaleNormalized / currentMagnification;
             }
         }
@@ -296,6 +315,11 @@ namespace OpenScripts2
                         break;
                     case OpticOptionType.Magnification:
                         // Handled by vanilla script
+
+                        if (advancedAmplifier.ZoomRing != null)
+                        {
+                            self.SettingNames[index].text = "Magnification: " + advancedAmplifier.ZoomRing.GetCurrentlySelectedMagnification().ToString("F1") + "x";
+                        }
                         break;
                     case OpticOptionType.ReticleLum:
                         string brightnessText = advancedAmplifier.BrightnessSettings[advancedAmplifier.SelectedBrightnessSetting].Text;
