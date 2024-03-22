@@ -21,6 +21,7 @@ namespace OpenScripts2
         public bool UsesAdvancedSizeMode = false;
         [Tooltip("Capacity requirement for items of size Small, Medium, Large, Massive, CantCarryBig")]
         public int[] Sizes = { 1, 2, 5, 10, 25 };
+        public bool UsesFirearmTagSizeMode = false;
         [Tooltip("Capacity requirement for firearms of size Pocket, Pistol, Compact, Carbine, FullSize, Bulky, Oversize")]
         public int[] FirearmSizes = { 2, 4, 10, 16, 24, 32, 50 };
         public int TotalCapacity = 50;
@@ -202,7 +203,7 @@ namespace OpenScripts2
                     FVRPhysicalObject.FVRPhysicalObjectSize size = clearQB.SizeLimit;
                     FVRObject.OTagFirearmSize firearmsize = _subQBSlots[clearQB].ObjectWrapper != null ? _subQBSlots[clearQB].ObjectWrapper.TagFirearmSize : FVRObject.OTagFirearmSize.None;
 
-                    if (firearmsize != FVRObject.OTagFirearmSize.None)
+                    if (firearmsize != FVRObject.OTagFirearmSize.None && UsesFirearmTagSizeMode == true)
                     {
                         _FirearmSizeRequirements.TryGetValue(firearmsize, out int firearmsizeRequirement);
 
@@ -256,12 +257,13 @@ namespace OpenScripts2
 
             if (UsesAdvancedSizeMode)
             {
-                if (firearmsize != FVRObject.OTagFirearmSize.None)
+                if (firearmsize != FVRObject.OTagFirearmSize.None && UsesFirearmTagSizeMode == true)
                 {
                     _FirearmSizeRequirements.TryGetValue(firearmsize, out int firearmsizeRequirement);
                     if (_currentLoad + firearmsizeRequirement > TotalCapacity)
                     {
-                        physicalObject.ForceObjectIntoInventorySlot(null);
+                        physicalObject.SetParentage(null);
+                        physicalObject.ClearQuickbeltState();
                         return;
                     }
                     else
@@ -274,7 +276,8 @@ namespace OpenScripts2
                     _SizeRequirements.TryGetValue(size, out int sizeRequirement);
                     if (_currentLoad + sizeRequirement > TotalCapacity)
                     {
-                        physicalObject.ForceObjectIntoInventorySlot(null);
+                        physicalObject.SetParentage(null);
+                        physicalObject.ClearQuickbeltState();
                         return;
                     }
                     else
@@ -286,7 +289,7 @@ namespace OpenScripts2
 
             FVRQuickBeltSlot slot = GetEmptySlot();
 
-            if (slot == null) physicalObject.ForceObjectIntoInventorySlot(null);
+            if (slot == null) { physicalObject.ClearQuickbeltState(); return; }
             slot.transform.position = pos;
             slot.SizeLimit = size;
             physicalObject.ForceObjectIntoInventorySlot(slot);
