@@ -8,11 +8,18 @@ using FistVR;
 
 namespace OpenScripts2
 {
-    public class ParticleEffectOnFire : OpenScripts2_BasePlugin
+    public class ParticleEffectsOnFire : OpenScripts2_BasePlugin
     {
         public FVRFireArm FireArm;
-		public ParticleSystem ParticleSystem;
-		public int ParticleCount;
+
+        [Serializable]
+        public class ParticleEmitter
+        {
+            public ParticleSystem ParticleSystem;
+            public int NumbersOfParticlesToEmit;
+        }
+
+        public ParticleEmitter[] ParticleEmitters;
 
 		public void Awake()
         {
@@ -25,16 +32,19 @@ namespace OpenScripts2
 		}
 
         [ContextMenu("Test Emission")]
-        private void EmitParticle()
+        private void EmitParticles()
 		{
-			ParticleSystem.Emit(ParticleCount);
+            foreach (var pEmitter in ParticleEmitters)
+            {
+                pEmitter.ParticleSystem.Emit(pEmitter.NumbersOfParticlesToEmit);
+            }
 		}
 
 		private void ShotFired(FVRFireArm firearm)
         {
 			if (firearm == FireArm)
             {
-				EmitParticle();
+				EmitParticles();
 			}
         }
 	}

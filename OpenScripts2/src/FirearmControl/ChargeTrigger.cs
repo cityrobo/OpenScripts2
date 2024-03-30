@@ -13,6 +13,7 @@ namespace OpenScripts2
 {
     public class ChargeTrigger : OpenScripts2_BasePlugin
     {
+        [Header("Charge Trigger Config")]
         public FVRFireArm FireArm;
         [Tooltip("Charge time in seconds")]
         public float ChargeTime = 1f;
@@ -22,6 +23,7 @@ namespace OpenScripts2
         [FormerlySerializedAs("StopsOnEmptyMag")]
         public bool StopsOnEmpty = false;
 
+        [Header("Optional")]
         public AudioEvent ChargingSounds;
         public AudioEvent ChargingAbortSounds;
 
@@ -149,6 +151,11 @@ namespace OpenScripts2
                 _isAutomaticFire = false;
                 _timeCharged = 0f;
             }
+            else if (FireArm == self && StopsOnEmpty && (!self.Chamber.IsFull || self.Chamber.IsFull && self.Chamber.IsSpent) && (!self.m_proxy.IsFull || self.m_proxy.IsFull && self.m_proxy.IsSpent) && (self.Magazine == null || !self.Magazine.HasARound()))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
         }
 
         private void ClosedBoltWeapon_DropHammer(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
@@ -196,6 +203,11 @@ namespace OpenScripts2
                 _isAutomaticFire = false;
                 _timeCharged = 0f;
             }
+            else if (FireArm == self && StopsOnEmpty && (!self.Chamber.IsFull || self.Chamber.IsFull && self.Chamber.IsSpent) && (!self.m_proxy.IsFull || self.m_proxy.IsFull && self.m_proxy.IsSpent) && (self.Magazine == null || !self.Magazine.HasARound()))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
         }
 
         private void OpenBoltReceiver_ReleaseSeer(On.FistVR.OpenBoltReceiver.orig_ReleaseSeer orig, OpenBoltReceiver self)
@@ -235,6 +247,11 @@ namespace OpenScripts2
         {
             orig(self);
             if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
+            else if (FireArm == self && StopsOnEmpty && (!self.Chamber.IsFull || self.Chamber.IsFull && self.Chamber.IsSpent) && (!self.m_proxy.IsFull || self.m_proxy.IsFull && self.m_proxy.IsSpent) && (self.Magazine == null || !self.Magazine.HasARound()))
             {
                 _isAutomaticFire = false;
                 _timeCharged = 0f;

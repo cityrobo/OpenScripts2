@@ -13,6 +13,7 @@ namespace OpenScripts2
 {
     public class ChargeTriggerPower : OpenScripts2_BasePlugin
     {
+        [Header("Charge Trigger Power Config")]
         public FVRFireArm FireArm;
         [Tooltip("Charge time in seconds")]
         public float ChargeTime = 1f;
@@ -20,11 +21,6 @@ namespace OpenScripts2
         public bool ChargesUpEveryShot = false;
         [Tooltip("If checked, it will not charge on empty and just drop the hammer normally.")]
         public bool StopsOnEmpty = false;
-
-        public AudioEvent ChargingSounds;
-
-        public VisualModifier[] VisualModifiers;
-
         public float ChargeVibrationFrequency = 1000f;
         [Range(0f, 1f)]
         public float ChargeVibrationAmplitude = 1f;
@@ -32,11 +28,26 @@ namespace OpenScripts2
         public float MinMuzzleVelocityMultiplier = 1f;
         public float MaxMuzzleVelocityMultiplier = 2f;
 
+
+        [Header("Optional")]
+        public AudioEvent ChargingSounds;
+
+        public VisualModifier[] VisualModifiers;
+
         public bool ChangesRoundClass = false;
         public FireArmRoundClass FullChargeRoundClass;
 
         public bool ChangesRoundPrefab = false;
         public GameObject FullChargeRoundPrefab;
+
+        [Serializable]
+        public class FullChargeShotParticleEmitter
+        {
+            public ParticleSystem FullChargeShotParticleSystem;
+            public int NumbersOfParticlesToEmit;
+        }
+
+        public FullChargeShotParticleEmitter[] FullChargeShotParticleEmitters;
 
         private FVRFireArmRound _fullChargeRound;
 
@@ -90,6 +101,22 @@ namespace OpenScripts2
                     LogError("No FullChargeRoundPrefab provided but ChangesRoundPrefab set to true!");
                 }
             }
+
+            if (FullChargeShotParticleEmitters.Length > 0)
+            {
+                GM.CurrentSceneSettings.ShotFiredEvent += CurrentSceneSettings_ShotFiredEvent;
+            }
+        }
+
+        private void CurrentSceneSettings_ShotFiredEvent(FVRFireArm firearm)
+        {
+            if (firearm == FireArm && _timeCharged >= ChargeTime)
+            {
+                foreach (var emitter in FullChargeShotParticleEmitters)
+                {
+                    emitter.FullChargeShotParticleSystem.Emit(emitter.NumbersOfParticlesToEmit);
+                }
+            }
         }
 
         public void OnDestroy()
@@ -128,6 +155,7 @@ namespace OpenScripts2
                 On.FistVR.FVRFireArm.Fire -= FVRFireArm_Fire;
             }
         }
+
         private void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
         {
             if (self == FireArm && _timeCharged >= ChargeTime && _fullChargeRound != null)
@@ -184,6 +212,7 @@ namespace OpenScripts2
             On.FistVR.ClosedBoltWeapon.FVRUpdate -= ClosedBoltWeapon_FVRUpdate;
             On.FistVR.ClosedBoltWeapon.Fire -= ClosedBoltWeapon_Fire;
         }
+
         private void HookClosedBolt()
         {
             On.FistVR.ClosedBoltWeapon.DropHammer += ClosedBoltWeapon_DropHammer;
@@ -195,6 +224,11 @@ namespace OpenScripts2
         {
             orig(self);
             if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
+            else if (FireArm == self && StopsOnEmpty && (!self.Chamber.IsFull || self.Chamber.IsFull && self.Chamber.IsSpent) && (!self.m_proxy.IsFull || self.m_proxy.IsFull && self.m_proxy.IsSpent) && (self.Magazine == null || !self.Magazine.HasARound()))
             {
                 _isAutomaticFire = false;
                 _timeCharged = 0f;
@@ -212,6 +246,7 @@ namespace OpenScripts2
             else if (self == FireArm && !_isCharging && StopsOnEmpty && !self.Chamber.IsFull) orig(self);
             else if (self != FireArm) orig(self);
         }
+
         private IEnumerator HammerDropClosedBolt(On.FistVR.ClosedBoltWeapon.orig_DropHammer orig, ClosedBoltWeapon self)
         {
             yield return DropHammer(self);
@@ -293,6 +328,11 @@ namespace OpenScripts2
         {
             orig(self);
             if (FireArm == self && (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
+            else if (FireArm == self && StopsOnEmpty && (!self.Chamber.IsFull || self.Chamber.IsFull && self.Chamber.IsSpent) && (!self.m_proxy.IsFull || self.m_proxy.IsFull && self.m_proxy.IsSpent) && (self.Magazine == null || !self.Magazine.HasARound()))
             {
                 _isAutomaticFire = false;
                 _timeCharged = 0f;
@@ -389,13 +429,15 @@ namespace OpenScripts2
         private void Handgun_FVRUpdate(On.FistVR.Handgun.orig_FVRUpdate orig, Handgun self)
         {
             orig(self);
-            if (FireArm == self)
+            if (FireArm == self && !self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold)
             {
-                if (!self.IsHeld || self.m_hand.Input.TriggerFloat < self.TriggerResetThreshold)
-                {
-                    _isAutomaticFire = false;
-                    _timeCharged = 0f;
-                }
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
+            }
+            else if (FireArm == self && StopsOnEmpty && (!self.Chamber.IsFull || self.Chamber.IsFull && self.Chamber.IsSpent) && (!self.m_proxy.IsFull || self.m_proxy.IsFull && self.m_proxy.IsSpent) && (self.Magazine == null || !self.Magazine.HasARound()))
+            {
+                _isAutomaticFire = false;
+                _timeCharged = 0f;
             }
         }
 

@@ -229,7 +229,7 @@ namespace OpenScripts2
                 _SizeRequirements.TryGetValue(size, out int sizeRequirement);
                 if (_currentLoad + sizeRequirement > TotalCapacity)
                 {
-                    physicalObject.ForceObjectIntoInventorySlot(null);
+                    physicalObject.ClearQuickbeltState();
                     return;
                 }
                 else
@@ -240,7 +240,12 @@ namespace OpenScripts2
 
             FVRQuickBeltSlot slot = GetEmptySlot();
 
-            if (slot == null) physicalObject.ForceObjectIntoInventorySlot(null);
+            if (slot == null)
+            {
+                physicalObject.ClearQuickbeltState();
+                return;
+            }
+
             slot.transform.position = pos;
             slot.SizeLimit = size;
             physicalObject.ForceObjectIntoInventorySlot(slot);

@@ -750,6 +750,7 @@ namespace UnityEngine
         }
     }
 }
+
 namespace System.Collections.Generic
 {
     public static class CSharpExtensions
@@ -762,6 +763,12 @@ namespace System.Collections.Generic
             }
 
             return string.Join(",", enumerable.Select(item => item.ToString()).ToArray());
+        }
+
+        public static void AddOrReplace<T, U>(this Dictionary<T, U> dic, T key, U value)
+        {
+            if (!dic.ContainsKey(key)) dic.Add(key, value);
+            else dic[key] = value;
         }
     }
 }

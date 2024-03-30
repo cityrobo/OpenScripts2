@@ -84,6 +84,8 @@ namespace OpenScripts2
 
         public static FVRFireArmChamber GetCurrentChamber(FVRFireArm fireArm)
         {
+            FVRFireArmChamber chamber;
+            int i;
             switch (fireArm)
             {
                 case Handgun w:
@@ -97,11 +99,35 @@ namespace OpenScripts2
                 case BoltActionRifle w:
                     return w.Chamber;
                 case BreakActionWeapon w:
-                    return w.Barrels[w.m_curBarrel].Chamber;
+                    chamber = w.Barrels[w.m_curBarrel].Chamber;
+                    i = w.m_curBarrel + 1;
+                    while ((chamber.IsSpent || !chamber.IsFull) && i < w.Barrels.Length)
+                    {
+                        chamber = w.Barrels[i].Chamber;
+                        i++;
+                    }
+                    if (chamber.IsSpent || !chamber.IsFull) chamber = w.Barrels[w.m_curBarrel].Chamber;
+                    return chamber;
                 case Revolver w:
-                    return w.Chambers[w.CurChamber];
+                    chamber = w.Chambers[w.CurChamber];
+                    i = w.CurChamber + 1;
+                    while ((chamber.IsSpent || !chamber.IsFull) && i < w.Chambers.Length)
+                    {
+                        chamber = w.Chambers[i];
+                        i++;
+                    }
+                    if (chamber.IsSpent || !chamber.IsFull) chamber = w.Chambers[w.CurChamber];
+                    return chamber;
                 case SingleActionRevolver w:
-                    return w.Cylinder.Chambers[w.CurChamber];
+                    chamber = w.Cylinder.Chambers[w.CurChamber];
+                    i = w.CurChamber + 1;
+                    while ((chamber.IsSpent || !chamber.IsFull) && i < w.Cylinder.Chambers.Length)
+                    {
+                        chamber = w.Cylinder.Chambers[i];
+                        i++;
+                    }
+                    if (chamber.IsSpent || !chamber.IsFull) chamber = w.Cylinder.Chambers[w.CurChamber];
+                    return chamber;
                 case RevolvingShotgun w:
                     return w.Chambers[w.CurChamber];
                 case Flaregun w:
@@ -109,9 +135,25 @@ namespace OpenScripts2
                 case RollingBlock w:
                     return w.Chamber;
                 case Derringer w:
-                    return w.Barrels[w.m_curBarrel].Chamber;
+                    chamber = w.Barrels[w.m_curBarrel].Chamber;
+                    i = w.m_curBarrel + 1;
+                    while ((chamber.IsSpent || !chamber.IsFull) && i < w.Barrels.Count)
+                    {
+                        chamber = w.Barrels[i].Chamber;
+                        i++;
+                    }
+                    if (chamber.IsSpent || !chamber.IsFull) chamber = w.Barrels[w.m_curBarrel].Chamber;
+                    return chamber;
                 case LAPD2019 w:
-                    return w.Chambers[w.CurChamber];
+                    chamber = w.Chambers[w.CurChamber];
+                    i = w.CurChamber + 1;
+                    while ((chamber.IsSpent || !chamber.IsFull) && i < w.Chambers.Length)
+                    {
+                        chamber = w.Chambers[i];
+                        i++;
+                    }
+                    if (chamber.IsSpent || !chamber.IsFull) chamber = w.Chambers[w.CurChamber];
+                    return chamber;
                 case BAP w:
                     return w.Chamber;
                 case HCB w:
@@ -133,10 +175,26 @@ namespace OpenScripts2
                 case PotatoGun w:
                     return w.Chamber;
                 case GrappleGun w:
-                    return w.Chambers[w.m_curChamber];
+                    chamber = w.Chambers[w.m_curChamber];
+                    i = w.m_curChamber + 1;
+                    while ((chamber.IsSpent || !chamber.IsFull) && i < w.Chambers.Length)
+                    {
+                        chamber = w.Chambers[i];
+                        i++;
+                    }
+                    if (chamber.IsSpent || !chamber.IsFull) chamber = w.Chambers[w.m_curChamber];
+                    return chamber;
+                case Airgun w:
+                    return w.Chamber;
+                case CarlGustaf w:
+                    return w.Chamber;
+                case MeatNailer w:
+                    return w.Chamber;
+                case Girandoni w:
+                    return w.Chamber;
                 default:
                     if (fireArm.GetChambers().Count > 0) return fireArm.GetChambers()[0];
-                    else return null;
+                    else return fireArm.GetComponentInChildren<FVRFireArmChamber>();
             }
         }
 
@@ -251,6 +309,18 @@ namespace OpenScripts2
                 }
                 return (bool)s_isPlayingPropertyInfo.GetValue(null, null);
             }
+        }
+
+        /// <summary>
+        /// Clears the editor log.
+        /// </summary>
+        public static void ClearEditorLog()
+        {
+            if (!IsInEditor) return;
+            var activeEditorTrackerAssembly = Assembly.GetAssembly(typeof(UnityEditor.ActiveEditorTracker));
+            var unityEditorInternalLogEntriesType = activeEditorTrackerAssembly.GetType("UnityEditorInternal.LogEntries");
+            var clearMethodInfo = unityEditorInternalLogEntriesType.GetMethod("Clear");
+            clearMethodInfo.Invoke(new object(), null);
         }
 
         private static Assembly s_unityEditorAssembly;
