@@ -19,10 +19,10 @@ namespace OpenScripts2
 
         [Header("Advanced Size Options")]
         public bool UsesAdvancedSizeMode = false;
-        [Tooltip("Capacity requirement for items of size Small, Medium, Large, Massive, CantCarryBig")]
+        [Tooltip("Capacity requirement for items of physicalObjectTagSize Small, Medium, Large, Massive, CantCarryBig")]
         public int[] Sizes = { 1, 2, 5, 10, 25 };
         public bool UsesFirearmTagSizeMode = false;
-        [Tooltip("Capacity requirement for firearms of size Pocket, Pistol, Compact, Carbine, FullSize, Bulky, Oversize")]
+        [Tooltip("Capacity requirement for firearms of physicalObjectTagSize Pocket, Pistol, Compact, Carbine, FullSize, Bulky, Oversize")]
         public int[] FirearmSizes = { 2, 4, 10, 16, 24, 32, 50 };
         public int TotalCapacity = 50;
 
@@ -35,7 +35,7 @@ namespace OpenScripts2
 
         [HideInInspector]
         public bool ItemDidCollide = false;
-        private readonly Dictionary<FVRQuickBeltSlot, FVRPhysicalObject> _subQBSlots = new();
+        private readonly Dictionary<FVRQuickBeltSlot, FVRPhysicalObject> _subQBSlotsDictionary = new();
         private readonly FVRPhysicalObject.FVRPhysicalObjectSize[] _sizes =
         {
             FVRPhysicalObject.FVRPhysicalObjectSize.Small,
@@ -77,12 +77,9 @@ namespace OpenScripts2
 
         public void OnDestroy()
         {
+#if !DEBUG
             Unhook();
-        }
-
-        public void Start()
-        {
-
+#endif
         }
 
         public void OnAwake()
@@ -108,18 +105,18 @@ namespace OpenScripts2
                 {
                     FVRQuickBeltSlot qbSlot = Instantiate(SubQBSlotPrefab).GetComponent<FVRQuickBeltSlot>();
 
-                    qbSlot.gameObject.name = "QuickBeltAreaSubSlot_" + _subQBSlots.Count;
+                    qbSlot.gameObject.name = "QuickBeltAreaSubSlot_" + _subQBSlotsDictionary.Count;
 
                     qbSlot.gameObject.transform.parent = transform;
                     qbSlot.gameObject.transform.localPosition = Vector3.zero;
                     qbSlot.gameObject.transform.localRotation = Quaternion.identity;
 
-                    _subQBSlots.Add(qbSlot, null);
+                    _subQBSlotsDictionary.Add(qbSlot, null);
                 }
 
                 if (MainObject != null)
                 {
-                    MainObject.Slots = MainObject.Slots.Concat(_subQBSlots.Keys).ToArray();
+                    MainObject.Slots = MainObject.Slots.Concat(_subQBSlotsDictionary.Keys).ToArray();
 
                     if (!MainObject.Slots.All(GM.CurrentPlayerBody.QBSlots_Added.Contains))
                     {
@@ -128,7 +125,7 @@ namespace OpenScripts2
                 }
                 else
                 {
-                    GM.CurrentPlayerBody.QBSlots_Added.AddRange(_subQBSlots.Keys);
+                    GM.CurrentPlayerBody.QBSlots_Added.AddRange(_subQBSlotsDictionary.Keys);
                 }
                 SubQBSlotPrefab.SetActive(false);
             }
@@ -147,7 +144,7 @@ namespace OpenScripts2
 
             //List<GameObject> slotsToDelete = new List<GameObject>();
             List<FVRQuickBeltSlot> slotsToEmpty = new();
-            foreach (var quickBeltSlot in _subQBSlots)
+            foreach (var quickBeltSlot in _subQBSlotsDictionary)
             {
                 FVRQuickBeltSlot slot = quickBeltSlot.Key;
 
@@ -188,7 +185,7 @@ namespace OpenScripts2
             }
             */
 
-            foreach (var qbSlot in _subQBSlots)
+            foreach (var qbSlot in _subQBSlotsDictionary)
             {
                 if (qbSlot.Value != qbSlot.Key.CurObject)
                 {
@@ -201,9 +198,9 @@ namespace OpenScripts2
                 if (UsesAdvancedSizeMode)
                 {
                     FVRPhysicalObject.FVRPhysicalObjectSize size = clearQB.SizeLimit;
-                    FVRObject.OTagFirearmSize firearmsize = _subQBSlots[clearQB].ObjectWrapper != null ? _subQBSlots[clearQB].ObjectWrapper.TagFirearmSize : FVRObject.OTagFirearmSize.None;
+                    FVRObject.OTagFirearmSize firearmsize = _subQBSlotsDictionary[clearQB].ObjectWrapper != null ? _subQBSlotsDictionary[clearQB].ObjectWrapper.TagFirearmSize : FVRObject.OTagFirearmSize.None;
 
-                    if (firearmsize != FVRObject.OTagFirearmSize.None && UsesFirearmTagSizeMode == true)
+                    if (UsesFirearmTagSizeMode && firearmsize != FVRObject.OTagFirearmSize.None)
                     {
                         _FirearmSizeRequirements.TryGetValue(firearmsize, out int firearmsizeRequirement);
 
@@ -217,7 +214,7 @@ namespace OpenScripts2
                     }
                 }
 
-                _subQBSlots[clearQB] = null;
+                _subQBSlotsDictionary[clearQB] = null;
             }
 
 
@@ -230,37 +227,34 @@ namespace OpenScripts2
 
         public void CreateNewQBSlotPos(FVRPhysicalObject physicalObject)
         {
-            FVRPhysicalObject.FVRPhysicalObjectSize size = physicalObject.Size;
-            FVRObject.OTagFirearmSize firearmsize = physicalObject.ObjectWrapper != null ? physicalObject.ObjectWrapper.TagFirearmSize : FVRObject.OTagFirearmSize.None;
+            FVRPhysicalObject.FVRPhysicalObjectSize physicalObjectTagSize = physicalObject.Size;
+            FVRObject.OTagFirearmSize firearmTagSize = physicalObject.ObjectWrapper != null ? physicalObject.ObjectWrapper.TagFirearmSize : FVRObject.OTagFirearmSize.None;
 
             Vector3 pos = physicalObject.transform.position;
             Quaternion rot = physicalObject.transform.rotation;
-            Quaternion localRot = physicalObject.transform.localRotation;
             if (!SetKinematic && physicalObject.QBPoseOverride != null)
             {
                 pos = physicalObject.QBPoseOverride.position;
                 rot = physicalObject.QBPoseOverride.rotation;
-                localRot = physicalObject.QBPoseOverride.localRotation;
             }
             else if (!SetKinematic && physicalObject.PoseOverride_Touch != null && (GM.HMDMode == ControlMode.Oculus || GM.HMDMode == ControlMode.Index))
             {
                 pos = physicalObject.PoseOverride_Touch.position;
                 rot = physicalObject.PoseOverride_Touch.rotation;
-                localRot = physicalObject.PoseOverride_Touch.localRotation;
             }
             else if (!SetKinematic && physicalObject.PoseOverride != null)
             {
                 pos = physicalObject.PoseOverride.position;
                 rot = physicalObject.PoseOverride.rotation;
-                localRot = physicalObject.PoseOverride.localRotation;
             }
 
             if (UsesAdvancedSizeMode)
             {
-                if (firearmsize != FVRObject.OTagFirearmSize.None && UsesFirearmTagSizeMode == true)
+                // if the QBArea is using FirearmTagSizeMode and the size is not empty increase the current load according to the look up table
+                if (UsesFirearmTagSizeMode && firearmTagSize != FVRObject.OTagFirearmSize.None)
                 {
-                    _FirearmSizeRequirements.TryGetValue(firearmsize, out int firearmsizeRequirement);
-                    if (_currentLoad + firearmsizeRequirement > TotalCapacity)
+                    _FirearmSizeRequirements.TryGetValue(firearmTagSize, out int firearmTagSizeRequirement);
+                    if (_currentLoad + firearmTagSizeRequirement > TotalCapacity)
                     {
                         physicalObject.SetParentage(null);
                         physicalObject.ClearQuickbeltState();
@@ -268,13 +262,14 @@ namespace OpenScripts2
                     }
                     else
                     {
-                        _currentLoad += firearmsizeRequirement;
+                        _currentLoad += firearmTagSizeRequirement;
                     }
                 }
+                // else do the same, but use the QBSlot size tag instead
                 else
                 {
-                    _SizeRequirements.TryGetValue(size, out int sizeRequirement);
-                    if (_currentLoad + sizeRequirement > TotalCapacity)
+                    _SizeRequirements.TryGetValue(physicalObjectTagSize, out int physicalObjectSizeRequirement);
+                    if (_currentLoad + physicalObjectSizeRequirement > TotalCapacity)
                     {
                         physicalObject.SetParentage(null);
                         physicalObject.ClearQuickbeltState();
@@ -282,19 +277,24 @@ namespace OpenScripts2
                     }
                     else
                     {
-                        _currentLoad += sizeRequirement;
+                        _currentLoad += physicalObjectSizeRequirement;
                     }
                 }
             }
 
             FVRQuickBeltSlot slot = GetEmptySlot();
+            if (slot == null) 
+            {
+                physicalObject.SetParentage(null);
+                physicalObject.ClearQuickbeltState();
+                return; 
+            }
 
-            if (slot == null) { physicalObject.ClearQuickbeltState(); return; }
             slot.transform.position = pos;
-            slot.SizeLimit = size;
+            slot.SizeLimit = physicalObjectTagSize;
             physicalObject.ForceObjectIntoInventorySlot(slot);
 
-            _subQBSlots[slot] = physicalObject;
+            _subQBSlotsDictionary[slot] = physicalObject;
             if (SetKinematic)
             {
                 physicalObject.RootRigidbody.isKinematic = true;
@@ -303,6 +303,7 @@ namespace OpenScripts2
             else slot.PoseOverride.rotation = rot;
         }
 
+        // External colission trigger coroutine
         IEnumerator WaitForCollision(FVRPhysicalObject physicalObject)
         {
             physicalObject.SetParentage(null);
@@ -316,9 +317,9 @@ namespace OpenScripts2
 
         FVRQuickBeltSlot GetEmptySlot()
         {
-            foreach (var qbSlot in _subQBSlots)
+            foreach (var qbSlotKeyValuePair in _subQBSlotsDictionary)
             {
-                if (qbSlot.Value == null) return qbSlot.Key;
+                if (qbSlotKeyValuePair.Value == null) return qbSlotKeyValuePair.Key;
             }
 
             return null;
@@ -340,40 +341,37 @@ namespace OpenScripts2
                 qbArea.OnAwake();
             }
         }
-#endif
+
         private void Unhook()
         {
-#if !DEBUG
+
             On.FistVR.FVRPhysicalObject.ConfigureFromFlagDic -= FVRPhysicalObject_ConfigureFromFlagDic;
             On.FistVR.FVRPhysicalObject.GetFlagDic -= FVRPhysicalObject_GetFlagDic;
-#endif
+
         }
 
         private void Hook()
         {
-#if !DEBUG
             On.FistVR.FVRPhysicalObject.ConfigureFromFlagDic += FVRPhysicalObject_ConfigureFromFlagDic;
             On.FistVR.FVRPhysicalObject.GetFlagDic += FVRPhysicalObject_GetFlagDic;
-#endif
         }
-# if !DEBUG
+
         private Dictionary<string, string> FVRPhysicalObject_GetFlagDic(On.FistVR.FVRPhysicalObject.orig_GetFlagDic orig, FVRPhysicalObject self)
         {
             Dictionary<string, string> flagDic = orig(self);
 
             if (self == MainObject)
             {
-                for (int i = 0; i < _subQBSlots.Count; i++)
+                for (int i = 0; i < _subQBSlotsDictionary.Count; i++)
                 {
-                    var keyValuePair = _subQBSlots.ElementAt(i);
+                    var keyValuePair = _subQBSlotsDictionary.ElementAt(i);
                     flagDic.Add(gameObject.name + "_QuickBeltAreaSubSlot_" + i, keyValuePair.Key.transform.localPosition.ToString("F6") + ";" + keyValuePair.Key.PoseOverride.localRotation.ToString("F6"));
                 }
             }
 
             return flagDic;
         }
-#endif
-#if !DEBUG
+
         private void FVRPhysicalObject_ConfigureFromFlagDic(On.FistVR.FVRPhysicalObject.orig_ConfigureFromFlagDic orig, FVRPhysicalObject self, Dictionary<string, string> f)
         {
             orig(self, f);
@@ -391,8 +389,8 @@ namespace OpenScripts2
 
                         Vector3 pos = new(float.Parse(posString[0]), float.Parse(posString[1]), float.Parse(posString[2]));
                         Quaternion rot = new(float.Parse(rotString[0]), float.Parse(rotString[1]), float.Parse(rotString[2]), float.Parse(rotString[3]));
-                        _subQBSlots.ElementAt(i).Key.transform.localPosition = pos;
-                        _subQBSlots.ElementAt(i).Key.PoseOverride.localRotation = rot;
+                        _subQBSlotsDictionary.ElementAt(i).Key.transform.localPosition = pos;
+                        _subQBSlotsDictionary.ElementAt(i).Key.PoseOverride.localRotation = rot;
                     }
                 }
                 _wasUnvaulted = true;
