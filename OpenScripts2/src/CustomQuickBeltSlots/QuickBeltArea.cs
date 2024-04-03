@@ -84,51 +84,48 @@ namespace OpenScripts2
 
         public void OnAwake()
         {
-            if (!_wasUnvaulted)
+            if (MainObject == null)
             {
-                if (MainObject == null)
-                {
-                    MainObject = GetComponentInParent<FVRPhysicalObject>();
-                }
-
-                for (int i = 0; i < _sizes.Length; i++)
-                {
-                    _SizeRequirements.Add(_sizes[i], Sizes[i]);
-                }
-
-                for (int i = 0; i < _firearmsizes.Length; i++)
-                {
-                    _FirearmSizeRequirements.Add(_firearmsizes[i], FirearmSizes[i]);
-                }
-
-                for (int i = 0; i < ItemLimit; i++)
-                {
-                    FVRQuickBeltSlot qbSlot = Instantiate(SubQBSlotPrefab).GetComponent<FVRQuickBeltSlot>();
-
-                    qbSlot.gameObject.name = "QuickBeltAreaSubSlot_" + _subQBSlotsDictionary.Count;
-
-                    qbSlot.gameObject.transform.parent = transform;
-                    qbSlot.gameObject.transform.localPosition = Vector3.zero;
-                    qbSlot.gameObject.transform.localRotation = Quaternion.identity;
-
-                    _subQBSlotsDictionary.Add(qbSlot, null);
-                }
-
-                if (MainObject != null)
-                {
-                    MainObject.Slots = MainObject.Slots.Concat(_subQBSlotsDictionary.Keys).ToArray();
-
-                    if (!MainObject.Slots.All(GM.CurrentPlayerBody.QBSlots_Added.Contains))
-                    {
-                        MainObject.RegisterQuickbeltSlots();
-                    }
-                }
-                else
-                {
-                    GM.CurrentPlayerBody.QBSlots_Added.AddRange(_subQBSlotsDictionary.Keys);
-                }
-                SubQBSlotPrefab.SetActive(false);
+                MainObject = GetComponentInParent<FVRPhysicalObject>();
             }
+
+            for (int i = 0; i < _sizes.Length; i++)
+            {
+                _SizeRequirements.Add(_sizes[i], Sizes[i]);
+            }
+
+            for (int i = 0; i < _firearmsizes.Length; i++)
+            {
+                _FirearmSizeRequirements.Add(_firearmsizes[i], FirearmSizes[i]);
+            }
+
+            for (int i = 0; i < ItemLimit; i++)
+            {
+                FVRQuickBeltSlot qbSlot = Instantiate(SubQBSlotPrefab).GetComponent<FVRQuickBeltSlot>();
+
+                qbSlot.gameObject.name = "QuickBeltAreaSubSlot_" + _subQBSlotsDictionary.Count;
+
+                qbSlot.gameObject.transform.parent = transform;
+                qbSlot.gameObject.transform.localPosition = Vector3.zero;
+                qbSlot.gameObject.transform.localRotation = Quaternion.identity;
+
+                _subQBSlotsDictionary.Add(qbSlot, null);
+            }
+
+            if (MainObject != null)
+            {
+                MainObject.Slots = MainObject.Slots.Concat(_subQBSlotsDictionary.Keys).ToArray();
+
+                if (!MainObject.Slots.All(GM.CurrentPlayerBody.QBSlots_Added.Contains))
+                {
+                    MainObject.RegisterQuickbeltSlots();
+                }
+            }
+            else
+            {
+                GM.CurrentPlayerBody.QBSlots_Added.AddRange(_subQBSlotsDictionary.Keys);
+            }
+            SubQBSlotPrefab.SetActive(false);
         }
 
         public void LateUpdate()

@@ -6,7 +6,6 @@ using System.Text;
 using BepInEx;
 using UnityEngine;
 using FistVR;
-using UnityEditor;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
 
@@ -273,41 +272,7 @@ namespace OpenScripts2
         {
             get
             {
-                if (s_inUnityEditor == null)
-                {
-                    try
-                    {
-                        s_unityEditorAssembly ??= Assembly.Load("UnityEditor");
-                        if (s_unityEditorAssembly != null)
-                        {
-                            s_inUnityEditor = true;
-                        }
-                        else
-                        {
-                            s_inUnityEditor = false;
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        s_inUnityEditor = false;
-                    }
-                }
-                return s_inUnityEditor.Value;
-            }
-        }
-
-        public static bool IsInEditorPlayMode
-        {
-            get
-            {
-                if (!IsInEditor) return false;
-
-                if (s_isPlayingPropertyInfo == null)
-                {
-                    Type editorApplicationType = s_unityEditorAssembly.GetType("UnityEditor.EditorApplication");
-                    s_isPlayingPropertyInfo = editorApplicationType.GetProperty("isPlaying", BindingFlags.Static | BindingFlags.Public);
-                }
-                return (bool)s_isPlayingPropertyInfo.GetValue(null, null);
+                return Application.isEditor;
             }
         }
 
@@ -317,10 +282,12 @@ namespace OpenScripts2
         public static void ClearEditorLog()
         {
             if (!IsInEditor) return;
+#if DEBUG
             var activeEditorTrackerAssembly = Assembly.GetAssembly(typeof(UnityEditor.ActiveEditorTracker));
             var unityEditorInternalLogEntriesType = activeEditorTrackerAssembly.GetType("UnityEditorInternal.LogEntries");
             var clearMethodInfo = unityEditorInternalLogEntriesType.GetMethod("Clear");
             clearMethodInfo.Invoke(new object(), null);
+#endif
         }
 
         private static Assembly s_unityEditorAssembly;

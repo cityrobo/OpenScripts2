@@ -1,3 +1,4 @@
+using BepInEx.Bootstrap;
 using FistVR;
 using System;
 using System.Collections;
@@ -74,8 +75,10 @@ namespace OpenScripts2
         private static readonly IntPtr _methodPointer;
 
         // ModularWorkshop compatibility requirements
-        private static readonly Type _modularWorkshopMagazineExtension;
-        private static readonly FieldInfo _additionalRoundsMagExtensionField;
+        //private static readonly Type _modularWorkshopMagazineExtension;
+        //private static readonly FieldInfo _additionalRoundsMagExtensionField;
+
+        private bool _modularWorkshopLoaded = false;
 
         public void Awake()
         {
@@ -90,6 +93,8 @@ namespace OpenScripts2
             };
 
             _viz = Magazine.Viz;
+
+            _modularWorkshopLoaded = Chainloader.PluginInfos.ContainsKey("h3vr.cityrobo.ModularWorkshopManager");
         }
 
         public void Start()
@@ -241,14 +246,17 @@ namespace OpenScripts2
             {
                 // Magazine Extension Test
                 int magazineExtension = 0;
-                if (_additionalRoundsMagExtensionField != null)
-                {
-                    Component[] magazineExtensionComponents = Magazine.GetComponentsInChildren(_modularWorkshopMagazineExtension);
-                    for (int i = 0; i < magazineExtensionComponents.Length; i++)
-                    {
-                        magazineExtension += (int)_additionalRoundsMagExtensionField.GetValue(magazineExtensionComponents[i]);
-                    }
-                }
+
+                if (_modularWorkshopLoaded) magazineExtension += MultiCaliberMagazineMWCompatibility.AdditionalRoundsFromMagExtension(this);
+
+                //if (_additionalRoundsMagExtensionField != null)
+                //{
+                //    Component[] magazineExtensionComponents = Magazine.GetComponentsInChildren(_modularWorkshopMagazineExtension);
+                //    for (int i = 0; i < magazineExtensionComponents.Length; i++)
+                //    {
+                //        magazineExtension += (int)_additionalRoundsMagExtensionField.GetValue(magazineExtensionComponents[i]);
+                //    }
+                //}
 
                 if (Magazine.m_numRounds > caliberDefinition.Capacity + magazineExtension)
                 {
@@ -414,20 +422,20 @@ namespace OpenScripts2
             On.FistVR.FVRPhysicalObject.ConfigureFromFlagDic += FVRPhysicalObject_ConfigureFromFlagDic;
             On.FistVR.FVRPhysicalObject.DuplicateFromSpawnLock += FVRPhysicalObject_DuplicateFromSpawnLock;
 
-            Assembly modularWorkshopAssembly = Assembly.Load("ModularWorkshop");
-            if (modularWorkshopAssembly != null)
-            {
-                Debug.Log("ModularWorkshop Assembly found!");
-                _modularWorkshopMagazineExtension = modularWorkshopAssembly.GetType("ModularWorkshop.ModularMagazineExtension");
-                if (_modularWorkshopMagazineExtension != null)
-                {
-                    Debug.Log("MagExtension type found!");
-                    _additionalRoundsMagExtensionField = _modularWorkshopMagazineExtension.GetField("AdditionalNumberOfRoundsInMagazine");
-                    if (_additionalRoundsMagExtensionField != null) Debug.Log("AdditionalRounds field found!");
-                    else Debug.LogError("AdditionalRounds field not found!");
-                }
-                else Debug.LogError("ModularWorkshop.ModularMagazineExtension not found!");
-            }
+            //Assembly modularWorkshopAssembly = Assembly.Load("ModularWorkshop");
+            //if (modularWorkshopAssembly != null)
+            //{
+            //    Debug.Log("ModularWorkshop Assembly found!");
+            //    _modularWorkshopMagazineExtension = modularWorkshopAssembly.GetType("ModularWorkshop.ModularMagazineExtension");
+            //    if (_modularWorkshopMagazineExtension != null)
+            //    {
+            //        Debug.Log("MagExtension type found!");
+            //        _additionalRoundsMagExtensionField = _modularWorkshopMagazineExtension.GetField("AdditionalNumberOfRoundsInMagazine");
+            //        if (_additionalRoundsMagExtensionField != null) Debug.Log("AdditionalRounds field found!");
+            //        else Debug.LogError("AdditionalRounds field not found!");
+            //    }
+            //    else Debug.LogError("ModularWorkshop.ModularMagazineExtension not found!");
+            //}
         }
 
         private static GameObject FVRPhysicalObject_DuplicateFromSpawnLock(On.FistVR.FVRPhysicalObject.orig_DuplicateFromSpawnLock orig, FVRPhysicalObject self, FVRViveHand hand)
