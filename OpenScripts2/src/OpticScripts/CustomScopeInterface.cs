@@ -143,7 +143,7 @@ namespace OpenScripts2
                 Zero();
                 _initialZero = true;
             }
-            else if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogWarning(this, "Scope set to \"Is Integrated\" but not FireArm assigned. Either implementation error or Modular Weapon Part.");
+            else if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogWarning(this, "Scope set to \"Is Integrated\" but not Revolver assigned. Either implementation error or Modular Weapon Part.");
 
             if (ZoomTextField == null) 
             { 
@@ -423,7 +423,11 @@ namespace OpenScripts2
             {
                 if (!IsIntegrated) FireArm = _attachment.curMount.Parent as FVRFireArm;
 
-                if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogError(this,"ScopeShaderZoom: FireArm not set on integrated Scope! Can't zero sight!");
+                if (IsIntegrated && FireArm == null)
+                {
+                    OpenScripts2_BepInExPlugin.LogError(this, "ScopeShaderZoom: FireArm not found and scope not set to integrated scope! Can't zero sight!");
+                    return;
+                }
 
                 FireArmRoundType roundType = FireArm.RoundType;
                 float zeroDistance = ZeroDistances[ZeroDistanceIndex];

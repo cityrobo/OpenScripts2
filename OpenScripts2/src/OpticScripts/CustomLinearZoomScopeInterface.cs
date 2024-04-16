@@ -408,7 +408,11 @@ namespace OpenScripts2
             {
                 if (!IsIntegrated) FireArm = _attachment.curMount.Parent as FVRFireArm;
 
-                if (IsIntegrated && FireArm == null) OpenScripts2_BepInExPlugin.LogError(this,"ScopeShaderZoom: FireArm not set on integrated Scope! Can't zero sight!");
+                if (IsIntegrated && FireArm == null)
+                {
+                    OpenScripts2_BepInExPlugin.LogError(this, "ScopeShaderZoom: FireArm not found and scope not set to integrated scope! Can't zero sight!");
+                    return;
+                }
 
                 FireArmRoundType roundType = FireArm.RoundType;
                 float zeroDistance = ZeroDistances[ZeroDistanceIndex];

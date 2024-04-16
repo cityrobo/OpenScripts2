@@ -112,6 +112,7 @@
     <Compile Include="src\CustomQuickBeltSlots\HolsterStockQBSlot.cs" />
     <Compile Include="src\FirearmControl\BoltPointUpdater.cs" />
     <Compile Include="src\FirearmControl\ChargeTriggerBreakActionWeapon.cs" />
+    <Compile Include="src\FirearmControl\ChargeTriggerPowerRevolverSpecial.cs" />
     <Compile Include="src\FirearmControl\ClosedBoltRotatingChargingHandle.cs" />
     <Compile Include="src\FirearmControl\FiredProjectileModification.cs" />
     <Compile Include="src\FirearmControl\SemiAutoClosedFullAutoOpenBolt.cs" />

@@ -789,7 +789,7 @@ namespace OpenScripts2
         #endregion
 
         #region Revolver Hooks and Coroutine
-        // BreakOpenShotgun Hooks and Coroutine
+        // Revolver Hooks and Coroutine
         private void UnhookRevolver()
         {
             On.FistVR.Revolver.UpdateTriggerHammer -= Revolver_UpdateTriggerHammer;
@@ -907,9 +907,14 @@ namespace OpenScripts2
                             nextChamber -= self.Cylinder.numChambers;
                         }
 
-                        if (self == FireArm && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent))) StartCoroutine(DropHammerRevolverDelay(self));
-                        else if (self == FireArm && !_isCharging && StopsOnEmpty && (!self.Chambers[nextChamber].IsFull || self.Chambers[nextChamber].IsFull)) DropHammerRevolver(self);
-                        else if (self != FireArm) DropHammerRevolver(self);
+                        if (!_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent)))
+                        {
+                            StartCoroutine(DropHammerRevolverDelay(self));
+                        }
+                        else if (!_isCharging && StopsOnEmpty && (!self.Chambers[nextChamber].IsFull || self.Chambers[nextChamber].IsSpent))
+                        {
+                            DropHammerRevolver(self);
+                        }
                     }
                     else if ((self.m_curTriggerFloat <= 0.14f || !self.IsDoubleActionTrigger) && !self.m_isHammerLocked && self.CanManuallyCockHammer)
                     {
@@ -1079,6 +1084,7 @@ namespace OpenScripts2
             BoltActionRifle w => fireArm.m_hand.Input.TriggerFloat < w.TriggerResetThreshold,
             BreakActionWeapon w => fireArm.m_hand.Input.TriggerFloat < 0.45f,
             LeverActionFirearm w => fireArm.m_hand.Input.TriggerUp,
+            Revolver w => fireArm.m_hand.Input.TriggerFloat < 0.95f,
             _ => false,
         };
 #endif
