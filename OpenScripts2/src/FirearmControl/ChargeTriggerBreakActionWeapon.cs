@@ -49,13 +49,22 @@ namespace OpenScripts2
         private float _timeCharged = 0f;
         private bool _isCharging = false;
 
+        private static readonly Dictionary<BreakActionWeapon, ChargeTriggerBreakActionWeapon> _existingChargeTriggerBreakActionWeapons = new();
+
 #if !DEBUG
+        static ChargeTriggerBreakActionWeapon()
+        {
+            On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
+            On.FistVR.BreakActionWeapon.DropHammer += BreakActionWeapon_DropHammer;
+            On.FistVR.BreakActionWeapon.Fire += BreakActionWeapon_Fire;
+        }
+
         public void Awake()
         {
-            HookBreakActionWeapon();
+            //HookBreakActionWeapon();
             if (ChangesRoundPrefab)
             {
-                On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
+                //On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
                 try
                 {
                     _fullChargeRound = FullChargeRoundPrefab.GetComponent<FVRFireArmRound>();
@@ -65,19 +74,21 @@ namespace OpenScripts2
                     LogError("No FullChargeRoundPrefab provided but ChangesRoundPrefab set to true!");
                 }
             }
+            _existingChargeTriggerBreakActionWeapons.Add(BreakAction, this);
         }
 
         public void OnDestroy()
         {
-            UnhookBreakActionWeapon();
+            _existingChargeTriggerBreakActionWeapons.Remove(BreakAction);
+            //UnhookBreakActionWeapon();
             if (ChangesRoundPrefab)
             {
-                On.FistVR.FVRFireArm.Fire -= FVRFireArm_Fire;
+                //On.FistVR.FVRFireArm.Fire -= FVRFireArm_Fire;
             }
         }
-        private void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
+        private static void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
         {
-            if (self == BreakAction && _timeCharged >= ChargeTime && _fullChargeRound != null)
+            if (self is BreakActionWeapon breakAction && _existingChargeTriggerBreakActionWeapons.TryGetValue(breakAction, out ChargeTriggerBreakActionWeapon chargeTrigger) && chargeTrigger._timeCharged >= chargeTrigger.ChargeTime && chargeTrigger._fullChargeRound != null)
             {
                 if (doBuzz && self.m_hand != null)
                 {
@@ -93,14 +104,14 @@ namespace OpenScripts2
                 float chamberVelMult = AM.GetChamberVelMult(chamber.RoundType, Vector3.Distance(chamber.transform.position, muzzle.position));
                 float num = self.GetCombinedFixedDrop(self.AccuracyClass) * 0.0166667f;
                 Vector2 vector = self.GetCombinedFixedDrift(self.AccuracyClass) * 0.0166667f;
-                for (int i = 0; i < _fullChargeRound.NumProjectiles; i++)
+                for (int i = 0; i < chargeTrigger._fullChargeRound.NumProjectiles; i++)
                 {
-                    float d = _fullChargeRound.ProjectileSpread + self.m_internalMechanicalMOA + self.GetCombinedMuzzleDeviceAccuracy();
+                    float d = chargeTrigger._fullChargeRound.ProjectileSpread + self.m_internalMechanicalMOA + self.GetCombinedMuzzleDeviceAccuracy();
 
-                    if (_fullChargeRound.BallisticProjectilePrefab != null)
+                    if (chargeTrigger._fullChargeRound.BallisticProjectilePrefab != null)
                     {
                         Vector3 b = muzzle.forward * 0.005f;
-                        GameObject ballisticProjectilePrefab = Instantiate(_fullChargeRound.BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
+                        GameObject ballisticProjectilePrefab = Instantiate(chargeTrigger._fullChargeRound.BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
                         Vector2 vector2 = (UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle) * 0.33333334f * d;
                         ballisticProjectilePrefab.transform.Rotate(new Vector3(vector2.x + vector.y + num, vector2.y + vector.x, 0f));
                         BallisticProjectile component = ballisticProjectilePrefab.GetComponent<BallisticProjectile>();
@@ -139,30 +150,33 @@ namespace OpenScripts2
         // BreakOpenShotgun Hooks and Coroutine
         private void UnhookBreakActionWeapon()
         {
-            On.FistVR.BreakActionWeapon.DropHammer -= BreakActionWeapon_DropHammer;
-            On.FistVR.BreakActionWeapon.Fire -= BreakActionWeapon_Fire;
+            //On.FistVR.BreakActionWeapon.DropHammer -= BreakActionWeapon_DropHammer;
+            //On.FistVR.BreakActionWeapon.Fire -= BreakActionWeapon_Fire;
         }
 
         private void HookBreakActionWeapon()
         {
-            On.FistVR.BreakActionWeapon.DropHammer += BreakActionWeapon_DropHammer;
-            On.FistVR.BreakActionWeapon.Fire += BreakActionWeapon_Fire;
+            //On.FistVR.BreakActionWeapon.DropHammer += BreakActionWeapon_DropHammer;
+            //On.FistVR.BreakActionWeapon.Fire += BreakActionWeapon_Fire;
         }
 
-        private void BreakActionWeapon_DropHammer(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
+        private static void BreakActionWeapon_DropHammer(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
         {
-            int i;
-            for (i = 0; i < self.Barrels.Length; i++)
+            if (_existingChargeTriggerBreakActionWeapons.TryGetValue(self, out ChargeTriggerBreakActionWeapon chargeTrigger))
             {
-                if (self.Barrels[i].m_isHammerCocked)
+                int i;
+                for (i = 0; i < self.Barrels.Length; i++)
                 {
-                    break;
+                    if (self.Barrels[i].m_isHammerCocked)
+                    {
+                        break;
+                    }
                 }
-            }
 
-            if (self == BreakAction && !_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Barrels[i].Chamber.IsFull && !self.Barrels[i].Chamber.IsSpent))) StartCoroutine(DropHammerBreakAction(orig, self));
-            else if (self == BreakAction && !_isCharging && StopsOnEmpty && (!self.Barrels[i].Chamber.IsFull || self.Barrels[i].Chamber.IsSpent)) orig(self);
-            else if (self != BreakAction) orig(self);
+                if (!chargeTrigger._isCharging && (!chargeTrigger.StopsOnEmpty || (chargeTrigger.StopsOnEmpty && self.Barrels[i].Chamber.IsFull && !self.Barrels[i].Chamber.IsSpent))) chargeTrigger.StartCoroutine(chargeTrigger.DropHammerBreakAction(orig, self));
+                else if (!chargeTrigger._isCharging && chargeTrigger.StopsOnEmpty && (!self.Barrels[i].Chamber.IsFull || self.Barrels[i].Chamber.IsSpent)) orig(self);
+            }
+            else orig(self);
         }
 
         private IEnumerator DropHammerBreakAction(On.FistVR.BreakActionWeapon.orig_DropHammer orig, BreakActionWeapon self)
@@ -174,21 +188,21 @@ namespace OpenScripts2
             _timeCharged = 0f;
         }
 
-        private bool BreakActionWeapon_Fire(On.FistVR.BreakActionWeapon.orig_Fire orig, BreakActionWeapon self, int b, bool FireAllBarrels, int index)
+        private static bool BreakActionWeapon_Fire(On.FistVR.BreakActionWeapon.orig_Fire orig, BreakActionWeapon self, int b, bool FireAllBarrels, int index)
         {
-            if (self == BreakAction)
+            if (_existingChargeTriggerBreakActionWeapons.TryGetValue(self, out ChargeTriggerBreakActionWeapon chargeTrigger))
             {
                 self.m_curBarrel = b;
-                if (ChangesRoundClass && _timeCharged >= ChargeTime)
+                if (chargeTrigger.ChangesRoundClass && chargeTrigger._timeCharged >= chargeTrigger.ChargeTime)
                 {
-                    if (self.Barrels[b].Chamber != null && self.Barrels[b].Chamber.m_round != null && self.Barrels[b].Chamber.m_round.RoundClass != FullChargeRoundClass)
+                    if (self.Barrels[b].Chamber != null && self.Barrels[b].Chamber.m_round != null && self.Barrels[b].Chamber.m_round.RoundClass != chargeTrigger.FullChargeRoundClass)
                     {
-                        self.Barrels[b].Chamber.m_round = AM.GetRoundSelfPrefab(self.Barrels[b].Chamber.m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                        self.Barrels[b].Chamber.m_round = AM.GetRoundSelfPrefab(self.Barrels[b].Chamber.m_round.RoundType, chargeTrigger.FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
                         self.Barrels[b].Chamber.UpdateProxyDisplay();
                     }
                 }
                 if (!self.Barrels[b].Chamber.Fire()) return false;
-                self.Fire(self.Barrels[b].Chamber, self.GetMuzzle(), true, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
+                self.Fire(self.Barrels[b].Chamber, self.GetMuzzle(), true, Mathf.Lerp(chargeTrigger.MinMuzzleVelocityMultiplier, chargeTrigger.MaxMuzzleVelocityMultiplier, chargeTrigger._timeCharged / chargeTrigger.ChargeTime), -1f);
                 self.FireMuzzleSmoke(self.Barrels[b].MuzzleIndexBarrelFire);
                 self.FireMuzzleSmoke(self.Barrels[b].MuzzleIndexBarrelSmoke);
                 self.AddGas(self.Barrels[b].GasOutIndexBarrel);

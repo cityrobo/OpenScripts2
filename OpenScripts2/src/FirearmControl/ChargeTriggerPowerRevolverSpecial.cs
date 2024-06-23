@@ -58,14 +58,24 @@ namespace OpenScripts2
         private bool _isCharging = false;
         private bool _isAutomaticFire = false;
 
-        FVRPooledAudioSource _chargingAudioSource;
+        private FVRPooledAudioSource _chargingAudioSource;
+        private static readonly Dictionary<Revolver, ChargeTriggerPowerRevolverSpecial> _existingRevolverSpecials = new();
+
 #if !DEBUG
+        static ChargeTriggerPowerRevolverSpecial()
+        {
+            On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
+
+            On.FistVR.Revolver.UpdateTriggerHammer += Revolver_UpdateTriggerHammer;
+            On.FistVR.Revolver.Fire += Revolver_Fire;
+        }
+
         public void Awake()
         {
-            HookRevolver();
+            //HookRevolver();
             if (ChangesRoundPrefab)
             {
-                On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
+                //On.FistVR.FVRFireArm.Fire += FVRFireArm_Fire;
                 try
                 {
                     _fullChargeRound = FullChargeRoundPrefab.GetComponent<FVRFireArmRound>();
@@ -82,6 +92,8 @@ namespace OpenScripts2
             }
 
             FullChargeLoopingAudioSource?.Stop();
+
+            _existingRevolverSpecials.Add(Revolver, this);
         }
 
         private void CurrentSceneSettings_ShotFiredEvent(FVRFireArm firearm)
@@ -97,17 +109,19 @@ namespace OpenScripts2
 
         public void OnDestroy()
         {
-            UnhookRevolver();
+            _existingRevolverSpecials.Remove(Revolver);
 
-            if (ChangesRoundPrefab)
-            {
-                On.FistVR.FVRFireArm.Fire -= FVRFireArm_Fire;
-            }
+            //UnhookRevolver();
+
+            //if (ChangesRoundPrefab)
+            //{
+            //    On.FistVR.FVRFireArm.Fire -= FVRFireArm_Fire;
+            //}
         }
 
-        private void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
+        private static void FVRFireArm_Fire(On.FistVR.FVRFireArm.orig_Fire orig, FVRFireArm self, FVRFireArmChamber chamber, Transform muzzle, bool doBuzz, float velMult, float rangeOverride)
         {
-            if (self == Revolver && _timeCharged >= ChargeTime && _fullChargeRound != null)
+            if (self is Revolver revolver && _existingRevolverSpecials.TryGetValue(revolver, out ChargeTriggerPowerRevolverSpecial revolverSpecial) && revolverSpecial._timeCharged >= revolverSpecial.ChargeTime && revolverSpecial._fullChargeRound != null)
             {
                 if (doBuzz && self.m_hand != null)
                 {
@@ -123,14 +137,14 @@ namespace OpenScripts2
                 float chamberVelMult = AM.GetChamberVelMult(chamber.RoundType, Vector3.Distance(chamber.transform.position, muzzle.position));
                 float num = self.GetCombinedFixedDrop(self.AccuracyClass) * 0.0166667f;
                 Vector2 vector = self.GetCombinedFixedDrift(self.AccuracyClass) * 0.0166667f;
-                for (int i = 0; i < _fullChargeRound.NumProjectiles; i++)
+                for (int i = 0; i < revolverSpecial._fullChargeRound.NumProjectiles; i++)
                 {
-                    float d = _fullChargeRound.ProjectileSpread + self.m_internalMechanicalMOA + self.GetCombinedMuzzleDeviceAccuracy();
+                    float d = revolverSpecial._fullChargeRound.ProjectileSpread + self.m_internalMechanicalMOA + self.GetCombinedMuzzleDeviceAccuracy();
 
-                    if (_fullChargeRound.BallisticProjectilePrefab != null)
+                    if (revolverSpecial._fullChargeRound.BallisticProjectilePrefab != null)
                     {
                         Vector3 b = muzzle.forward * 0.005f;
-                        GameObject ballisticProjectilePrefab = Instantiate(_fullChargeRound.BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
+                        GameObject ballisticProjectilePrefab = Instantiate(revolverSpecial._fullChargeRound.BallisticProjectilePrefab, muzzle.position - b, muzzle.rotation);
                         Vector2 vector2 = (UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle + UnityEngine.Random.insideUnitCircle) * 0.33333334f * d;
                         ballisticProjectilePrefab.transform.Rotate(new Vector3(vector2.x + vector.y + num, vector2.y + vector.x, 0f));
                         BallisticProjectile component = ballisticProjectilePrefab.GetComponent<BallisticProjectile>();
@@ -191,19 +205,19 @@ namespace OpenScripts2
         // Revolver Hooks and Coroutine
         private void UnhookRevolver()
         {
-            On.FistVR.Revolver.UpdateTriggerHammer -= Revolver_UpdateTriggerHammer;
-            On.FistVR.Revolver.Fire -= Revolver_Fire;
+            //On.FistVR.Revolver.UpdateTriggerHammer -= Revolver_UpdateTriggerHammer;
+            //On.FistVR.Revolver.Fire -= Revolver_Fire;
         }
 
         private void HookRevolver()
         {
-            On.FistVR.Revolver.UpdateTriggerHammer += Revolver_UpdateTriggerHammer;
-            On.FistVR.Revolver.Fire += Revolver_Fire;
+            //On.FistVR.Revolver.UpdateTriggerHammer += Revolver_UpdateTriggerHammer;
+            //On.FistVR.Revolver.Fire += Revolver_Fire;
         }
 
-        private void Revolver_Fire(On.FistVR.Revolver.orig_Fire orig, Revolver self)
+        private static void Revolver_Fire(On.FistVR.Revolver.orig_Fire orig, Revolver self)
         {
-            if (self == Revolver)
+            if (_existingRevolverSpecials.TryGetValue(self, out ChargeTriggerPowerRevolverSpecial revolverSpecial))
             {
                 int chamberToFire = self.CurChamber + self.ChamberOffset;
                 if (chamberToFire >= self.Cylinder.numChambers)
@@ -211,17 +225,17 @@ namespace OpenScripts2
                     chamberToFire -= self.Cylinder.numChambers;
                 }
 
-                if (ChangesRoundClass && _timeCharged >= ChargeTime)
+                if (revolverSpecial.ChangesRoundClass && revolverSpecial._timeCharged >= revolverSpecial.ChargeTime)
                 {
-                    if (self.Chambers[chamberToFire] != null && self.Chambers[chamberToFire].m_round != null && self.Chambers[chamberToFire].m_round.RoundClass != FullChargeRoundClass)
+                    if (self.Chambers[chamberToFire] != null && self.Chambers[chamberToFire].m_round != null && self.Chambers[chamberToFire].m_round.RoundClass != revolverSpecial.FullChargeRoundClass)
                     {
-                        self.Chambers[chamberToFire].m_round = AM.GetRoundSelfPrefab(self.Chambers[chamberToFire].m_round.RoundType, FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
+                        self.Chambers[chamberToFire].m_round = AM.GetRoundSelfPrefab(self.Chambers[chamberToFire].m_round.RoundType, revolverSpecial.FullChargeRoundClass).GetGameObject().GetComponent<FVRFireArmRound>();
                         self.Chambers[chamberToFire].UpdateProxyDisplay();
                     }
                 }
 
                 FVRFireArmChamber fvrfireArmChamber = self.Chambers[chamberToFire];
-                self.Fire(fvrfireArmChamber, self.GetMuzzle(), true, Mathf.Lerp(MinMuzzleVelocityMultiplier, MaxMuzzleVelocityMultiplier, _timeCharged / ChargeTime), -1f);
+                self.Fire(fvrfireArmChamber, self.GetMuzzle(), true, Mathf.Lerp(revolverSpecial.MinMuzzleVelocityMultiplier, revolverSpecial.MaxMuzzleVelocityMultiplier, revolverSpecial._timeCharged / revolverSpecial.ChargeTime), -1f);
                 self.FireMuzzleSmoke();
                 if (fvrfireArmChamber.GetRound().IsHighPressure)
                 {
@@ -239,9 +253,9 @@ namespace OpenScripts2
             else orig(self);
         }
 
-        private void Revolver_UpdateTriggerHammer(On.FistVR.Revolver.orig_UpdateTriggerHammer orig, Revolver self)
+        private static void Revolver_UpdateTriggerHammer(On.FistVR.Revolver.orig_UpdateTriggerHammer orig, Revolver self)
         {
-            if (self == Revolver)
+            if (_existingRevolverSpecials.TryGetValue(self, out ChargeTriggerPowerRevolverSpecial revolverSpecial))
             {
                 int nextChamber = self.CurChamber + self.ChamberOffset + (self.IsCylinderRotClockwise ? 1 : -1);
                 if (nextChamber >= self.Cylinder.numChambers)
@@ -297,10 +311,10 @@ namespace OpenScripts2
                         self.PlayAudioEvent(FirearmAudioEventType.Prefire, 1f);
 
                         // New Code
-                        if (!StopsOnEmpty || (StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent))
+                        if (!revolverSpecial.StopsOnEmpty || (revolverSpecial.StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent))
                         {
-                            _chargingAudioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, Revolver.transform.position);
-                            _chargingAudioSource.FollowThisTransform(Revolver.transform);
+                            revolverSpecial._chargingAudioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, revolverSpecial.ChargingSounds, revolverSpecial.Revolver.transform.position);
+                            revolverSpecial._chargingAudioSource.FollowThisTransform(revolverSpecial.Revolver.transform);
                         }
                     }
                 }
@@ -316,17 +330,17 @@ namespace OpenScripts2
                         // Single Action
                         if (self.m_isHammerLocked)
                         {
-                            DropHammerRevolver(self);
+                            revolverSpecial.DropHammerRevolver(self);
                         }
                         // Double Action
-                        else if (!_isCharging && (!StopsOnEmpty || (StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent)))
+                        else if (!revolverSpecial._isCharging && (!revolverSpecial.StopsOnEmpty || (revolverSpecial.StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent)))
                         {
-                            StartCoroutine(DropHammerRevolverDelay(self));
+                            revolverSpecial.StartCoroutine(revolverSpecial.DropHammerRevolverDelay(self));
                         }
                         // Next Chamber Empty
-                        else if (!_isCharging && StopsOnEmpty && (!self.Chambers[nextChamber].IsFull || self.Chambers[nextChamber].IsSpent))
+                        else if (!revolverSpecial._isCharging && revolverSpecial.StopsOnEmpty && (!self.Chambers[nextChamber].IsFull || self.Chambers[nextChamber].IsSpent))
                         {
-                            DropHammerRevolver(self);
+                            revolverSpecial.DropHammerRevolver(self);
                         }
                     }
                     else if ((self.m_curTriggerFloat <= 0.14f || !self.IsDoubleActionTrigger) && !self.m_isHammerLocked && self.CanManuallyCockHammer)
@@ -350,10 +364,10 @@ namespace OpenScripts2
                                     self.PlayAudioEvent(FirearmAudioEventType.Prefire, 1f);
 
                                     // New Code
-                                    if (!StopsOnEmpty || (StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent))
+                                    if (!revolverSpecial.StopsOnEmpty || (revolverSpecial.StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent))
                                     {
-                                        _chargingAudioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, Revolver.transform.position);
-                                        _chargingAudioSource.FollowThisTransform(Revolver.transform);
+                                        revolverSpecial._chargingAudioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, revolverSpecial.ChargingSounds, self.transform.position);
+                                        revolverSpecial._chargingAudioSource.FollowThisTransform(self.transform);
                                     }
                                 }
                             }
@@ -363,10 +377,10 @@ namespace OpenScripts2
                                 self.PlayAudioEvent(FirearmAudioEventType.Prefire, 1f);
 
                                 // New Code
-                                if (!StopsOnEmpty || (StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent))
+                                if (!revolverSpecial.StopsOnEmpty || (revolverSpecial.StopsOnEmpty && self.Chambers[nextChamber].IsFull && !self.Chambers[nextChamber].IsSpent))
                                 {
-                                    _chargingAudioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, Revolver.transform.position);
-                                    _chargingAudioSource.FollowThisTransform(Revolver.transform);
+                                    revolverSpecial._chargingAudioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, revolverSpecial.ChargingSounds, self.transform.position);
+                                    revolverSpecial._chargingAudioSource.FollowThisTransform(self.transform);
                                 }
                             }
                         }

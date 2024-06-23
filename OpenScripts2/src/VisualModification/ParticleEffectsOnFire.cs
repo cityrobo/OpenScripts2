@@ -17,6 +17,9 @@ namespace OpenScripts2
         {
             public ParticleSystem ParticleSystem;
             public int NumbersOfParticlesToEmit;
+            public bool EmitWhenGunSuppressed = true;
+            public bool EmitWhenGunHasMuzzleDevices = true;
+            public bool MoveWithMuzzle = false;
         }
 
         public ParticleEmitter[] ParticleEmitters;
@@ -32,11 +35,16 @@ namespace OpenScripts2
 		}
 
         [ContextMenu("Test Emission")]
-        private void EmitParticles()
+        private void EmitParticles(FVRFireArm firearm)
 		{
             foreach (var pEmitter in ParticleEmitters)
             {
-                pEmitter.ParticleSystem.Emit(pEmitter.NumbersOfParticlesToEmit);
+                if (pEmitter.MoveWithMuzzle)
+                {
+                    pEmitter.ParticleSystem.transform.position = firearm.CurrentMuzzle.transform.position;
+                }
+
+                if ((pEmitter.EmitWhenGunHasMuzzleDevices || !pEmitter.EmitWhenGunHasMuzzleDevices && firearm.MuzzleDevices.Count == 0) && (pEmitter.EmitWhenGunSuppressed || !pEmitter.EmitWhenGunSuppressed && !firearm.IsSuppressed())) pEmitter.ParticleSystem.Emit(pEmitter.NumbersOfParticlesToEmit);
             }
 		}
 
@@ -44,7 +52,7 @@ namespace OpenScripts2
         {
 			if (firearm == FireArm)
             {
-				EmitParticles();
+				EmitParticles(firearm);
 			}
         }
 	}

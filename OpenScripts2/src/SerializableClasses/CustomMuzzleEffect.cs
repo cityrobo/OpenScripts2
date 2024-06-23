@@ -13,5 +13,7 @@ namespace OpenScripts2
         public MuzzleEffectConfig Entry;
         public MuzzleEffectSize Size;
         public Transform OverridePoint;
+        public bool EmitWhenGunSuppressed = true;
+        public bool EmitWhenGunHasMuzzleDevices = true;
     }
 }

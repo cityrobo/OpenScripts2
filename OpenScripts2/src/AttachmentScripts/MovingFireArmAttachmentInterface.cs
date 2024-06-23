@@ -1,5 +1,4 @@
 using FistVR;
-using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -61,8 +60,11 @@ namespace OpenScripts2
         private Vector3 _lastHandPos;
 
         private Vector3 _startPos;
-        private Vector3 _lowerLimit;
-        private Vector3 _upperLimit;
+
+        [HideInInspector]
+        public Vector3 LowerLimit;
+        [HideInInspector]
+        public Vector3 UpperLimit;
 
         [HideInInspector]
         public GameObject DisableOnHover;
@@ -77,8 +79,8 @@ namespace OpenScripts2
         public override void Awake()
         {
             base.Awake();
-            _lowerLimit = new Vector3(XLimits.x, YLimits.x, ZLimits.x);
-            _upperLimit = new Vector3(XLimits.y, YLimits.y, ZLimits.y);
+            LowerLimit = new Vector3(XLimits.x, YLimits.x, ZLimits.x);
+            UpperLimit = new Vector3(XLimits.y, YLimits.y, ZLimits.y);
 
             _startPos = Attachment.ObjectWrapper.GetGameObject().GetComponent<FVRFireArmAttachment>().AttachmentInterface.transform.localPosition;
 
@@ -206,17 +208,16 @@ namespace OpenScripts2
 
         private void OneDegreeOfFreedom(Vector3 newPosRaw)
         {
-
             Vector3 newPosProjected;
             if (CanSwitchModes)
             {
-                Vector3 lowLimit = _lowerLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
-                Vector3 highLimit = _upperLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
+                Vector3 lowLimit = LowerLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
+                Vector3 highLimit = UpperLimit.GetCombinedAxisVector(LimitingAxis, transform.localPosition).ApproximateInfiniteComponent(100f);
                 newPosProjected = GetClosestValidPoint(lowLimit, highLimit, transform.parent.InverseTransformPoint(newPosRaw));
             }
             else
             {
-                newPosProjected = transform.parent.InverseTransformPoint(newPosRaw).GetAxisVector(LimitingAxis).Clamp(_lowerLimit, _upperLimit);
+                newPosProjected = transform.parent.InverseTransformPoint(newPosRaw).GetAxisVector(LimitingAxis).Clamp(LowerLimit, UpperLimit);
             }
             transform.localPosition = newPosProjected;
         }
@@ -231,16 +232,16 @@ namespace OpenScripts2
             {
                 newPosProjected = transform.parent.InverseTransformPoint(newPosRaw).RemoveAxisValue(LimitingAxis);
             }
-            Vector3 newPosClamped = transform.parent.InverseTransformPoint(newPosProjected).Clamp(_lowerLimit, _upperLimit);
+            Vector3 newPosClamped = transform.parent.InverseTransformPoint(newPosProjected).Clamp(LowerLimit, UpperLimit);
             transform.localPosition = newPosClamped.ModifyAxisValue(LimitingAxis, _startPos.GetAxisValue(LimitingAxis));
         }
         private void ThreeDegreesOfFreedom(Vector3 newPosRaw)
         {
-            transform.localPosition = transform.parent.InverseTransformPoint(newPosRaw).Clamp(_lowerLimit, _upperLimit);
+            transform.localPosition = transform.parent.InverseTransformPoint(newPosRaw).Clamp(LowerLimit, UpperLimit);
         }
 
         [ContextMenu("Copy existing Interface's values")]
-        public void CopyAttachment()
+        public void CopyInterface()
         {
             FVRFireArmAttachmentInterface[] attachments = GetComponents<FVRFireArmAttachmentInterface>();
 
@@ -260,4 +261,17 @@ namespace OpenScripts2
             LimitingAxis = MovementModes[_currentMode].LimitingAxis;
         }
     }
+
+#if DEBUG
+    [UnityEditor.CustomEditor(typeof(MovingFireArmAttachmentInterface))]
+    public class MovingFireArmAttachmentInterfaceEditor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            MovingFireArmAttachmentInterface t = (MovingFireArmAttachmentInterface)target;
+            DrawDefaultInspector();
+            if (GUILayout.Button("Copy existing interface on this game object.")) t.CopyInterface();
+        }
+    }
+#endif
 }

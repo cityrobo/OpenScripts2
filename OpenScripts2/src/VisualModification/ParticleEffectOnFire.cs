@@ -13,8 +13,11 @@ namespace OpenScripts2
         public FVRFireArm FireArm;
 		public ParticleSystem ParticleSystem;
 		public int ParticleCount;
+        public bool EmitWhenGunSuppressed = true;
+        public bool EmitWhenGunHasMuzzleDevices = true;
+        public bool MoveWithMuzzle = false;
 
-		public void Awake()
+        public void Awake()
         {
 			GM.CurrentSceneSettings.ShotFiredEvent += ShotFired;
         }
@@ -34,7 +37,12 @@ namespace OpenScripts2
         {
 			if (firearm == FireArm)
             {
-				EmitParticle();
+                if (MoveWithMuzzle)
+                {
+                    ParticleSystem.transform.position = firearm.CurrentMuzzle.transform.position;
+                }
+
+                if ((EmitWhenGunHasMuzzleDevices || !EmitWhenGunHasMuzzleDevices && firearm.MuzzleDevices.Count == 0) && (EmitWhenGunSuppressed || !EmitWhenGunSuppressed && !firearm.IsSuppressed())) EmitParticle();
 			}
         }
 	}

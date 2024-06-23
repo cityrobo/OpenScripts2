@@ -61,14 +61,14 @@ namespace OpenScripts2
 
             if (Weapon.m_fireSelectorMode == FullAutoFireSelectorPosition && Weapon.IsBoltCatchEngaged()) _wasOnFullAutoSear = true;
 
-            if (Weapon.m_fireSelectorMode == SemiAutoFireSelectorPosition && _wasOnFullAutoSear == true)
-            {
-                if (Weapon.IsHeld && Weapon.m_hasTriggeredUpSinceBegin && Weapon.m_hand.Input.TriggerFloat > Weapon.TriggerFiringThreshold)
-                {
-                    Weapon.ReleaseSeer();
-                    StartCoroutine(ReengageSear());
-                }
-            }
+            //if (Weapon.m_fireSelectorMode == SemiAutoFireSelectorPosition && _wasOnFullAutoSear == true)
+            //{
+            //    if (Weapon.IsHeld && Weapon.m_hasTriggeredUpSinceBegin && Weapon.m_hand.Input.TriggerFloat > Weapon.TriggerFiringThreshold)
+            //    {
+            //        Weapon.ReleaseSeer();
+            //        //StartCoroutine(ReengageSear());
+            //    }
+            //}
         }
 
         private IEnumerator ReengageSear()
@@ -89,10 +89,10 @@ namespace OpenScripts2
         {
             if (_existingSemiAutoClosedFullAutoOpenBolts.TryGetValue(self, out SemiAutoClosedFullAutoOpenBolt script))
             {
-                bool flag = false;
+                bool boltOrHandleIsHeld = false;
                 if (self.IsHeld || self.m_isChargingHandleHeld)
                 {
-                    flag = true;
+                    boltOrHandleIsHeld = true;
                 }
                 float boltZ_current = self.m_boltZ_current;
                 if (self.IsHeld)
@@ -112,59 +112,78 @@ namespace OpenScripts2
                 {
                     self.m_boltZ_heldTarget = Mathf.Lerp(self.m_boltZ_forward, self.m_boltZ_rear, self.m_chargingHandleLerp);
                 }
+
+                // Sear Selection
                 Vector2 boltMovementRange = new Vector2(self.m_boltZ_rear, self.m_boltZ_forward);
+                // Use full-auto sear
                 if (!script._semiAutoSearActive && self.m_boltZ_current <= self.m_boltZ_lock && self.Receiver.IsBoltCatchEngaged())
                 {
                     boltMovementRange = new Vector2(self.m_boltZ_rear, self.m_boltZ_lock);
                 }
-                else if (script._semiAutoSearActive && self.m_boltZ_current <= script.m_boltZ_closedBoltSear && self.Receiver.IsBoltCatchEngaged())
+                // Use semi-auto sear
+                else if (script._semiAutoSearActive && self.m_boltZ_current <= script.m_boltZ_closedBoltSear && self.Receiver.IsBoltCatchEngaged() && !script._wasOnFullAutoSear)
                 {
                     boltMovementRange = new Vector2(self.m_boltZ_rear, script.m_boltZ_closedBoltSear);
                 }
 
-                bool flag2 = false;
+                // Full-auto to semi-auto sear switch
+                // Keep on full-auto sear while trigger has not been pressed.
+                else if (script._semiAutoSearActive && self.m_boltZ_current <= self.m_boltZ_lock && self.Receiver.IsBoltCatchEngaged() && script._wasOnFullAutoSear)
+                {
+                    boltMovementRange = new Vector2(self.m_boltZ_rear, self.m_boltZ_lock);
+                }
+                // Reengage sear when trigger pressed to release from full-auto sear so that bolt catches on semi-auto sear again.
+                else if (script._semiAutoSearActive && self.m_boltZ_current <= script.m_boltZ_closedBoltSear && !self.Receiver.IsBoltCatchEngaged() && script._wasOnFullAutoSear)
+                {
+                    self.Receiver.EngageSeer();
+                    script._wasOnFullAutoSear = false;
+                    boltMovementRange = new Vector2(self.m_boltZ_rear, script.m_boltZ_closedBoltSear);
+                }
+
+                bool boltOnSafetyCatch = false;
                 if (self.m_hasSafetyCatch)
                 {
-                    float num = self.m_currentBoltRot;
-                    float num2 = Mathf.InverseLerp(Mathf.Min(self.BoltRot_Standard, self.BoltRot_Safe), Mathf.Max(self.BoltRot_Standard, self.BoltRot_Safe), num);
+                    float currentBoltRotation = self.m_currentBoltRot;
+                    float savetyRotationLerpValue = Mathf.InverseLerp(Mathf.Min(self.BoltRot_Standard, self.BoltRot_Safe), Mathf.Max(self.BoltRot_Standard, self.BoltRot_Safe), currentBoltRotation);
                     if (self.IsHeld)
                     {
                         if (self.m_boltZ_current < self.m_boltZ_safetyrotLimit)
                         {
-                            Vector3 vector3 = self.m_hand.Input.Pos - self.transform.position;
-                            vector3 = Vector3.ProjectOnPlane(vector3, self.transform.forward).normalized;
-                            Vector3 up = self.Receiver.transform.up;
-                            num = Mathf.Atan2(Vector3.Dot(self.transform.forward, Vector3.Cross(up, vector3)), Vector3.Dot(up, vector3)) * 57.29578f;
-                            num = Mathf.Clamp(num, Mathf.Min(self.BoltRot_Standard, self.BoltRot_Safe), Mathf.Max(self.BoltRot_Standard, self.BoltRot_Safe));
+                            Vector3 handToBoltDelta = self.m_hand.Input.Pos - self.transform.position;
+                            handToBoltDelta = Vector3.ProjectOnPlane(handToBoltDelta, self.transform.forward).normalized;
+                            Vector3 receiverUp = self.Receiver.transform.up;
+                            currentBoltRotation = Mathf.Atan2(Vector3.Dot(self.transform.forward, Vector3.Cross(receiverUp, handToBoltDelta)), Vector3.Dot(receiverUp, handToBoltDelta)) * 57.29578f;
+                            currentBoltRotation = Mathf.Clamp(currentBoltRotation, Mathf.Min(self.BoltRot_Standard, self.BoltRot_Safe), Mathf.Max(self.BoltRot_Standard, self.BoltRot_Safe));
                         }
                     }
                     else if (!self.m_isChargingHandleHeld)
                     {
-                        if (num2 <= 0.5f)
+                        if (savetyRotationLerpValue <= 0.5f)
                         {
-                            num = Mathf.Min(self.BoltRot_Standard, self.BoltRot_Safe);
+                            currentBoltRotation = Mathf.Min(self.BoltRot_Standard, self.BoltRot_Safe);
                         }
                         else
                         {
-                            num = Mathf.Max(self.BoltRot_Standard, self.BoltRot_Safe);
+                            currentBoltRotation = Mathf.Max(self.BoltRot_Standard, self.BoltRot_Safe);
                         }
                     }
-                    if (Mathf.Abs(num - self.BoltRot_Safe) < self.BoltRot_SlipDistance)
+                    if (Mathf.Abs(currentBoltRotation - self.BoltRot_Safe) < self.BoltRot_SlipDistance)
                     {
                         boltMovementRange = new Vector2(self.m_boltZ_rear, self.m_boltZ_safetyCatch);
-                        flag2 = true;
+                        boltOnSafetyCatch = true;
                     }
-                    else if (Mathf.Abs(num - self.BoltRot_Standard) >= self.BoltRot_SlipDistance)
+                    else if (Mathf.Abs(currentBoltRotation - self.BoltRot_Standard) >= self.BoltRot_SlipDistance)
                     {
                         boltMovementRange = new Vector2(self.m_boltZ_rear, self.m_boltZ_safetyrotLimit);
                     }
-                    if (Mathf.Abs(num - self.m_currentBoltRot) > 0.1f)
+                    if (Mathf.Abs(currentBoltRotation - self.m_currentBoltRot) > 0.1f)
                     {
-                        self.transform.localEulerAngles = new Vector3(0f, 0f, num);
+                        self.transform.localEulerAngles = new Vector3(0f, 0f, currentBoltRotation);
                     }
-                    self.m_currentBoltRot = num;
+                    self.m_currentBoltRot = currentBoltRotation;
                 }
-                if (flag)
+
+                if (boltOrHandleIsHeld)
                 {
                     self.m_curBoltSpeed = 0f;
                 }
@@ -172,24 +191,25 @@ namespace OpenScripts2
                 {
                     self.m_curBoltSpeed = Mathf.MoveTowards(self.m_curBoltSpeed, self.BoltSpeed_Forward, Time.deltaTime * self.BoltSpringStiffness);
                 }
-                float num3 = self.m_boltZ_current;
-                float num4 = self.m_boltZ_current;
-                if (flag)
+
+                float newBoltPosition = self.m_boltZ_current;
+                float boltTargetWhenHeld = self.m_boltZ_current;
+                if (boltOrHandleIsHeld)
                 {
-                    num4 = self.m_boltZ_heldTarget;
+                    boltTargetWhenHeld = self.m_boltZ_heldTarget;
                 }
-                if (flag)
+                if (boltOrHandleIsHeld)
                 {
-                    num3 = Mathf.MoveTowards(self.m_boltZ_current, num4, self.BoltSpeed_Held * Time.deltaTime);
+                    newBoltPosition = Mathf.MoveTowards(self.m_boltZ_current, boltTargetWhenHeld, self.BoltSpeed_Held * Time.deltaTime);
                 }
                 else
                 {
-                    num3 = self.m_boltZ_current + self.m_curBoltSpeed * Time.deltaTime;
+                    newBoltPosition = self.m_boltZ_current + self.m_curBoltSpeed * Time.deltaTime;
                 }
-                num3 = Mathf.Clamp(num3, boltMovementRange.x, boltMovementRange.y);
-                if (Mathf.Abs(num3 - self.m_boltZ_current) > Mathf.Epsilon)
+                newBoltPosition = Mathf.Clamp(newBoltPosition, boltMovementRange.x, boltMovementRange.y);
+                if (Mathf.Abs(newBoltPosition - self.m_boltZ_current) > Mathf.Epsilon)
                 {
-                    self.m_boltZ_current = num3;
+                    self.m_boltZ_current = newBoltPosition;
                     self.transform.localPosition = new Vector3(self.transform.localPosition.x, self.transform.localPosition.y, self.m_boltZ_current);
                     if (self.SlidingPieces.Length > 0)
                     {
@@ -197,20 +217,22 @@ namespace OpenScripts2
                         for (int i = 0; i < self.SlidingPieces.Length; i++)
                         {
                             Vector3 localPosition = self.SlidingPieces[i].Piece.localPosition;
-                            float num5 = Mathf.Lerp(self.m_boltZ_current, z, self.SlidingPieces[i].DistancePercent);
-                            self.SlidingPieces[i].Piece.localPosition = new Vector3(localPosition.x, localPosition.y, num5);
+                            float slidingPieceZ = Mathf.Lerp(self.m_boltZ_current, z, self.SlidingPieces[i].DistancePercent);
+                            self.SlidingPieces[i].Piece.localPosition = new Vector3(localPosition.x, localPosition.y, slidingPieceZ);
                         }
                     }
                     if (self.Spring != null)
                     {
-                        float num6 = Mathf.InverseLerp(self.m_boltZ_rear, self.m_boltZ_forward, self.m_boltZ_current);
-                        self.Spring.localScale = new Vector3(1f, 1f, Mathf.Lerp(self.SpringScales.x, self.SpringScales.y, num6));
+                        float springScaleZ = Mathf.InverseLerp(self.m_boltZ_rear, self.m_boltZ_forward, self.m_boltZ_current);
+                        self.Spring.localScale = new Vector3(1f, 1f, Mathf.Lerp(self.SpringScales.x, self.SpringScales.y, springScaleZ));
                     }
                 }
                 else
                 {
                     self.m_curBoltSpeed = 0f;
                 }
+
+                // Bolt Pos Enum Selection
                 OpenBoltReceiverBolt.BoltPos boltPos = self.CurPos;
                 if (Mathf.Abs(self.m_boltZ_current - self.m_boltZ_forward) < 0.001f)
                 {
@@ -233,7 +255,9 @@ namespace OpenScripts2
                     boltPos = OpenBoltReceiverBolt.BoltPos.LockedToRear;
                 }
                 self.CurPos = boltPos;
-                if (self.m_hasSafetyCatch && !self.IsHeld && flag2 && Mathf.Abs(self.m_boltZ_current - self.m_boltZ_safetyCatch) < 0.001f && Mathf.Abs(boltZ_current - self.m_boltZ_safetyCatch) >= 0.001f)
+
+                // Bolt Events
+                if (self.m_hasSafetyCatch && !self.IsHeld && boltOnSafetyCatch && Mathf.Abs(self.m_boltZ_current - self.m_boltZ_safetyCatch) < 0.001f && Mathf.Abs(boltZ_current - self.m_boltZ_safetyCatch) >= 0.001f)
                 {
                     self.Receiver.PlayAudioEvent(FirearmAudioEventType.CatchOnSear, 1f);
                 }
@@ -271,18 +295,11 @@ namespace OpenScripts2
                 }
                 if (self.HasLockLatch)
                 {
-                    float num7;
-                    if (self.CurPos == OpenBoltReceiverBolt.BoltPos.Forward && !self.IsHeld)
+                    float lockLatchLerp = self.CurPos == OpenBoltReceiverBolt.BoltPos.Forward && !self.IsHeld ? 1f : 0f;
+
+                    if (Mathf.Abs(lockLatchLerp - self.m_lockLatchLerp) > 0.001f)
                     {
-                        num7 = 1f;
-                    }
-                    else
-                    {
-                        num7 = 0f;
-                    }
-                    if (Mathf.Abs(num7 - self.m_lockLatchLerp) > 0.001f)
-                    {
-                        self.m_lockLatchLerp = num7;
+                        self.m_lockLatchLerp = lockLatchLerp;
                         self.Receiver.SetAnimatedComponent(self.LockLatch, self.m_lockLatchLerp, self.LockLatch_Interp, self.LockLatch_SafetyAxis);
                     }
                 }

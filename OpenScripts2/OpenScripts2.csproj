@@ -103,6 +103,9 @@
   <ItemGroup>
     <Compile Include="src\AttachmentScripts\AdvancedMovingFireArmAttachmentInterface.cs" />
     <Compile Include="src\AttachmentScripts\InvertingMount.cs" />
+    <Compile Include="src\AttachmentScripts\MovingAttachmentInterfaceLimiterAddon.cs" />
+    <Compile Include="src\AttachmentScripts\ScopeBaseOptic.cs" />
+    <Compile Include="src\AttachmentScripts\ScopeBaseMount.cs" />
     <Compile Include="src\AttachmentScripts\SupressableMuzzleNoiseMaker.cs" />
     <Compile Include="src\AttachmentScripts\CustomMuzzleDeviceMuzzleEffects.cs" />
     <Compile Include="src\AttachmentScripts\MovingFireArmAttachmentInterface.cs" />

@@ -125,4 +125,17 @@ namespace OpenScripts2
             this.CopyComponent(toCopy);
         }
     }
+
+#if DEBUG
+    [UnityEditor.CustomEditor(typeof(CustomOpenScripts2Attachment))]
+    public class CustomOpenScripts2AttachmentEditor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            CustomOpenScripts2Attachment t = (CustomOpenScripts2Attachment)target;
+            DrawDefaultInspector();
+            if (GUILayout.Button("Copy existing attachment on this game object.")) t.CopyAttachment();
+        }
+    }
+#endif
 }

@@ -47,11 +47,12 @@ namespace OpenScripts2
                 {
                     if (customMuzzleEffects[j].Entry != null)
                     {
+                        if ((!customMuzzleEffects[j].EmitWhenGunHasMuzzleDevices && self.MuzzleDevices.Count == 0) || (!customMuzzleEffects[j].EmitWhenGunSuppressed && self.IsSuppressed())) continue;
                         MuzzleEffectConfig muzzleConfig = customMuzzleEffects[j].Entry;
                         MuzzleEffectSize muzzleEffectSize = overrideEffectSizeWithDefault ? muzzleEffectSize = self.DefaultMuzzleEffectSize : customMuzzleEffects[j].Size;
                         int muzzleEffectSizeAsIndex = (int)muzzleEffectSize;
                         GameObject muzzleEffectPrefab = GM.CurrentSceneSettings.IsSceneLowLight ? muzzleConfig.Prefabs_Lowlight[muzzleEffectSizeAsIndex] : muzzleConfig.Prefabs_Highlight[muzzleEffectSizeAsIndex];
-                        Transform parent = customMuzzleEffects[j].OverridePoint ?? self.MuzzlePos.transform;
+                        Transform parent = customMuzzleEffects[j].OverridePoint ?? self.CurrentMuzzle.transform;
                         muzzleEffectPrefab = Instantiate(muzzleEffectPrefab, parent.position, parent.rotation, parent);
 
                         MuzzlePSystem muzzlePSystem = new()
@@ -112,7 +113,7 @@ namespace OpenScripts2
 
         public void Start()
         {
-            // If the system wasn't hooked into the firearms code fast enough in Awake() <<due to code execution order, this will make sure that the effects are still applied.
+            // If the system wasn't hooked into the firearms code fast enough in Awake() due to code execution order, this will make sure that the effects are still applied.
             if (FireArm.m_muzzleSystems.Count < (FireArm.MuzzleEffects.Length + CustomMuzzleEffects.Length))
             {
                 int count = FireArm.MuzzleDevices.Count;
