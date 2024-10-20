@@ -102,6 +102,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\AttachmentScripts\AdvancedMovingFireArmAttachmentInterface.cs" />
+    <Compile Include="src\AttachmentScripts\AdvancedMovingFireArmAttachmentMenu.cs" />
     <Compile Include="src\AttachmentScripts\InvertingMount.cs" />
     <Compile Include="src\AttachmentScripts\MovingAttachmentInterfaceLimiterAddon.cs" />
     <Compile Include="src\AttachmentScripts\ScopeBaseOptic.cs" />
@@ -118,6 +119,7 @@
     <Compile Include="src\FirearmControl\ChargeTriggerPowerRevolverSpecial.cs" />
     <Compile Include="src\FirearmControl\ClosedBoltRotatingChargingHandle.cs" />
     <Compile Include="src\FirearmControl\FiredProjectileModification.cs" />
+    <Compile Include="src\FirearmControl\RecoilModificationCore.cs" />
     <Compile Include="src\FirearmControl\SemiAutoClosedFullAutoOpenBolt.cs" />
     <Compile Include="src\FirearmControl\FireArmStartBurstFix.cs" />
     <Compile Include="src\FirearmControl\AdditionalBarrel.cs" />

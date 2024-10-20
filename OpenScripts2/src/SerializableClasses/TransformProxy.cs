@@ -45,6 +45,14 @@ namespace OpenScripts2
             if (deleteReferenceGameObject) UnityEngine.Object.Destroy(transform.gameObject);
         }
 
+        public TransformProxy(Transform parent, Vector3 localPosition, Quaternion? localRotation = null, Vector3? localScale = null)
+        {
+            this.parent = parent;
+            this.localPosition = localPosition;
+            this.localRotation = localRotation ?? Quaternion.identity;
+            this.localScale = localScale ?? Vector3.one;
+        }
+
         public Vector3 position => parent.TransformPoint(localPosition);
         public Quaternion rotation => parent.TransformRotation(localRotation);
 

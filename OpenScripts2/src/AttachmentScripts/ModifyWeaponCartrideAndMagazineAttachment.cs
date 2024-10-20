@@ -28,7 +28,7 @@ namespace OpenScripts2
         public FireArmMagazineType MagType;
 
         [Header("MagPos Calculation Modification")]
-        [Header("Place Firearm and the new mag pos into these fields and use the context menu to calculate the position.")]
+        [Header("Place _firearm and the new mag pos into these fields and use the context menu to calculate the position.")]
         public FVRFireArm TemporaryFirearm;
         public Transform MagMountPos;
         public Transform MagEjectPos;

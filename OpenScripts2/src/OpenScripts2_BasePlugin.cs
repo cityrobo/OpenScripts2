@@ -197,6 +197,28 @@ namespace OpenScripts2
             }
         }
 
+        [Serializable]
+        public class RecoilMultipliers
+        {
+            public float VerticalRotPerShot = 1f;
+            public float MaxVerticalRot_Bipodded = 1f;
+            public float MaxVerticalRot = 1f;
+            public float VerticalRotRecovery = 1f;
+
+            public float HorizontalRotPerShot = 1f;
+            public float MaxHorizontalRot_Bipodded = 1f;
+            public float MaxHorizontalRot = 1f;
+            public float HorizontalRotRecovery = 1f;
+
+            public float ZLinearPerShot = 1f;
+            public float ZLinearMax = 1f;
+            public float ZLinearRecovery = 1f;
+
+            public float XYLinearPerShot = 1f;
+            public float XYLinearMax = 1f;
+            public float XYLinearRecovery = 1f;
+        }
+
         public static FVRFireArmRecoilProfile CopyAndAdjustRecoilProfile(FVRFireArmRecoilProfile orig, float recoilFactor)
         {
             FVRFireArmRecoilProfile copy = Instantiate(orig);
@@ -209,14 +231,62 @@ namespace OpenScripts2
             copy.MaxHorizontalRot_Bipodded *= recoilFactor;
             copy.MaxHorizontalRot *= recoilFactor;
             copy.HorizontalRotRecovery /= recoilFactor;
-            
+
             copy.ZLinearPerShot *= recoilFactor;
             copy.ZLinearMax *= recoilFactor;
             copy.ZLinearRecovery /= recoilFactor;
 
             copy.XYLinearPerShot *= recoilFactor;
             copy.XYLinearMax *= recoilFactor;
-            copy.ZLinearRecovery /= recoilFactor;
+            copy.XYLinearRecovery /= recoilFactor;
+
+            return copy;
+        }
+
+        public static FVRFireArmRecoilProfile CopyAndAdjustRecoilProfile(FVRFireArmRecoilProfile orig, float recoilFactor, float recoveryFactor)
+        {
+            FVRFireArmRecoilProfile copy = Instantiate(orig);
+            copy.VerticalRotPerShot *= recoilFactor;
+            copy.MaxVerticalRot_Bipodded *= recoilFactor;
+            copy.MaxVerticalRot *= recoilFactor;
+            copy.VerticalRotRecovery /= recoveryFactor;
+
+            copy.HorizontalRotPerShot *= recoilFactor;
+            copy.MaxHorizontalRot_Bipodded *= recoilFactor;
+            copy.MaxHorizontalRot *= recoilFactor;
+            copy.HorizontalRotRecovery /= recoveryFactor;
+
+            copy.ZLinearPerShot *= recoilFactor;
+            copy.ZLinearMax *= recoilFactor;
+            copy.ZLinearRecovery /= recoveryFactor;
+
+            copy.XYLinearPerShot *= recoilFactor;
+            copy.XYLinearMax *= recoilFactor;
+            copy.XYLinearRecovery /= recoveryFactor;
+
+            return copy;
+        }
+
+        public static FVRFireArmRecoilProfile CopyAndAdjustRecoilProfile(FVRFireArmRecoilProfile orig, RecoilMultipliers multipliers)
+        {
+            FVRFireArmRecoilProfile copy = Instantiate(orig);
+            copy.VerticalRotPerShot *= multipliers.VerticalRotPerShot;
+            copy.MaxVerticalRot_Bipodded *= multipliers.MaxVerticalRot_Bipodded;
+            copy.MaxVerticalRot *= multipliers.MaxVerticalRot;
+            copy.VerticalRotRecovery *= multipliers.VerticalRotRecovery;
+
+            copy.HorizontalRotPerShot *= multipliers.HorizontalRotPerShot;
+            copy.MaxHorizontalRot_Bipodded *= multipliers.MaxHorizontalRot_Bipodded;
+            copy.MaxHorizontalRot *= multipliers.MaxHorizontalRot;
+            copy.HorizontalRotRecovery *= multipliers.HorizontalRotRecovery;
+
+            copy.ZLinearPerShot *= multipliers.ZLinearPerShot;
+            copy.ZLinearMax *= multipliers.ZLinearMax;
+            copy.ZLinearRecovery *= multipliers.ZLinearRecovery;
+
+            copy.XYLinearPerShot *= multipliers.XYLinearPerShot;
+            copy.XYLinearMax *= multipliers.XYLinearMax;
+            copy.XYLinearRecovery *= multipliers.XYLinearRecovery;
 
             return copy;
         }
@@ -226,7 +296,7 @@ namespace OpenScripts2
         {
             var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
 
-            return (Action) Activator.CreateInstance(typeof(Action), self, pointer);
+            return (Action)Activator.CreateInstance(typeof(Action), self, pointer);
         }
 
         public static Action<T> GetBaseAction<T>(Type BaseClass, string MethodName, MonoBehaviour self)
@@ -263,7 +333,7 @@ namespace OpenScripts2
 
         public static void ProjectileFired(FVRFireArm fireArm, ref BallisticProjectile projectile)
         {
-            ProjectileFiredEvent?.Invoke( fireArm, ref projectile );
+            ProjectileFiredEvent?.Invoke(fireArm, ref projectile);
         }
 
         public static event ProjectileFired ProjectileFiredEvent;

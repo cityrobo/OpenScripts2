@@ -10,7 +10,6 @@ namespace OpenScripts2
 {
     public class CustomOpenScripts2Attachment : FVRFireArmAttachment
     {
-
         public override void Awake()
         {
             base.Awake();
@@ -31,6 +30,9 @@ namespace OpenScripts2
                     break;
                 case MovingFireArmAttachmentInterface i:
                     MovingFireArmAttachmentInterfaceFlagDic(flagDic, true, i);
+                    break;
+                case AdvancedMovingFireArmAttachmentInterface i:
+                    AdvancedMovingFireArmAttachmentInterfaceFlagDic(flagDic, true, i);
                     break;
             }
 
@@ -54,6 +56,9 @@ namespace OpenScripts2
                     break;
                 case MovingFireArmAttachmentInterface i:
                     MovingFireArmAttachmentInterfaceFlagDic(f, false, i);
+                    break;
+                case AdvancedMovingFireArmAttachmentInterface i:
+                    AdvancedMovingFireArmAttachmentInterfaceFlagDic(f, false, i);
                     break;
             }
 
@@ -93,6 +98,53 @@ namespace OpenScripts2
                 {
                     split = value.Split(',');
                     i.SecondaryPiece.localPosition = new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
+                }
+            }
+        }
+
+        private void AdvancedMovingFireArmAttachmentInterfaceFlagDic(Dictionary<string, string> flagDic, bool save, AdvancedMovingFireArmAttachmentInterface i)
+        {
+            string value;
+            if (save)
+            {
+                value = i.transform.localPosition.ToString("F6").Replace(" ", "").Replace("(", "").Replace(")", "");
+                flagDic.Add(AdvancedMovingFireArmAttachmentInterface.POSITION_FLAGDIC_KEY, value);
+
+                value = i.transform.localRotation.ToString("F6").Replace(" ", "").Replace("(", "").Replace(")", "");
+                flagDic.Add(AdvancedMovingFireArmAttachmentInterface.ROTATION_FLAGDIC_KEY, value);
+
+                if (i.SecondaryPiece != null)
+                {
+                    value = i.SecondaryPiece.localPosition.ToString("F6").Replace(" ", "").Replace("(", "").Replace(")", "");
+                    flagDic.Add(AdvancedMovingFireArmAttachmentInterface.SECONDARY_POSITION_FLAGDIC_KEY, value);
+                }
+
+                if (i.IsPinned)
+                {
+                    value = i.GetPinTargetPath();
+                    flagDic.Add(AdvancedMovingFireArmAttachmentInterface.PIN_TRANFORM_PATH_FLAGDIC_KEY, value);
+                }
+            }
+            else if (flagDic.TryGetValue(AdvancedMovingFireArmAttachmentInterface.POSITION_FLAGDIC_KEY, out value))
+            {
+                string[] split = value.Split(',');
+                i.transform.localPosition = new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
+
+                if (flagDic.TryGetValue(AdvancedMovingFireArmAttachmentInterface.ROTATION_FLAGDIC_KEY, out value))
+                {
+                    split = value.Split(',');
+                    i.transform.localRotation = new Quaternion(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]), float.Parse(split[3]));
+                }
+
+                if (flagDic.TryGetValue(AdvancedMovingFireArmAttachmentInterface.SECONDARY_POSITION_FLAGDIC_KEY, out value) && i.SecondaryPiece != null)
+                {
+                    split = value.Split(',');
+                    i.SecondaryPiece.localPosition = new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
+                }
+
+                if (flagDic.TryGetValue(AdvancedMovingFireArmAttachmentInterface.PIN_TRANFORM_PATH_FLAGDIC_KEY, out value))
+                {
+                    i.UnvaultingPinTransformPath = value;
                 }
             }
         }

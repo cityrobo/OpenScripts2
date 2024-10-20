@@ -388,6 +388,8 @@ namespace OpenScripts2
                         break;
                 }
             }
+
+            Magazine.UpdateBulletDisplay();
         }
 
         public void ReplaceFiringSounds(FVRFirearmAudioSet set)

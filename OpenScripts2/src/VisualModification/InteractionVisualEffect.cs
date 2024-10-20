@@ -84,7 +84,7 @@ namespace OpenScripts2
 
                     if (input.TriggerPressed) _currentInteractions.Add(E_InteractionType.Trigger);
 
-                    if (input.TriggerTouched) _currentInteractions.Add(E_InteractionType.TriggerTouched);
+                    if ((hand.CMode != ControlMode.WMR && input.TriggerTouched) || (hand.CMode == ControlMode.WMR && input.TriggerFloat > 0f)) _currentInteractions.Add(E_InteractionType.TriggerTouched);
                     if (input.GripPressed) _currentInteractions.Add(E_InteractionType.GripPressed);
                 }
                 else

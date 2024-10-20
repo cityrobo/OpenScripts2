@@ -11,7 +11,7 @@ using FistVR;
 namespace OpenScripts2
 {
 #if !DEBUG
-    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.10.0")]
+    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.11.0")]
 #endif
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {

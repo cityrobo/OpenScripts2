@@ -103,8 +103,8 @@ namespace OpenScripts2
                     _interface.LowerLimit = new Vector3(NewXLimits.x, NewYLimits.x, NewZLimits.x);
                     _interface.UpperLimit = new Vector3(NewXLimits.y, NewYLimits.y, NewZLimits.y);
 
-                    // Make sure scope is position between limits after attaching
-                    _interface.transform.ModifyLocalPositionAxisValue(Axis.Z, Mathf.Abs(NewZLimits.y - NewZLimits.x) / 2);
+                    // Make sure scope is position in the middle of the limits after attaching
+                    _interface.transform.ModifyLocalPositionAxisValue(Axis.Z, (NewZLimits.y - NewZLimits.x) / 2f + NewZLimits.x);
                 }
             }
             else if (_interface != null && Optic.curMount == null)

@@ -172,10 +172,10 @@ namespace OpenScripts2
     {
         public static AnimationCurve GetCurve(float Exponent, float StartsAt = 0f, bool InvertX = false, bool InvertY = false, int NumberOfKeys = 10)
         {
-            List<Keyframe> keys = new List<Keyframe>();
+            List<Keyframe> keyframes = new List<Keyframe>();
             float tangent;
             float step = 1f / NumberOfKeys;
-            Keyframe key;
+            Keyframe keyframe;
 
             float X = 0f;
             float Y = Mathf.Pow(X, Exponent);
@@ -192,8 +192,8 @@ namespace OpenScripts2
                 {
                     Y = 1f - Y;
                 }
-                key = new Keyframe(X, Y, 0, 0);
-                keys.Add(key);
+                keyframe = new Keyframe(X, Y, 0, 0);
+                keyframes.Add(keyframe);
 
                 X = 0;
                 tangent = GetTangentAt(X,Exponent) / (1f - StartsAt);
@@ -210,16 +210,16 @@ namespace OpenScripts2
                     X = 1f - X;
                     tangent = -tangent;
 
-                    key = new Keyframe(X, Y, tangent, 0);
-                    key.tangentMode = 1;
+                    keyframe = new Keyframe(X, Y, tangent, 0);
+                    keyframe.tangentMode = 1;
                 }
                 else
                 {
-                    key = new Keyframe(X, Y, 0, tangent);
-                    key.tangentMode = 1;
+                    keyframe = new Keyframe(X, Y, 0, tangent);
+                    keyframe.tangentMode = 1;
                 }
 
-                keys.Add(key);
+                keyframes.Add(keyframe);
 
                 j = 1;
             }
@@ -242,12 +242,25 @@ namespace OpenScripts2
                     tangent = -tangent;
                 }
 
-                key = new Keyframe(X, Y, tangent, tangent);
-                keys.Add(key);
+                keyframe = new Keyframe(X, Y, tangent, tangent);
+                keyframes.Add(keyframe);
             }
 
-            return new AnimationCurve(keys.ToArray());
+            return new AnimationCurve(keyframes.ToArray());
         }
+
+        public static AnimationCurve GetStraightLine(float StartY, float EndY)
+        {
+            List<Keyframe> keyframes = new List<Keyframe>();
+
+            float tangent = EndY - StartY;
+
+            keyframes.Add(new(0f, StartY, tangent, tangent));
+            keyframes.Add(new(1f, EndY, tangent, tangent));
+
+            return new AnimationCurve(keyframes.ToArray());
+        }
+
         public static float GetTangentAt(float X, float Exponent)
         {
             return Exponent * Mathf.Pow(X, Exponent - 1f);
@@ -636,6 +649,12 @@ namespace UnityEngine
             }
         }
 
+        /// <summary>
+        /// Allows modification of a single global position axis while leaving all other axis untouched
+        /// </summary>
+        /// <param name="transform">The transform this method is called on.</param>
+        /// <param name="axis">The position axis to modify.</param>
+        /// <param name="value">The new value for the global position axis.</param>
         public static void ModifyPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newPos = transform.position;
@@ -643,6 +662,12 @@ namespace UnityEngine
             if (VectorsNotEqual(transform.position, newPos)) transform.position = newPos;
         }
 
+        /// <summary>
+        /// Allows modification of a single local position axis while leaving all other axis untouched
+        /// </summary>
+        /// <param name="transform">The transform this method is called on.</param>
+        /// <param name="axis">The position axis to modify.</param>
+        /// <param name="value">The new value for the local position axis.</param>
         public static void ModifyLocalPositionAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis, float value)
         {
             Vector3 newPos = transform.localPosition;
@@ -739,6 +764,24 @@ namespace UnityEngine
             return x || y || z;
         }
 
+        public static bool Approximately(this Vector3 a, Vector3 b)
+        {
+            bool x = Mathf.Approximately(a.x, b.x);
+            bool y = Mathf.Approximately(a.y, b.y);
+            bool z = Mathf.Approximately(a.z, b.z);
+
+            return x && y && z;
+        }
+
+        public static bool NotEqual(this Vector3 a, Vector3 b)
+        {
+            bool x = a.x != b.x;
+            bool y = a.y != b.y;
+            bool z = a.z != b.z;
+
+            return x || y || z;
+        }
+
         public static bool QuaternionsNotEqual(Quaternion a, Quaternion b)
         {
             bool x = a.x != b.x;
@@ -748,6 +791,28 @@ namespace UnityEngine
 
             return x || y || z || w;
         }
+
+        public static bool NotEqual(this Quaternion a, Quaternion b)
+        {
+            bool x = a.x != b.x;
+            bool y = a.y != b.y;
+            bool z = a.z != b.z;
+            bool w = a.w != b.w;
+
+            return x || y || z || w;
+        }
+
+        public static bool Approximately(this Quaternion a, Quaternion b)
+        {
+            bool x = Mathf.Approximately(a.x, b.x);
+            bool y = Mathf.Approximately(a.y, b.y);
+            bool z = Mathf.Approximately(a.z, b.z);
+            bool w = Mathf.Approximately(a.w, b.w);
+
+            return x && y && z && w;
+        }
+
+        public static Quaternion Invert(this Quaternion a) => Quaternion.Inverse(a);
     }
 }
 
