@@ -15,7 +15,7 @@ namespace OpenScripts2
         public class AdditionalChambering
         {
             public FireArmRoundType AdditionalRoundType;
-            [Tooltip("Will get deleted for performance reasons, do not put anything below it!")]
+            [Tooltip("Will get deleted for performance reasons, do not add any children to this game object!")]
             public Transform RoundMountPoint;
             [HideInInspector]
             public TransformProxy RoundMountPointProxy;
@@ -30,6 +30,13 @@ namespace OpenScripts2
         private Vector3 _origChamberPos;
         private Vector3 _origTriggerCenter;
         private float _origChamberVelMultiplier;
+
+        private const string MULTICALIBERCHAMBER_FLAG = "MultiCaliberChamber";
+
+        public void Awake()
+        {
+            _existingMultiCaliberChamber.Add(Chamber, this);
+        }
 
         public void Start()
         {
@@ -56,14 +63,80 @@ namespace OpenScripts2
             }
         }
 
+        public void OnDestroy()
+        {
+            _existingMultiCaliberChamber.Remove(Chamber);
+        }
+
 #if !DEBUG
         static MultiCaliberChamber()
         {
             On.FistVR.FVRFireArmRound.OnTriggerEnter += FVRFireArmRound_OnTriggerEnter;
             On.FistVR.FVRFireArmChamber.SetRound_FVRFireArmRound_bool += FVRFireArmChamber_SetRound_FVRFireArmRound_bool;
             On.FistVR.FVRFireArmChamber.SetRound_FVRFireArmRound_Vector3_Quaternion += FVRFireArmChamber_SetRound_FVRFireArmRound_Vector3_Quaternion;
+            // Smart Palming Patch
             On.FistVR.FVRFireArmRound.GetNumRoundsPulled += FVRFireArmRound_GetNumRoundsPulled;
             On.FistVR.FVRFireArmRound.DuplicateFromSpawnLock += FVRFireArmRound_DuplicateFromSpawnLock;
+
+            On.FistVR.Speedloader.OnTriggerEnter += Speedloader_OnTriggerEnter;
+            // Vaulting patches
+
+            //On.FistVR.FVRFireArm.GetFlagDic += FVRFireArm_GetFlagDic;
+            //On.FistVR.FVRFireArm.ConfigureFromFlagDic += FVRFireArm_ConfigureFromFlagDic;
+        }
+
+        private static void FVRFireArm_ConfigureFromFlagDic(On.FistVR.FVRFireArm.orig_ConfigureFromFlagDic orig, FVRFireArm self, Dictionary<string, string> f)
+        {
+            orig(self, f);
+
+            List<FVRFireArmChamber> chambers = self.GetChambers();
+            for (int i = 0; i < chambers.Count; i++)
+            {
+                FVRFireArmChamber chamber = chambers[i];
+                if (_existingMultiCaliberChamber.TryGetValue(chamber, out var multiCaliberChamber))
+                {
+                    if (f.TryGetValue(MULTICALIBERCHAMBER_FLAG + "_" + i, out var roundTypeString))
+                    {
+                        FireArmRoundType roundType = (FireArmRoundType)Enum.Parse(typeof(FireArmRoundType), roundTypeString);
+                        multiCaliberChamber.SetRoundType(roundType);
+                    }
+                }
+            }
+        }
+
+        private static Dictionary<string, string> FVRFireArm_GetFlagDic(On.FistVR.FVRFireArm.orig_GetFlagDic orig, FVRFireArm self)
+        {
+            Dictionary<string, string> flagDic = orig(self);
+
+            List<FVRFireArmChamber> chambers = self.GetChambers();
+            for (int i = 0; i < chambers.Count; i++)
+            {
+                FVRFireArmChamber chamber = chambers[i];
+                if (_existingMultiCaliberChamber.TryGetValue(chamber, out var multiCaliberChamber))
+                {
+                    flagDic.Add(MULTICALIBERCHAMBER_FLAG + "_" + i, chamber.RoundType.ToString());
+                }
+            }
+
+            return flagDic;
+        }
+
+        private static void Speedloader_OnTriggerEnter(On.FistVR.Speedloader.orig_OnTriggerEnter orig, Speedloader self, Collider c)
+        {
+            orig(self, c);
+
+            if (self.QuickbeltSlot == null)
+            {
+                RevolverCylinder revolverCylinder = c.GetComponent<RevolverCylinder>();
+                if (revolverCylinder != null && revolverCylinder.CanAccept())
+                {
+                    FireArmRoundType roundType = self.Chambers[0].Type;
+                    if (revolverCylinder.Revolver.Chambers.All(c => _existingMultiCaliberChamber.TryGetValue(c, out var multiCaliberChamber) && multiCaliberChamber.IsValidRound(roundType) && multiCaliberChamber.SetRoundType(roundType)))
+                    {
+                        self.HoveredCylinder = revolverCylinder;
+                    }
+                }
+            }
         }
 
         private static void FVRFireArmChamber_SetRound_FVRFireArmRound_Vector3_Quaternion(On.FistVR.FVRFireArmChamber.orig_SetRound_FVRFireArmRound_Vector3_Quaternion orig, FVRFireArmChamber self, FVRFireArmRound round, Vector3 p, Quaternion r)
@@ -173,16 +246,6 @@ namespace OpenScripts2
             orig(self, collider);
         }
 
-        public void Awake()
-        {
-            _existingMultiCaliberChamber.Add(Chamber, this);
-        }
-
-        public void OnDestroy()
-        {
-            _existingMultiCaliberChamber.Remove(Chamber);
-        }
-
         public bool SetRoundType(FireArmRoundType roundType)
         {
             if (AdditionalChamberings.Select(a => a.AdditionalRoundType).Contains(roundType))
@@ -250,5 +313,5 @@ namespace OpenScripts2
             else return false;
         }
 #endif
-	}
+    }
 }

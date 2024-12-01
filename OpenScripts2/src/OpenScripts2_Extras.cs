@@ -6,6 +6,7 @@ using System.Text;
 using UnityEngine;
 using OpenScripts2;
 using HarmonyLib;
+using ModularWorkshop;
 
 namespace OpenScripts2
 {
@@ -161,14 +162,29 @@ namespace OpenScripts2
             Vector3 AV = value - a;
             return Vector3.Dot(AV, AB) / Vector3.Dot(AB, AB);
         }
+
+        public static float SignedAngle(Vector3 from, Vector3 to, Vector3 axis)
+        {
+            // angle in [0,180]
+            float angle = Vector3.Angle(from, to);
+            float sign = Mathf.Sign(Vector3.Dot(axis, Vector3.Cross(from, to)));
+
+            // angle in [-179,180]
+            float signedAngle = angle * sign;
+
+            // angle in [0,360] (not used but included here for completeness)
+            //float angle360 =  (signed_angle + 180) % 360;
+
+            return signedAngle;
+        }
     }
 
-    static class QuaternionUtils
+    public static class QuaternionUtils
     {
 
     }
 
-    static class CurveCalculator
+    public static class CurveCalculator
     {
         public static AnimationCurve GetCurve(float Exponent, float StartsAt = 0f, bool InvertX = false, bool InvertY = false, int NumberOfKeys = 10)
         {
@@ -541,6 +557,27 @@ namespace UnityEngine
             }
         }
 
+        /// <summary>
+        /// Return the value of the local euler angles associated with the supplied axis
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <param name="axis">The Axis you want to return the value from.</param>
+        /// <returns>Transform.localEulerAngles.axis</returns>
+        public static float GetLocalEulerAnglesAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis)
+        {
+            switch (axis)
+            {
+                case OpenScripts2_BasePlugin.Axis.X:
+                    return transform.localEulerAngles.x;
+                case OpenScripts2_BasePlugin.Axis.Y:
+                    return transform.localEulerAngles.y;
+                case OpenScripts2_BasePlugin.Axis.Z:
+                    return transform.localEulerAngles.z;
+                default:
+                    return 0f;
+            }
+        }
+
         public static float GetLocalScaleAxisValue(this Transform transform, OpenScripts2_BasePlugin.Axis axis)
         {
             switch (axis)
@@ -813,6 +850,86 @@ namespace UnityEngine
         }
 
         public static Quaternion Invert(this Quaternion a) => Quaternion.Inverse(a);
+
+        public enum EColliderType
+        {
+            Sphere,
+            Capsule,
+            Box
+        }
+
+        public static void Analyze(this Collider collider, out Vector3 center, out Vector3 size, out EColliderType type, out OpenScripts2_BasePlugin.Axis axis)
+        {
+            switch (collider)
+            {
+                case CapsuleCollider c:
+                    center = c.center;
+                    size = new(c.radius, c.height, 0f);
+                    type = EColliderType.Capsule;
+                    axis = c.direction switch
+                    {
+                        0 => OpenScripts2_BasePlugin.Axis.X,
+                        1 => OpenScripts2_BasePlugin.Axis.Y,
+                        2 => OpenScripts2_BasePlugin.Axis.Z,
+                        _ => OpenScripts2_BasePlugin.Axis.X,
+                    };
+                    break;
+                case SphereCollider c:
+                    center = c.center;
+                    size = new(c.radius, 0f, 0f);
+                    type = EColliderType.Sphere;
+                    axis = (OpenScripts2_BasePlugin.Axis) (-1);
+                    break;
+                case BoxCollider c:
+                    center = c.center;
+                    size = c.size;
+                    type = EColliderType.Box;
+                    axis = (OpenScripts2_BasePlugin.Axis)(-1);
+                    break;
+                default:
+                    throw new ArgumentException($"Collider type {collider.GetType()} not supported!");
+            }
+        }
+
+        public static Vector3 Center(this Collider collider)
+        {
+            Vector3 center;
+            switch (collider)
+            {
+                case CapsuleCollider c:
+                    center = c.center;
+                    break;
+                case SphereCollider c:
+                    center = c.center;
+                    break;
+                case BoxCollider c:
+                    center = c.center;
+                    break;
+                default:
+                    throw new ArgumentException($"Collider type {collider.GetType()} not supported!");
+            }
+            return center;
+        }
+
+        public static Vector3 Size(this Collider collider)
+        {
+            Vector3 size;
+            switch (collider)
+            {
+                case CapsuleCollider c:
+                    size = new(c.radius, c.height, 0f);
+                    break;
+                case SphereCollider c:
+                    size = new(c.radius, 0f, 0f);
+                    break;
+                case BoxCollider c:
+                    size = c.size;
+                    break;
+                default:
+                    throw new ArgumentException($"Collider type {collider.GetType()} not supported!");
+            }
+            return size;
+        }
     }
 }
 

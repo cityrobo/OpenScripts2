@@ -82,8 +82,6 @@ namespace OpenScripts2
                 _fireArm = Attachment.curMount.GetRootMount().MyObject as FVRFireArm;
                 if (_fireArm != null)
                 {
-                    List<FVRFireArmChamber> chambers = _fireArm.GetChambers();
-
                     if (ChangesMagType)
                     {
                         _origMagType = _fireArm.MagazineType;
@@ -107,6 +105,8 @@ namespace OpenScripts2
                         }
                         _fireArm.MagazineType = MagType;
                     }
+
+                    List<FVRFireArmChamber> chambers = _fireArm.GetChambers();
                     if (ChangesCaliber)
                     {
                         _origRoundType = _fireArm.RoundType;
@@ -114,45 +114,45 @@ namespace OpenScripts2
                         _fireArm.RoundType = RoundType;
                         chambers.ForEach(c => c.RoundType = RoundType);
                     }
-
-                    _origRecoilProfile = _fireArm.RecoilProfile;
-                    _origRecoilProfileStocked = _fireArm.RecoilProfileStocked;
-
-                    _origAccuracyClass = _fireArm.AccuracyClass;
-
-                    _orig_Shots_Main = _fireArm.AudioClipSet.Shots_Main;
-                    _orig_Shots_Suppressed = _fireArm.AudioClipSet.Shots_Suppressed;
-                    _orig_Shots_LowPressure = _fireArm.AudioClipSet.Shots_LowPressure;
-
-                    if (!UsesRecoilMultiplierInstead)
-                    {
-                        if (RecoilProfile != null) _fireArm.RecoilProfile = RecoilProfile;
-                        if (RecoilProfileStocked != null) _fireArm.RecoilProfileStocked = RecoilProfileStocked;
-                    }
-                    else
-                    {
-                        _fireArm.RecoilProfile = CopyAndAdjustRecoilProfile(_fireArm.RecoilProfile, RecoilMultiplier);
-                        if (_fireArm.RecoilProfileStocked != null) _fireArm.RecoilProfileStocked = CopyAndAdjustRecoilProfile(_fireArm.RecoilProfileStocked, RecoilMultiplier);
-                    }
-
-                    if (AccuracyClass != 0) _fireArm.AccuracyClass = AccuracyClass;
-
-                    if (Shots_Main.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Main = Shots_Main;
-                    if (Shots_Suppressed.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Suppressed = Shots_Suppressed;
-                    if (Shots_LowPressure.Clips.Count != 0) _fireArm.AudioClipSet.Shots_LowPressure = Shots_LowPressure;
-
                     if (ChangesChamberVelocityMultiplier)
                     {
                         _origChamberVelocityMultiplier = chambers[0].ChamberVelocityMultiplier;
 
                         chambers.ForEach(c => c.ChamberVelocityMultiplier = ChamberVelocityMultiplierOverride);
                     }
+
+                    _origRecoilProfile = _fireArm.RecoilProfile;
+                    _origRecoilProfileStocked = _fireArm.RecoilProfileStocked;
+                    if (!UsesRecoilMultiplierInstead)
+                    {
+                        if (RecoilProfile != null) _fireArm.RecoilProfile = RecoilProfile;
+                        if (RecoilProfileStocked != null) _fireArm.RecoilProfileStocked = RecoilProfileStocked;
+                    }
+                    else if (RecoilMultiplier != 1f)
+                    {
+                        _fireArm.RecoilProfile = CopyAndAdjustRecoilProfile(_fireArm.RecoilProfile, RecoilMultiplier);
+                        if (_fireArm.RecoilProfileStocked != null) _fireArm.RecoilProfileStocked = CopyAndAdjustRecoilProfile(_fireArm.RecoilProfileStocked, RecoilMultiplier);
+                    }
+                    
+                    if (AccuracyClass != 0)
+                    {
+                        _origAccuracyClass = _fireArm.AccuracyClass;
+                        _fireArm.AccuracyClass = AccuracyClass;
+                    }
+
+                    if (Shots_Main.Clips.Count != 0 || Shots_Suppressed.Clips.Count != 0 || Shots_LowPressure.Clips.Count != 0)
+                    {
+                        _orig_Shots_Main = _fireArm.AudioClipSet.Shots_Main;
+                        _orig_Shots_Suppressed = _fireArm.AudioClipSet.Shots_Suppressed;
+                        _orig_Shots_LowPressure = _fireArm.AudioClipSet.Shots_LowPressure;
+                        if (Shots_Main.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Main = Shots_Main;
+                        if (Shots_Suppressed.Clips.Count != 0) _fireArm.AudioClipSet.Shots_Suppressed = Shots_Suppressed;
+                        if (Shots_LowPressure.Clips.Count != 0) _fireArm.AudioClipSet.Shots_LowPressure = Shots_LowPressure;
+                    }
                 }
             }
             else if (Attachment.curMount == null && _fireArm != null)
             {
-                List<FVRFireArmChamber> chambers = _fireArm.GetChambers();
-
                 if (ChangesMagType)
                 {
                     _fireArm.MagazineType = _origMagType;
@@ -165,25 +165,32 @@ namespace OpenScripts2
                         _fireArm.MagazineEjectPos.localRotation = _origMagEjectRot;
                     }
                 }
+
+                List<FVRFireArmChamber> chambers = _fireArm.GetChambers();
                 if (ChangesCaliber)
                 {
                     _fireArm.RoundType = _origRoundType;
 
                     chambers.ForEach(c => c.RoundType = _origRoundType);
                 }
+                if (ChangesChamberVelocityMultiplier)
+                {
+                    chambers.ForEach(c => c.ChamberVelocityMultiplier = _origChamberVelocityMultiplier);
+                }
 
                 _fireArm.RecoilProfile = _origRecoilProfile;
                 _fireArm.RecoilProfileStocked = _origRecoilProfileStocked;
 
-                _fireArm.AccuracyClass = _origAccuracyClass;
-
-                _fireArm.AudioClipSet.Shots_Main = _orig_Shots_Main;
-                _fireArm.AudioClipSet.Shots_Suppressed = _orig_Shots_Suppressed;
-                _fireArm.AudioClipSet.Shots_LowPressure = _orig_Shots_LowPressure;
-
-                if (ChangesChamberVelocityMultiplier)
+                if (AccuracyClass != 0)
                 {
-                    chambers.ForEach(c => c.ChamberVelocityMultiplier = _origChamberVelocityMultiplier);
+                    _fireArm.AccuracyClass = _origAccuracyClass;
+                }
+
+                if (Shots_Main.Clips.Count != 0 || Shots_Suppressed.Clips.Count != 0 || Shots_LowPressure.Clips.Count != 0)
+                {
+                    _fireArm.AudioClipSet.Shots_Main = _orig_Shots_Main;
+                    _fireArm.AudioClipSet.Shots_Suppressed = _orig_Shots_Suppressed;
+                    _fireArm.AudioClipSet.Shots_LowPressure = _orig_Shots_LowPressure;
                 }
 
                 _fireArm = null;

@@ -22,8 +22,7 @@ namespace OpenScripts2
 
         [Tooltip("Is magazine a double feed magazine?")]
         public bool UsesDoubleFeedMagazines;
-        [Tooltip("Does round in magazine start on the right?")]
-        public bool StartsOnTheRight;
+
 
         [Tooltip("Round X-Axis offset inside the magazine")]
         public float DoubleFeedXPosOffset;
@@ -37,6 +36,8 @@ namespace OpenScripts2
         public bool TestExtraction = false;
         [Tooltip("Set the virtual amount of rounds in the magazine for double feed testing.")]
         public int VirtualNumberOfRoundsInMag;
+        [Tooltip("Does round in magazine start on the right?")]
+        public bool StartsOnTheRight;
 
         [HideInInspector]
         public bool RoundWasExtracted = false;
@@ -48,6 +49,52 @@ namespace OpenScripts2
         private static readonly Dictionary<BoltActionRifle, SimplifiedManipulateFireArmRoundProxy> _existingManipulateFireArmRoundProxyBoltActionRifles = new();
 
         private float _lastBoltZ;
+
+        private enum EBoltPos
+        {
+            Forward,
+            ForwardToEject,
+            Eject,
+            EjectToStartChambering,
+            StartChambering,
+            ChamberingToLocked,
+            Locked,
+            LockedToRear,
+            Rear
+        }
+
+        private EBoltPos _curBoltPos;
+        private EBoltPos _lastBoltPos;
+
+        private Transform BoltParent => FireArm switch
+        {
+            ClosedBoltWeapon w => w.Bolt.transform.parent,
+            Handgun w => w.Slide.transform.parent,
+            TubeFedShotgun w => w.Bolt.transform.parent,
+            OpenBoltReceiver w => w.Bolt.transform.parent,
+            BoltActionRifle w => w.BoltHandle.transform.parent,
+            _ => null,
+        };
+
+        private float CurrentBoltZ => FireArm switch
+        {
+            ClosedBoltWeapon w => w.Bolt.m_boltZ_current,
+            Handgun w => w.Slide.m_slideZ_current,
+            TubeFedShotgun w => w.Bolt.m_boltZ_current,
+            OpenBoltReceiver w => w.Bolt.m_boltZ_current,
+            BoltActionRifle w => w.BoltHandle.transform.localPosition.z,
+            _ => 0f,
+        };
+
+        private FVRFireArmChamber Chamber => FireArm switch
+        {
+            ClosedBoltWeapon w => w.Chamber,
+            OpenBoltReceiver w => w.Chamber,
+            TubeFedShotgun w => w.Chamber,
+            Handgun w => w.Chamber,
+            BoltActionRifle w => w.Chamber,
+            _ => null,
+        };
 
         private static bool CheckAllDictionariesForFirearm(FVRFireArm fireArm, out SimplifiedManipulateFireArmRoundProxy simplifiedManipulateFireArmRoundProxy)
         {
@@ -159,28 +206,156 @@ namespace OpenScripts2
         {
             if (ProxyRound == null)
             {
-                switch (FireArm)
+                UpdateCurrentBoltPositionEnum();
+
+                if (_curBoltPos >= EBoltPos.Eject && _lastBoltPos < EBoltPos.Eject)
                 {
-                    case ClosedBoltWeapon w:
-                        ClosedBoltUpdate(w.Bolt);
-                        break;
-                    case Handgun w:
-                        HandgunUpdate(w.Slide);
-                        break;
-                    case TubeFedShotgun w:
-                        TubeFedUpdate(w.Bolt);
-                        break;
-                    case OpenBoltReceiver w:
-                        OpenBoltUpdate(w.Bolt);
-                        break;
-                    case BoltActionRifle w:
-                        break;
+                    //ClosedBolt_BoltEvent_EjectRound(closedBolt);
+
+                    switch (FireArm)
+                    {
+                        case ClosedBoltWeapon w:
+                            ClosedBolt_BoltEvent_EjectRound(w.Bolt);
+                            break;
+                        case Handgun w:
+                            Handgun_BoltEvent_EjectRound(w.Slide);
+                            break;
+                        case TubeFedShotgun w:
+                            TubeFed_BoltEvent_EjectRound(w.Bolt);
+                            break;
+                        case OpenBoltReceiver w:
+                            OpenBolt_BoltEvent_EjectRound(w.Bolt);
+                            break;
+                        case BoltActionRifle w:
+                            break;
+                    }
                 }
+                if (!Chamber.IsFull && _curBoltPos < EBoltPos.StartChambering && _lastBoltPos > EBoltPos.EjectToStartChambering)
+                {
+                    //ClosedBolt_BoltEvent_ExtractRoundFromMag(closedBolt);
+
+                    switch (FireArm)
+                    {
+                        case ClosedBoltWeapon w:
+                            ClosedBolt_BoltEvent_ExtractRoundFromMag(w.Bolt);
+                            break;
+                        case Handgun w:
+                            Handgun_BoltEvent_ExtractRoundFromMag(w.Slide);
+                            break;
+                        case TubeFedShotgun w:
+                            TubeFed_BoltEvent_ExtractRoundFromMag(w.Bolt);
+                            break;
+                        case OpenBoltReceiver w:
+                            OpenBolt_BoltEvent_ExtractRoundFromMag(w.Bolt);
+                            break;
+                        case BoltActionRifle w:
+                            break;
+                    }
+                }
+
+                //switch (FireArm)
+                //{
+                //    case ClosedBoltWeapon w:
+                //        ClosedBoltUpdate(w.Bolt);
+                //        break;
+                //    case Handgun w:
+                //        HandgunUpdate(w.Slide);
+                //        break;
+                //    case TubeFedShotgun w:
+                //        TubeFedUpdate(w.Bolt);
+                //        break;
+                //    case OpenBoltReceiver w:
+                //        OpenBoltUpdate(w.Bolt);
+                //        break;
+                //    case BoltActionRifle w:
+                //        break;
+                //}
+
+                _lastBoltPos = _curBoltPos;
             }
             else
             {
                 UpdateDisplayRoundPositionsEditor();
             }
+        }
+
+        private void UpdateCurrentBoltPositionEnum()
+        {
+            Transform parent = BoltParent;
+
+            float boltZ_current = CurrentBoltZ;
+
+            float boltZ_forward = FireArm switch
+            {
+                ClosedBoltWeapon w => w.Bolt.m_boltZ_forward,
+                Handgun w => w.Slide.m_slideZ_forward,
+                TubeFedShotgun w => w.Bolt.m_boltZ_forward,
+                OpenBoltReceiver w => w.Bolt.m_boltZ_forward,
+                BoltActionRifle w => w.BoltHandle.Point_Forward.localPosition.z,
+                _ => 0f,
+            };
+
+            float boltZ_lock = FireArm switch
+            {
+                ClosedBoltWeapon w => w.Bolt.m_boltZ_lock,
+                Handgun w => w.Slide.m_slideZ_lock,
+                TubeFedShotgun w => w.Bolt.m_boltZ_lock,
+                OpenBoltReceiver w => w.Bolt.m_boltZ_lock,
+                BoltActionRifle w => Mathf.Lerp(w.BoltHandle.Point_Forward.localPosition.z, w.BoltHandle.Point_Rearward.localPosition.z, 0.975f),
+                _ => 0f,
+            };
+
+            float boltZ_rear = FireArm switch
+            {
+                ClosedBoltWeapon w => w.Bolt.m_boltZ_rear,
+                Handgun w => w.Slide.m_slideZ_rear,
+                TubeFedShotgun w => w.Bolt.m_boltZ_rear,
+                OpenBoltReceiver w => w.Bolt.m_boltZ_rear,
+                BoltActionRifle w => w.BoltHandle.Point_Rearward.localPosition.z,
+                _ => 0f,
+            };
+
+            float chamberingStartZ = parent.InverseTransformPoint(BoltRoundChamberingStartPos.position).z;
+            float extractionEndZ = parent.InverseTransformPoint(BoltRoundExtractionEndPos.position).z;
+
+            EBoltPos boltPos;
+            if (Mathf.Approximately(boltZ_current, boltZ_forward))
+            {
+                boltPos = EBoltPos.Forward;
+            }
+            else if (Mathf.Approximately(boltZ_current, extractionEndZ) && !Mathf.Approximately(boltZ_lock, extractionEndZ) && !Mathf.Approximately(extractionEndZ, chamberingStartZ))
+            {
+                boltPos = EBoltPos.Eject;
+            }
+            else if (Mathf.Approximately(boltZ_current, chamberingStartZ) && !Mathf.Approximately(boltZ_lock, chamberingStartZ))
+            {
+                boltPos = EBoltPos.StartChambering;
+            }
+            else if (Mathf.Approximately(boltZ_current, boltZ_lock))
+            {
+                boltPos = EBoltPos.Locked;
+            }
+            else if (Mathf.Approximately(boltZ_current, boltZ_rear))
+            {
+                boltPos = EBoltPos.Rear;
+            }
+            else if (boltZ_current > extractionEndZ)
+            {
+                boltPos = EBoltPos.ForwardToEject;
+            }
+            else if (boltZ_current > chamberingStartZ)
+            {
+                boltPos = EBoltPos.EjectToStartChambering;
+            }
+            else if (boltZ_current > boltZ_lock)
+            {
+                boltPos = EBoltPos.ChamberingToLocked;
+            }
+            else
+            {
+                boltPos = EBoltPos.LockedToRear;
+            }
+            _curBoltPos = boltPos;
         }
 
         #region Closed Bolt custom round operations
@@ -193,7 +368,7 @@ namespace OpenScripts2
             {
                 ClosedBolt_BoltEvent_EjectRound(closedBolt);
             }
-            if (!closedBolt.Weapon.Chamber.IsFull && _lastBoltZ <= chamberStartPosZ && closedBolt.m_boltZ_current > chamberStartPosZ)
+            if (!closedBolt.Weapon.m_proxy.IsFull && !closedBolt.Weapon.Chamber.IsFull && closedBolt.m_boltZ_current > chamberStartPosZ)
             {
                 ClosedBolt_BoltEvent_ExtractRoundFromMag(closedBolt);
             }
@@ -234,7 +409,7 @@ namespace OpenScripts2
             if (removedRound)
             {
                 closedBolt.m_proxy.SetFromPrefabReference(roundPrefab);
-                UpdateDisplayRoundPositions(closedBolt);
+                UpdateDisplayRoundPositions();
             }
         }
         #endregion
@@ -249,7 +424,7 @@ namespace OpenScripts2
             {
                 Handgun_BoltEvent_EjectRound(slide);
             }
-            if (!slide.Handgun.Chamber.IsFull && _lastBoltZ <= chamberingStartPosZ && slide.m_slideZ_current > chamberingStartPosZ)
+            if (!slide.Handgun.m_proxy.IsFull && !slide.Handgun.Chamber.IsFull && slide.m_slideZ_current > chamberingStartPosZ)
             {
                 Handgun_BoltEvent_ExtractRoundFromMag(slide);
             }
@@ -290,7 +465,7 @@ namespace OpenScripts2
             if (removedRound)
             {
                 slide.m_proxy.SetFromPrefabReference(roundPrefab);
-                UpdateDisplayRoundPositions(slide);
+                UpdateDisplayRoundPositions();
             }
         }
         #endregion
@@ -305,7 +480,7 @@ namespace OpenScripts2
             {
                 TubeFed_BoltEvent_EjectRound(tubeFedBolt);
             }
-            if (!tubeFedBolt.Shotgun.Chamber.IsFull && _lastBoltZ <= chamberStartPosZ && tubeFedBolt.m_boltZ_current > chamberStartPosZ)
+            if (!tubeFedBolt.Shotgun.m_proxy.IsFull && !tubeFedBolt.Shotgun.Chamber.IsFull && tubeFedBolt.m_boltZ_current > chamberStartPosZ)
             {
                 TubeFed_BoltEvent_ExtractRoundFromMag(tubeFedBolt);
             }
@@ -348,7 +523,7 @@ namespace OpenScripts2
             {
                 tubeFed.m_proxy.SetFromPrefabReference(roundPrefab);
                 tubeFed.m_isExtractedRoundOnLowerPath = true;
-                UpdateDisplayRoundPositions(tubeFed);
+                UpdateDisplayRoundPositions();
             }
         }
         #endregion
@@ -363,7 +538,7 @@ namespace OpenScripts2
             {
                 OpenBolt_BoltEvent_EjectRound(openBolt);
             }
-            if (!openBolt.Receiver.Chamber.IsFull && _lastBoltZ <= chamberStartPosZ && openBolt.m_boltZ_current > chamberStartPosZ)
+            if (!openBolt.Receiver.m_proxy.IsFull && !openBolt.Receiver.Chamber.IsFull && openBolt.m_boltZ_current > chamberStartPosZ)
             {
                 OpenBolt_BoltEvent_ExtractRoundFromMag(openBolt);
             }
@@ -419,7 +594,7 @@ namespace OpenScripts2
             if (extractedRound)
             {
                 openBolt.m_proxy.SetFromPrefabReference(roundPrefab);
-                UpdateDisplayRoundPositions(openBolt);
+                UpdateDisplayRoundPositions();
             }
             if (openBolt.Bolt.HasLastRoundBoltHoldOpen && openBolt.Magazine != null && !openBolt.Magazine.HasARound() && openBolt.Magazine.DoesFollowerStopBolt && !openBolt.Magazine.IsBeltBox)
             {
@@ -431,16 +606,18 @@ namespace OpenScripts2
         #region Bolt Action custom round operations
         private FVRFireArmRound BoltActionUpdate(BoltActionRifle_Handle handle)
         {
-            Transform parent = handle.transform.parent;
-            float extractEndPosZ = parent.InverseTransformPoint(BoltRoundExtractionEndPos.position).z;
-            float chamberStartPosZ = parent.InverseTransformPoint(BoltRoundChamberingStartPos.position).z;
+            UpdateCurrentBoltPositionEnum();
+
+            //Transform parent = handle.transform.parent;
+            //float extractEndPosZ = parent.InverseTransformPoint(BoltRoundExtractionEndPos.position).z;
+            //float chamberStartPosZ = parent.InverseTransformPoint(BoltRoundChamberingStartPos.position).z;
 
             FVRFireArmRound ejectedRound = null;
-            if (_lastBoltZ >= extractEndPosZ && handle.transform.localPosition.z < extractEndPosZ)
+            if (_curBoltPos >= EBoltPos.Eject && _lastBoltPos < EBoltPos.Eject)
             {
                 ejectedRound = handle.Rifle.Chamber.EjectRound(handle.Rifle.EjectionPos.position, handle.Rifle.transform.right * handle.Rifle.RightwardEjectionForce + handle.Rifle.transform.up * handle.Rifle.UpwardEjectionForce, handle.Rifle.transform.up * handle.Rifle.YSpinEjectionTorque, handle.Rifle.EjectionPos.position, handle.Rifle.EjectionPos.rotation, false);
             }
-            if (!handle.Rifle.Chamber.IsFull && _lastBoltZ <= chamberStartPosZ && handle.transform.localPosition.z > chamberStartPosZ)
+            if (_curBoltPos < EBoltPos.StartChambering && _lastBoltPos > EBoltPos.EjectToStartChambering)
             {
                 BoltAction_BoltEvent_ExtractRoundFromMag(handle);
             }
@@ -465,7 +642,7 @@ namespace OpenScripts2
             {
                 GameObject gameObject = RemoveRound(rifle.Magazine);
                 rifle.m_proxy.SetFromPrefabReference(gameObject);
-                UpdateDisplayRoundPositions(rifle);
+                UpdateDisplayRoundPositions();
             }
             if (rifle.EjectsMagazineOnEmpty && !rifle.Magazine.HasARound())
             {
@@ -528,15 +705,7 @@ namespace OpenScripts2
         private void UpdateDisplayRoundPositionsEditor()
         {
             //Transform parent = self.Bolt.transform.parent;
-            Transform parent = FireArm switch
-            {
-                ClosedBoltWeapon w => w.Bolt.transform.parent,
-                OpenBoltReceiver w => w.Bolt.transform.parent,
-                TubeFedShotgun w => w.Bolt.transform.parent,
-                Handgun w => w.Slide.transform.parent,
-                BoltActionRifle w => w.BoltHandle.transform.parent,
-                _ => null,
-            };
+            Transform parent = BoltParent;
 
             Transform roundPosMag = FireArm switch
             {
@@ -568,15 +737,7 @@ namespace OpenScripts2
                 _ => null,
             };
 
-            float boltZCurrent = FireArm switch
-            {
-                ClosedBoltWeapon w => w.Bolt.transform.localPosition.z,
-                OpenBoltReceiver w => w.Bolt.transform.localPosition.z,
-                TubeFedShotgun w => w.Bolt.transform.localPosition.z,
-                Handgun w => w.Slide.transform.localPosition.z,
-                BoltActionRifle w => w.BoltHandle.transform.localPosition.z,
-                _ => 0f,
-            };
+            float boltZCurrent = CurrentBoltZ;
 
             float startPosZ;
             float endPosZ;
@@ -731,7 +892,7 @@ namespace OpenScripts2
                 //    self.m_proxy.ProxyRound.position = pos;
                 //    self.m_proxy.ProxyRound.rotation = rot;
                 //}
-                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions(self);
+                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions();
             }
             else orig(self);
         }
@@ -821,7 +982,7 @@ namespace OpenScripts2
                 //    self.m_proxy.ProxyRound.rotation = rot;
                 //}
 
-                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions(self);
+                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions();
 
                 if (self.Slide.CurPos == HandgunSlide.SlidePos.Forward)
                 {
@@ -908,7 +1069,7 @@ namespace OpenScripts2
                 //    self.m_proxy.ProxyRound.rotation = rot;
                 //}
 
-                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions(self);
+                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions();
             }
             else orig(self);
         }
@@ -999,7 +1160,7 @@ namespace OpenScripts2
                 //    }
                 //}
 
-                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions(self);
+                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions();
             }
             else orig(self);
         }
@@ -1164,7 +1325,7 @@ namespace OpenScripts2
                 //    self.m_proxy.ProxyRound.position = pos;
                 //    self.m_proxy.ProxyRound.rotation = rot;
                 //}
-                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions(self);
+                manipulateFireArmRoundProxy.UpdateDisplayRoundPositions();
                 self.LastBoltHandleState = self.CurBoltHandleState;
                 return fvrfireArmRound;
             }
@@ -1185,9 +1346,9 @@ namespace OpenScripts2
             public Transform RoundPosEjecting;
         }
 
-        public void UpdateDisplayRoundPositions(FVRFireArm fireArm)
+        public void UpdateDisplayRoundPositions()
         {
-            FVRFireArmChamber chamber = fireArm switch
+            FVRFireArmChamber chamber = FireArm switch
             {
                 ClosedBoltWeapon w => w.Chamber,
                 Handgun w => w.Chamber,
@@ -1197,7 +1358,7 @@ namespace OpenScripts2
                 _ => null,
             };
 
-            FVRFirearmMovingProxyRound proxy = fireArm switch
+            FVRFirearmMovingProxyRound proxy = FireArm switch
             {
                 ClosedBoltWeapon w => w.m_proxy,
                 Handgun w => w.m_proxy,
@@ -1207,27 +1368,11 @@ namespace OpenScripts2
                 _ => null,
             };
 
-            Transform parent = fireArm switch
-            {
-                ClosedBoltWeapon w => w.Bolt.transform.parent,
-                Handgun w => w.Slide.transform.parent,
-                TubeFedShotgun w => w.Bolt.transform.parent,
-                OpenBoltReceiver w => w.Bolt.transform.parent,
-                BoltActionRifle w => w.BoltHandle.transform.parent,
-                _ => null,
-            };
+            Transform parent = BoltParent;
 
-            float boltZ_current = fireArm switch
-            {
-                ClosedBoltWeapon w => w.Bolt.m_boltZ_current,
-                Handgun w => w.Slide.m_slideZ_current,
-                TubeFedShotgun w => w.Bolt.m_boltZ_current,
-                OpenBoltReceiver w => w.Bolt.m_boltZ_current,
-                BoltActionRifle w => w.BoltHandle.transform.localPosition.z,
-                _ => 0f,
-            };
+            float boltZ_current = CurrentBoltZ;
 
-            Transform roundMagExit = fireArm switch
+            Transform roundMagExit = FireArm switch
             {
                 ClosedBoltWeapon w => w.RoundPos_MagazinePos,
                 Handgun w => w.RoundPos_Magazine,
@@ -1237,7 +1382,7 @@ namespace OpenScripts2
                 _ => null,
             };
 
-            Transform roundEjecting = fireArm switch
+            Transform roundEjecting = FireArm switch
             {
                 ClosedBoltWeapon w => w.RoundPos_Ejecting,
                 Handgun w => w.RoundPos_Ejecting,
@@ -1294,19 +1439,28 @@ namespace OpenScripts2
             Vector3 MagazinePos_Pos = proxyInfo.RoundPosMagExit.localPosition;
             Quaternion MagazinePos_Rot = proxyInfo.RoundPosMagExit.localRotation;
 
-            if (UsesDoubleFeedMagazines && FireArm.Magazine != null && (FireArm.Magazine.m_numRounds % 2f == 0 && StartsOnTheRight || FireArm.Magazine.m_numRounds % 2f != 0 && !StartsOnTheRight))
+            //if (UsesDoubleFeedMagazines && FireArm.Magazine != null && (FireArm.Magazine.m_numRounds % 2f == 0 && StartsOnTheRight || FireArm.Magazine.m_numRounds % 2f != 0 && !StartsOnTheRight))
+            //{
+            //    MagazinePos_Pos.x += DoubleFeedXPosOffset;
+            //    MagazinePos_Rot *= Quaternion.Euler(0f, DoubleFeedYRotOffset, 0f);
+            //}
+            //else if (UsesDoubleFeedMagazines && FireArm.Magazine != null && !(FireArm.Magazine.m_numRounds % 2f == 0 && StartsOnTheRight || FireArm.Magazine.m_numRounds % 2f != 0 && !StartsOnTheRight))
+            //{
+            //    MagazinePos_Pos.x += -DoubleFeedXPosOffset;
+            //    MagazinePos_Rot *= Quaternion.Euler(0f, -DoubleFeedYRotOffset, 0f);
+            //}
+
+            if (UsesDoubleFeedMagazines && FireArm.Magazine != null)
             {
-                MagazinePos_Pos.x += DoubleFeedXPosOffset;
-                MagazinePos_Rot *= Quaternion.Euler(0f, DoubleFeedYRotOffset, 0f);
-            }
-            else if (UsesDoubleFeedMagazines && FireArm.Magazine != null && !(FireArm.Magazine.m_numRounds % 2f == 0 && StartsOnTheRight || FireArm.Magazine.m_numRounds % 2f != 0 && !StartsOnTheRight))
-            {
-                MagazinePos_Pos.x += -DoubleFeedXPosOffset;
-                MagazinePos_Rot *= Quaternion.Euler(0f, -DoubleFeedYRotOffset, 0f);
+                // Is round on the left or right side of the magazine?
+                float xPositionSign = Mathf.Sign(FireArm.Magazine.DisplayBullets[0].transform.localPosition.x);
+
+                MagazinePos_Pos.x += xPositionSign * DoubleFeedXPosOffset;
+                MagazinePos_Rot *= Quaternion.Euler(0f, xPositionSign * DoubleFeedYRotOffset, 0f);
             }
 
-            Vector3 pos = Vector3.Lerp(proxyInfo.RoundPosMagExit.parent.TransformPoint(MagazinePos_Pos), proxyInfo.Chamber.transform.position, boltLerpBetweenExtractAndFore);
-            Quaternion rot = Quaternion.Slerp(proxyInfo.RoundPosMagExit.parent.rotation * MagazinePos_Rot, proxyInfo.Chamber.transform.rotation, boltLerpBetweenExtractAndFore);
+            Vector3 pos = Vector3.Lerp(proxyInfo.Parent.TransformPoint(MagazinePos_Pos), proxyInfo.Chamber.transform.position, boltLerpBetweenExtractAndFore);
+            Quaternion rot = Quaternion.Slerp(proxyInfo.Parent.rotation * MagazinePos_Rot, proxyInfo.Chamber.transform.rotation, boltLerpBetweenExtractAndFore);
             proxyInfo.Proxy.ProxyRound.position = pos;
             proxyInfo.Proxy.ProxyRound.rotation = rot;
         }

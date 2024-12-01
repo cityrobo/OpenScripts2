@@ -11,7 +11,7 @@ using FistVR;
 namespace OpenScripts2
 {
 #if !DEBUG
-    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.11.0")]
+    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.11.1")]
 #endif
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {
@@ -25,6 +25,12 @@ namespace OpenScripts2
 
         // Advanced MagGrab Trigger Config Entries
         public static ConfigEntry<bool> AdvancedMagGrabSimpleMagRelease;
+
+        // Handgun and Physical Object Spin Config Entries
+        public static ConfigEntry<float> SpinReleaseDelayTime;
+        public static ConfigEntry<bool> SpinToggle;
+        public static ConfigEntry<bool> SpinGrabHelper;
+        public static ConfigEntry<float> SpinGrabHelperScale;
 
         public BepInEx.Logging.ManualLogSource Logging => Logger;
 
@@ -44,6 +50,12 @@ namespace OpenScripts2
 
             // Advanced MagGrab Trigger Config Bindings
             AdvancedMagGrabSimpleMagRelease = Config.Bind("Advanced Magazine Grab Trigger", "Simple Magazine Release", false, "If true, disables input requirements from advanced magazine wells.");
+
+            // Handgun and Physical Object Spin Config Bindings
+            SpinReleaseDelayTime = Config.Bind("Handgun and Physical Object Spin", "Spin Release Delay Time", 0.25f, "Delay between letting go of the spin input and stopping to spin.");
+            SpinToggle = Config.Bind("Handgun and Physical Object Spin", "Spin Toggle", false, "This option lets you toggle spinning. Great when you wanna catch the revolver while spining!");
+            SpinGrabHelper = Config.Bind("Handgun and Physical Object Spin", "Spin Grab Helper", true, "If this option is true, the grab collider of the revolver will be scaled up by below value to help with grabbing after tossing the gun.");
+            SpinGrabHelperScale = Config.Bind("Handgun and Physical Object Spin", "Spin Grab Helper Scale", 3f);
 
 #if !DEBUG
             IL.FistVR.FVRFireArm.Fire += OpenScripts2_BasePlugin.FVRFireArm_Fire_ProjectileFiredEventHook;
