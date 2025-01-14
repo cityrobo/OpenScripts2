@@ -120,6 +120,9 @@ namespace OpenScripts2
                 {
                     MainObject.RegisterQuickbeltSlots();
                 }
+                foreach (FVRQuickBeltSlot mainObjSlot in MainObject.Slots) {
+                    mainObjSlot.SetAffixedTo(MainObject);
+                }
             }
             else
             {
