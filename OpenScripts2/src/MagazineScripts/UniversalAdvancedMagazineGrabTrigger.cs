@@ -17,7 +17,8 @@ namespace OpenScripts2
             Vanilla,
             TouchpadUp_BYButton,
             TouchpadDown_AXButton,
-			MainHandMagazineReleaseButton
+			MainHandMagazineReleaseButton,
+            Touchpad_AnyButton
         }
 		public E_InputType RequiredInput;
 		public bool IsSecondarySlotGrab;
@@ -151,6 +152,26 @@ namespace OpenScripts2
                 case E_InputType.MainHandMagazineReleaseButton:
                     // See below!
                     break;
+                case E_InputType.Touchpad_AnyButton:
+                    if (!hand.IsInStreamlinedMode && hand.Input.TouchpadDown || hand.IsInStreamlinedMode && hand.Input.AXButtonDown || hand.IsInStreamlinedMode && hand.Input.BYButtonDown)
+                    {
+                        StartCoroutine(MoveMagReleaseButton(MagazineReleaseButtonReleaseDelay));
+                        if (!IsSecondarySlotGrab && FireArm.Magazine != null)
+                        {
+                            EndInteraction(hand);
+                            FireArm.EjectMag(false);
+                            hand.ForceSetInteractable(_currentMagazine);
+                            _currentMagazine.BeginInteraction(hand);
+                        }
+                        else if (IsSecondarySlotGrab && FireArm.SecondaryMagazineSlots[SecondaryGrabSlot].Magazine != null)
+                        {
+                            EndInteraction(hand);
+                            FireArm.EjectSecondaryMagFromSlot(SecondaryGrabSlot, false);
+                            hand.ForceSetInteractable(_currentMagazine);
+                            _currentMagazine.BeginInteraction(hand);
+                        }
+                    }
+                    break;
             }
             if (FireArm.Magazine == null)
             {
@@ -167,20 +188,20 @@ namespace OpenScripts2
                 switch (FireArm)
                 {
                     case ClosedBoltWeapon w:
-                        w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleasePressed, w.MagReleaseInterp);
+                        if (w.MagazineReleaseButton != null) w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleasePressed, w.MagReleaseInterp);
                         break;
                     case Handgun w:
-                        w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleasePressed, w.MagReleaseInterp, w.MagReleaseAxis);
+                        if (w.MagazineReleaseButton != null) w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleasePressed, w.MagReleaseInterp, w.MagReleaseAxis);
                         break;
                 }
                 yield return new WaitForSeconds(delay);
                 switch (FireArm)
                 {
                     case ClosedBoltWeapon w:
-                        w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleaseUnpressed, w.MagReleaseInterp);
+                        if (w.MagazineReleaseButton != null) w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleaseUnpressed, w.MagReleaseInterp);
                         break;
                     case Handgun w:
-                        w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleaseUnpressed, w.MagReleaseInterp, w.MagReleaseAxis);
+                        if (w.MagazineReleaseButton != null) w.SetAnimatedComponent(w.MagazineReleaseButton, w.MagReleaseUnpressed, w.MagReleaseInterp, w.MagReleaseAxis);
                         break;
                 }
             }
