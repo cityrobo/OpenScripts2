@@ -150,6 +150,7 @@
     <Compile Include="src\MountedGuns\MountedGunControls_ClosedBolt.cs" />
     <Compile Include="src\MountedGuns\MountedGunControls_OpenBolt.cs" />
     <Compile Include="src\MovingObjectParts\AutomaticallyMovingPart.cs" />
+    <Compile Include="src\MovingObjectParts\MovableObjectPartMK2.cs" />
     <Compile Include="src\MovingObjectParts\PrecisionTranslatingPart.cs" />
     <Compile Include="src\MovingObjectParts\RigidbodyJiggleBones.cs" />
     <Compile Include="src\OpenScripts2_Extras.cs" />

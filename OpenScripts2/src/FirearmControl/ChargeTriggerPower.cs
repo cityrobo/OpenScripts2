@@ -1128,7 +1128,7 @@ namespace OpenScripts2
             _isCharging = true;
             _timeCharged = 0f;
             FVRPooledAudioSource audioSource = SM.PlayCoreSound(FVRPooledAudioType.Generic, ChargingSounds, fireArm.transform.position);
-            audioSource.FollowThisTransform(fireArm.transform);
+            audioSource?.FollowThisTransform(fireArm.transform);
             while (_timeCharged < ChargeTime)
             {
                 if (!fireArm.IsHeld || CheckTrigger(fireArm)) break;

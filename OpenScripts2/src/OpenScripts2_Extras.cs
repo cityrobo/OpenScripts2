@@ -165,6 +165,10 @@ namespace OpenScripts2
 
         public static float SignedAngle(Vector3 from, Vector3 to, Vector3 axis)
         {
+            // Only care about the part of the vectors on the axis plane
+            from = Vector3.ProjectOnPlane(from, axis);
+            to = Vector3.ProjectOnPlane(to, axis);
+
             // angle in [0,180]
             float angle = Vector3.Angle(from, to);
             float sign = Mathf.Sign(Vector3.Dot(axis, Vector3.Cross(from, to)));

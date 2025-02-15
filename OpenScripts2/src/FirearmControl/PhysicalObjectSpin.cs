@@ -13,20 +13,22 @@ namespace OpenScripts2
     public class PhysicalObjectSpin : OpenScripts2_BasePlugin
     {
         public FVRPhysicalObject PhysicalObject;
-		public Transform PoseSpinHolder;
+        public Transform PoseSpinHolder;
 
-		public ETouchpadDir TouchpadDir;
+        public ETouchpadDir TouchpadDir;
 
-		private float _xSpinVel;
-		private float _xSpinRot;
+        private float _xSpinVel;
+        private float _xSpinRot;
 
-		private bool _isSpinning;
+        private bool _isSpinning;
         private bool _spinningToggleState;
+        private Vector3 _origColliderSize;
+        private EColliderType _colliderType;
 
         private static readonly Dictionary<FVRPhysicalObject, PhysicalObjectSpin> _existingHandGunSpins = new();
 
 #if !DEBUG
-		static PhysicalObjectSpin()
+        static PhysicalObjectSpin()
         {
             On.FistVR.FVRPhysicalObject.BeginInteraction += FVRPhysicalObject_BeginInteraction;
             On.FistVR.FVRPhysicalObject.UpdateInteraction += FVRPhysicalObject_UpdateInteraction;
@@ -36,20 +38,28 @@ namespace OpenScripts2
             On.FistVR.FVRPhysicalObject.FVRFixedUpdate += FVRPhysicalObject_FVRFixedUpdate;
         }
 
-        public void Awake()
+        public virtual void Awake()
         {
-			_existingHandGunSpins.Add(PhysicalObject, this);
-		}
+            _existingHandGunSpins.Add(PhysicalObject, this);
 
-		public void OnDestroy()
+            Collider collider = PhysicalObject.GetComponent<Collider>();
+            collider.Analyze(out Vector3 _, out _origColliderSize, out _colliderType, out var _);
+        }
+
+        public void OnDestroy()
         {
-			_existingHandGunSpins.Remove(PhysicalObject);
+            _existingHandGunSpins.Remove(PhysicalObject);
         }
 
         private static void FVRPhysicalObject_BeginInteraction(On.FistVR.FVRPhysicalObject.orig_BeginInteraction orig, FVRPhysicalObject self, FVRViveHand hand)
         {
             if (_existingHandGunSpins.TryGetValue(self, out PhysicalObjectSpin physicalObjectSpin))
             {
+                if (OpenScripts2_BepInExPlugin.SpinGrabHelper.Value && physicalObjectSpin._isSpinning)
+                {
+                    physicalObjectSpin.ResetColliderScale(self);
+                }
+
                 if (OpenScripts2_BepInExPlugin.SpinToggle.Value)
                 {
                     physicalObjectSpin._isSpinning = physicalObjectSpin._spinningToggleState;
@@ -68,11 +78,6 @@ namespace OpenScripts2
                     physicalObjectSpin._xSpinVel = -spinSpeed.x * 10f;
 
                     physicalObjectSpin._xSpinRot = Vector3Utils.SignedAngle(self.PoseOverride.forward, hand.Input.Forward, self.transform.right);
-                }
-
-                if (OpenScripts2_BepInExPlugin.SpinGrabHelper.Value && physicalObjectSpin._isSpinning)
-                {
-                    ScaleColliderDown(self);
                 }
             }
             orig(self, hand);
@@ -119,7 +124,7 @@ namespace OpenScripts2
 
                 if (OpenScripts2_BepInExPlugin.SpinGrabHelper.Value && physicalObjectSpin._isSpinning)
                 {
-                    ScaleColliderUp(self);
+                    physicalObjectSpin.IncreaseColliderScale(self);
                 }
             }
 
@@ -195,46 +200,43 @@ namespace OpenScripts2
             }
         }
 
-        private static void ScaleColliderUp(FVRPhysicalObject self)
+        private void IncreaseColliderScale(FVRPhysicalObject self)
         {
             float colliderScale = OpenScripts2_BepInExPlugin.SpinGrabHelperScale.Value;
-            Collider collider = self.GetComponent<Collider>();
-            collider.Analyze(out Vector3 _, out Vector3 size, out var type, out var _);
 
-            size *= colliderScale;
-            switch (type)
+            Collider collider = PhysicalObject.GetComponent<Collider>();
+            Vector3 newSize = _origColliderSize;
+            newSize *= colliderScale;
+            switch (_colliderType)
             {
                 case EColliderType.Sphere:
-                    (collider as SphereCollider).radius = size.x;
+                    (collider as SphereCollider).radius = newSize.x;
                     break;
                 case EColliderType.Capsule:
-                    (collider as CapsuleCollider).radius = size.x;
-                    (collider as CapsuleCollider).height = size.y;
+                    (collider as CapsuleCollider).radius = newSize.x;
+                    (collider as CapsuleCollider).height = newSize.y;
                     break;
                 case EColliderType.Box:
-                    (collider as BoxCollider).size = size;
+                    (collider as BoxCollider).size = newSize;
                     break;
             }
         }
 
-        private static void ScaleColliderDown(FVRPhysicalObject self)
+        private void ResetColliderScale(FVRPhysicalObject self)
         {
-            float colliderScale = OpenScripts2_BepInExPlugin.SpinGrabHelperScale.Value;
             Collider collider = self.GetComponent<Collider>();
-            collider.Analyze(out Vector3 _, out Vector3 size, out var type, out var _);
-
-            size /= colliderScale;
-            switch (type)
+            Vector3 oldSize = _origColliderSize;
+            switch (_colliderType)
             {
                 case EColliderType.Sphere:
-                    (collider as SphereCollider).radius = size.x;
+                    (collider as SphereCollider).radius = oldSize.x;
                     break;
                 case EColliderType.Capsule:
-                    (collider as CapsuleCollider).radius = size.x;
-                    (collider as CapsuleCollider).height = size.y;
+                    (collider as CapsuleCollider).radius = oldSize.x;
+                    (collider as CapsuleCollider).height = oldSize.y;
                     break;
                 case EColliderType.Box:
-                    (collider as BoxCollider).size = size;
+                    (collider as BoxCollider).size = oldSize;
                     break;
             }
         }

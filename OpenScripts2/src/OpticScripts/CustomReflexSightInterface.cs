@@ -79,20 +79,7 @@ namespace OpenScripts2
         {
             base.Start();
 
-            _originalReticleRotation = ReticleMesh.transform.localRotation;
-
-            _materialPropertyBlock = new MaterialPropertyBlock();
-
-            if (CurrentSelectedReticle >= ReticleTextures.Length) CurrentSelectedReticle = 0;
-            if (CurrentZeroDistance >= ZeroDistances.Length) CurrentZeroDistance = 0;
-            if (ReticleTextures.Length != 0) _materialPropertyBlock.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
-
-            if (SwitchObject != null) SwitchObject.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
-
-            if (ReticleTextures.Length <= 1) 
-            { 
-                _currentMenu = 1;
-            }
+            SetupOnStart();
 
             if (IsIntegrated && FireArm != null)
             {
@@ -110,6 +97,24 @@ namespace OpenScripts2
             if (LensCollider == null) _disableOcclusionCulling = true;
 
             ReticleMesh.SetPropertyBlock(_materialPropertyBlock);
+        }
+
+        private void SetupOnStart()
+        {
+            _originalReticleRotation = ReticleMesh.transform.localRotation;
+
+            _materialPropertyBlock = new MaterialPropertyBlock();
+
+            if (CurrentSelectedReticle >= ReticleTextures.Length) CurrentSelectedReticle = 0;
+            if (CurrentZeroDistance >= ZeroDistances.Length) CurrentZeroDistance = 0;
+            if (ReticleTextures.Length != 0) _materialPropertyBlock.SetTexture(NameOfTextureVariable, ReticleTextures[CurrentSelectedReticle]);
+
+            SwitchObject?.ModifyLocalPositionAxisValue(SwitchAxis, SwitchPositions[CurrentSelectedReticle]);
+
+            if (ReticleTextures.Length <= 1)
+            {
+                _currentMenu = 1;
+            }
         }
 
         public override void UpdateInteraction(FVRViveHand hand)
@@ -180,7 +185,9 @@ namespace OpenScripts2
 
         public void OffsetReticle()
         {
+            if (_materialPropertyBlock == null) SetupOnStart();
             Zero();
+            gameObject.SetActive(true);
         }
 
         private void ShowNextMenu() 
