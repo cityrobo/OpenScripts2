@@ -36,7 +36,8 @@ namespace OpenScripts2
         private Quaternion _startRot;
         private Quaternion _stopRot;
 
-        private bool _MagazineCuttoffActive = false;
+        // Variable was private before, keeping the name for compatibility
+        public bool _MagazineCuttoffActive = false;
 
         private FVRFireArmMagazine _mag;
 
@@ -45,7 +46,7 @@ namespace OpenScripts2
 
         private bool _wasClipFed = false;
 
-        private static List<FVRFireArm> s_firearmsWithMagazineCutoff = new();
+        private static readonly List<FVRFireArm> s_firearmsWithMagazineCutoff = new();
 
 #if !DEBUG
         static MagazineCutoff()
@@ -54,6 +55,7 @@ namespace OpenScripts2
             On.FistVR.FVRFireArmRound.DuplicateFromSpawnLock += FVRFireArmRound_DuplicateFromSpawnLock;
         }
 
+        // Patched FVRFireArmRound.DuplicateFromSpawnLock to make smart ammo palming logic aware of an engaged magazine cutoff
         private static GameObject FVRFireArmRound_DuplicateFromSpawnLock(On.FistVR.FVRFireArmRound.orig_DuplicateFromSpawnLock orig, FVRFireArmRound self, FVRViveHand hand)
         {
             GameObject gO = orig(self, hand);
@@ -96,6 +98,7 @@ namespace OpenScripts2
             return gO;
         }
 
+        // Patched FVRFireArmRound.GetNumRoundsPulled to make smart ammo palming logic aware of an engaged magazine cutoff
         private static int FVRFireArmRound_GetNumRoundsPulled(On.FistVR.FVRFireArmRound.orig_GetNumRoundsPulled orig, FVRFireArmRound self, FVRViveHand hand)
         {
             int num = 0;

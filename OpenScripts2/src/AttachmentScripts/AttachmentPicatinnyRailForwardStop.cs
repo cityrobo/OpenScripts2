@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 using UnityEngine;
+using HarmonyLib;
 
 
 namespace OpenScripts2
@@ -14,14 +15,38 @@ namespace OpenScripts2
     {
         public FVRFireArmAttachment Attachment;
 
+        private bool _externallyActivated = false;
+
         public void Awake()
         {
-            AttachmentMountPicatinnyRail.ExistingForwardStops.Add(Attachment, this);
+            if (!_externallyActivated && Attachment != null)
+            {
+                AttachmentMountPicatinnyRail.ExistingForwardStops.Add(Attachment, this);
+            }
+        }
+
+        public void ExternalActivation()
+        {
+            if (Attachment != null)
+            {
+                AttachmentMountPicatinnyRail.ExistingForwardStops.Add(Attachment, this);
+
+                _externallyActivated = true;
+            }
+            else
+            {
+                LogError("Attachment is null during ExternalActivation!");
+            }
+        }
+
+        public void ExternalDeactivation()
+        {
+            AttachmentMountPicatinnyRail.ExistingForwardStops.Remove(Attachment);
         }
 
         public void OnDestroy()
         {
-            AttachmentMountPicatinnyRail.ExistingForwardStops.Remove(Attachment);
+            if (!_externallyActivated) AttachmentMountPicatinnyRail.ExistingForwardStops.Remove(Attachment);
         }
     }
 }

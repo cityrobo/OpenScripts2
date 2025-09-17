@@ -260,7 +260,7 @@ namespace OpenScripts2
 
                 Vector3 deltaLocalPos = _origChamberPos - additionalChambering.RoundMountPointProxy.localPosition;
                 Chamber.transform.localPosition = additionalChambering.RoundMountPointProxy.localPosition;
-                Chamber.ChamberVelocityMultiplier = additionalChambering.ChamberVelocityMultiplierOverride;
+                Chamber.ChamberVelocityMultiplier = additionalChambering.ChamberVelocityMultiplierOverride != 0 ? additionalChambering.ChamberVelocityMultiplierOverride : 1f;
 
                 Collider col = Chamber.GetComponent<Collider>();
                 switch (col)

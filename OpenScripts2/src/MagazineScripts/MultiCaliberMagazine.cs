@@ -121,6 +121,30 @@ namespace OpenScripts2
                 }
 
                 if (caliberDefinition.MagazineOriginOverridePoint != null) caliberDefinition.MagazineOriginOverridePointProxy = new(caliberDefinition.MagazineOriginOverridePoint, true);
+
+                if (Magazine.DisplayBullets.Length < caliberDefinition.DisplayTransformProxies.Count)
+                {
+                    List<GameObject> tempDisplayBulletsList = Magazine.DisplayBullets.ToList();
+                    List<MeshFilter> tempDisplayMeshRenderersList = Magazine.DisplayMeshFilters.ToList();
+                    List<Renderer> tempDisplayRenderersList = Magazine.DisplayRenderers.ToList();
+
+                    List<Vector3> tempDisplayStartPositions = Magazine.m_DisplayStartPositions.ToList();
+                    for (int i = Magazine.DisplayBullets.Length; i < caliberDefinition.DisplayTransformProxies.Count; i++)
+                    {
+                        GameObject newDisplayBullet = Instantiate(Magazine.DisplayBullets.Last());
+                        if (Magazine.Viz != null) newDisplayBullet.transform.SetParent(Magazine.Viz.transform);
+                        else newDisplayBullet.transform.SetParent(Magazine.transform);
+                        newDisplayBullet.SetActive(false);
+                        tempDisplayBulletsList.Add(newDisplayBullet);
+                        tempDisplayMeshRenderersList.Add(newDisplayBullet.GetComponent<MeshFilter>());
+                        tempDisplayRenderersList.Add(newDisplayBullet.GetComponent<Renderer>());
+                        tempDisplayStartPositions.Add(newDisplayBullet.transform.localPosition);
+                    }
+                    Magazine.DisplayBullets = tempDisplayBulletsList.ToArray();
+                    Magazine.DisplayMeshFilters = tempDisplayMeshRenderersList.ToArray();
+                    Magazine.DisplayRenderers = tempDisplayRenderersList.ToArray();
+                    Magazine.m_DisplayStartPositions = tempDisplayStartPositions.ToArray();
+                }
             }
         }
 
@@ -297,17 +321,16 @@ namespace OpenScripts2
 
                 Magazine.m_capacity = caliberDefinition.Capacity + magazineExtension;
             }
-            if (caliberDefinition.DisplayBullets.Length > 0)
+            if (caliberDefinition.DisplayTransformProxies.Count > 0)
             {
                 Magazine.m_roundInsertionTarget.localPosition = caliberDefinition.DisplayTransformProxies[0].localPosition;
                 Magazine.m_roundInsertionTarget.localRotation = caliberDefinition.DisplayTransformProxies[0].localRotation;
 
-                for (int i = 0; i < Magazine.DisplayBullets.Length; i++)
+                for (int i = 0; i < Magazine.DisplayBullets.Length && i < caliberDefinition.DisplayTransformProxies.Count; i++)
                 {
                     Magazine.DisplayBullets[i].transform.GoToTransformProxy(caliberDefinition.DisplayTransformProxies[i]);
+                    Magazine.m_DisplayStartPositions[i] = caliberDefinition.DisplayTransformProxies[i].localPosition;
                 }
-
-                Magazine.m_DisplayStartPositions = caliberDefinition.DisplayTransformProxies.Select(obj => obj.localPosition).ToArray();
             }
 
             if (caliberDefinition.MagazineOriginOverridePointProxy != null)
@@ -391,6 +414,11 @@ namespace OpenScripts2
 
             Magazine.UpdateBulletDisplay();
         }
+
+        //private void UpdateMagazineDisplayBulletArrays(CaliberDefinition caliberDefinition)
+        //{
+
+        //}
 
         public void ReplaceFiringSounds(FVRFirearmAudioSet set)
         {

@@ -301,6 +301,7 @@ namespace OpenScripts2
                 _cartridgeGenerationReady = true;
                 _followerGenerationReady = true;
 
+                sO.ApplyModifiedProperties();
                 //UpdateConfigValues(m);
             }
         }
@@ -506,28 +507,37 @@ namespace OpenScripts2
 
             float yOffset = _m.FirstFollowerPositionToGenerateFrom.transform.localPosition.y - _m.FirstCartridgeToGenerateFrom.transform.localPosition.y;
             float zOffset = _m.FirstFollowerPositionToGenerateFrom.transform.localPosition.z - _m.FirstCartridgeToGenerateFrom.transform.localPosition.z;
+
+            Vector3 offsetPosition = _m.FirstFollowerPositionToGenerateFrom.transform.localPosition - _m.FirstCartridgeToGenerateFrom.transform.localPosition;
+            Quaternion offsetRotation = _m.FirstFollowerPositionToGenerateFrom.transform.rotation * Quaternion.Inverse(_m.FirstCartridgeToGenerateFrom.transform.rotation);
+
             for (int i = 1 + _m.ManuallyAddedCartridgePositions.Count; i < _cartridgeObjectList.Count; i++)
             {
-                Vector3 nextFollowerPositions = _cartridgeObjectList[i].transform.TransformPoint(0f, yOffset, zOffset);
-                nextFollowerPositions.x = _m.FirstFollowerPositionToGenerateFrom.transform.position.x;
+                GameObject addedFollowerPosition = Instantiate(_m.FirstFollowerPositionToGenerateFrom, Vector3.zero, Quaternion.identity, _m.Magazine.Viz);
+                addedFollowerPosition.name = _m.FirstFollowerPositionToGenerateFrom.name + " (" + i.ToString() + ")";
+                addedFollowerPosition.transform.localScale = _m.FirstFollowerPositionToGenerateFrom.transform.localScale;
+
+                addedFollowerPosition.transform.localPosition = _cartridgeObjectList[i].transform.localPosition + offsetPosition;
+                addedFollowerPosition.transform.ModifyLocalPositionAxisValue(OpenScripts2_BasePlugin.Axis.X, 0f);
+                addedFollowerPosition.transform.localRotation = _cartridgeObjectList[i].transform.localRotation * offsetRotation;
+
+                //Vector3 nextFollowerPositions = _cartridgeObjectList[i].transform.TransformPoint(0f, yOffset, zOffset);
+                //nextFollowerPositions.x = _m.FirstFollowerPositionToGenerateFrom.transform.position.x;
+
                 //nextFollowerPositions.y += yOffset;
                 //nextFollowerPositions.z += zOffset;
-                Quaternion nextFollowerRotations = _m.FirstFollowerPositionToGenerateFrom.transform.rotation;
-                Vector3 eulerAngles;
-                if (_m.IsCurved)
-                {
-                    eulerAngles = new Vector3(_m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.x - _m.CartridgeAngleOffsetX * (i - 1), _m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.y, _m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.z);
-                }
-                else
-                {
-                    eulerAngles = new Vector3(_m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.x, _m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.y, _m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.z);
-                }
+                //Quaternion nextFollowerRotations = _m.FirstFollowerPositionToGenerateFrom.transform.rotation;
+                //Vector3 eulerAngles;
+                //if (_m.IsCurved)
+                //{
+                //    eulerAngles = new Vector3(_m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.x - _m.CartridgeAngleOffsetX * (i - 1), _m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.y, _m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.z);
+                //}
+                //else
+                //{
+                //    eulerAngles = new Vector3(_m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.x, _m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.y, _m.FirstFollowerPositionToGenerateFrom.transform.rotation.eulerAngles.z);
+                //}
 
-                nextFollowerRotations = Quaternion.Euler(eulerAngles);
-                GameObject addedFollowerPosition = Instantiate(_m.FirstFollowerPositionToGenerateFrom, nextFollowerPositions, nextFollowerRotations, _m.Magazine.Viz);
-
-                addedFollowerPosition.transform.localScale = _m.FirstFollowerPositionToGenerateFrom.transform.localScale;
-                addedFollowerPosition.name = _m.FirstFollowerPositionToGenerateFrom.name + " (" + i.ToString() + ")";
+                //nextFollowerRotations = Quaternion.Euler(eulerAngles);
 
                 _followerObjectList.Add(addedFollowerPosition);
 

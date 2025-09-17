@@ -292,6 +292,14 @@ namespace OpenScripts2
         }
 
         // Methods for getting a reference to call the base method of something for patching virtual methods.
+        #region BaseMethodReferenceMethods
+        /// <summary>
+        /// Gets a reference to the base method of a virtual method. For use with methods that have no return value and no input parameters.
+        /// </summary>
+        /// <param name="BaseClass">Class of the base method.</param>
+        /// <param name="MethodName">Name of the base method.</param>
+        /// <param name="self">Object to execute the base method on.</param>
+        /// <returns></returns>
         public static Action GetBaseAction(Type BaseClass, string MethodName, MonoBehaviour self)
         {
             var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
@@ -299,6 +307,14 @@ namespace OpenScripts2
             return (Action)Activator.CreateInstance(typeof(Action), self, pointer);
         }
 
+        /// <summary>
+        /// Gets a reference to the base method of a virtual method. For use with methods that have no return value and one parameter.
+        /// </summary>
+        /// <typeparam name="T">Type of the input paramerter of the base method.</typeparam>
+        /// <param name="BaseClass">Class of the base method.</param>
+        /// <param name="MethodName">Name of the base method.</param>
+        /// <param name="self">Object to execute the base method on.</param>
+        /// <returns></returns>
         public static Action<T> GetBaseAction<T>(Type BaseClass, string MethodName, MonoBehaviour self)
         {
             var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
@@ -306,6 +322,30 @@ namespace OpenScripts2
             return (Action<T>)Activator.CreateInstance(typeof(Action<T>), self, pointer);
         }
 
+        /// <summary>
+        /// Gets a reference to the base method of a virtual method. For use with methods that have no return value and two parameters.
+        /// </summary>
+        /// <typeparam name="T1">Type of the first input paramerter of the base method.</typeparam>
+        /// <typeparam name="T2">Type of the second input paramerter of the base method.</typeparam>
+        /// <param name="BaseClass">Class of the base method.</param>
+        /// <param name="MethodName">Name of the base method.</param>
+        /// <param name="self">Object to execute the base method on.</param>
+        /// <returns></returns>
+        public static Action<T1, T2> GetBaseAction<T1, T2>(Type BaseClass, string MethodName, MonoBehaviour self)
+        {
+            var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
+
+            return (Action<T1, T2>)Activator.CreateInstance(typeof(Action<T1, T2>), self, pointer);
+        }
+
+        /// <summary>
+        /// Gets a reference to the base method of a virtual method. For use with methods that have a return value and no input parameters.
+        /// </summary>
+        /// <typeparam name="T">Return type of the base method.</typeparam>
+        /// <param name="BaseClass">Class of the base method.</param>
+        /// <param name="MethodName">Name of the base method.</param>
+        /// <param name="self">Object to execute the base method on.</param>
+        /// <returns></returns>
         public static Func<T> GetBaseFunc<T>(Type BaseClass, string MethodName, MonoBehaviour self)
         {
             var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
@@ -313,6 +353,40 @@ namespace OpenScripts2
             return (Func<T>)Activator.CreateInstance(typeof(Func<T>), self, pointer);
         }
 
+        /// <summary>
+        /// Gets a reference to the base method of a virtual method. For use with methods that have a return value and one input parameter.
+        /// </summary>
+        /// <typeparam name="T1">Return type of the base method.</typeparam>
+        /// <typeparam name="T2">Type of the input paramerter of the base method.</typeparam>
+        /// <param name="BaseClass">Class of the base method.</param>
+        /// <param name="MethodName">Name of the base method.</param>
+        /// <param name="self">Object to execute the base method on.</param>
+        /// <returns></returns>
+        public static Func<T1, T2> GetBaseFunc<T1, T2>(Type BaseClass, string MethodName, MonoBehaviour self)
+        {
+            var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
+
+            return (Func<T1, T2>)Activator.CreateInstance(typeof(Func<T1, T2>), self, pointer);
+        }
+
+        /// <summary>
+        /// Gets a reference to the base method of a virtual method. For use with methods that have a return value and two input parameters.
+        /// </summary>
+        /// <typeparam name="T1">Return type of the base method.</typeparam>
+        /// <typeparam name="T2">Type of the first input paramerter of the base method.</typeparam>
+        /// <typeparam name="T3">Type of the second input paramerter of the base method.</typeparam>
+        /// <param name="BaseClass">Class of the base method.</param>
+        /// <param name="MethodName">Name of the base method.</param>
+        /// <param name="self">Object to execute the base method on.</param>
+        /// <returns></returns>
+        public static Func<T1, T2, T3> GetBaseFunc<T1, T2, T3>(Type BaseClass, string MethodName, MonoBehaviour self)
+        {
+            var pointer = BaseClass.GetMethod(MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).MethodHandle.GetFunctionPointer();
+
+            return (Func<T1, T2, T3>)Activator.CreateInstance(typeof(Func<T1, T2, T3>), self, pointer);
+        }
+
+        #endregion
         // Logging
         public void Log(string message)
         {
