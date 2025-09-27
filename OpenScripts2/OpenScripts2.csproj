@@ -105,8 +105,10 @@
     <Compile Include="src\AttachmentScripts\AdvancedMovingFireArmAttachmentMenu.cs" />
     <Compile Include="src\AttachmentScripts\InvertingMount.cs" />
     <Compile Include="src\AttachmentScripts\MovingAttachmentInterfaceLimiterAddon.cs" />
+    <Compile Include="src\AttachmentScripts\MultiBarrelMount.cs" />
     <Compile Include="src\AttachmentScripts\ScopeBaseOptic.cs" />
     <Compile Include="src\AttachmentScripts\ScopeBaseMount.cs" />
+    <Compile Include="src\AttachmentScripts\ShotgunChokeInterface.cs" />
     <Compile Include="src\AttachmentScripts\SupressableMuzzleNoiseMaker.cs" />
     <Compile Include="src\AttachmentScripts\CustomMuzzleDeviceMuzzleEffects.cs" />
     <Compile Include="src\AttachmentScripts\MovingFireArmAttachmentInterface.cs" />
