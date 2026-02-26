@@ -42,10 +42,10 @@
       <HintPath>..\packages\HarmonyX.2.10.0\lib\net35\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.118.1\lib\net35\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.120.0\lib\net35\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.118.1\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.120.0\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx, Version=5.4.17.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\BepInEx.BaseLib.5.4.17\lib\net35\BepInEx.dll</HintPath>
@@ -94,10 +94,10 @@
       <HintPath>..\packages\UnityEngine.5.6.1\lib\net35\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.118.1\lib\net35\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.120.0\lib\net35\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="Valve.Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\H3VR.GameLibs.0.118.1\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\H3VR.GameLibs.0.120.0\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +106,7 @@
     <Compile Include="src\AttachmentScripts\InvertingMount.cs" />
     <Compile Include="src\AttachmentScripts\MovingAttachmentInterfaceLimiterAddon.cs" />
     <Compile Include="src\AttachmentScripts\MultiBarrelMount.cs" />
+    <Compile Include="src\AttachmentScripts\PressurePadAttachmentInterface.cs" />
     <Compile Include="src\AttachmentScripts\ScopeBaseOptic.cs" />
     <Compile Include="src\AttachmentScripts\ScopeBaseMount.cs" />
     <Compile Include="src\AttachmentScripts\ShotgunChokeInterface.cs" />
@@ -114,11 +115,14 @@
     <Compile Include="src\AttachmentScripts\MovingFireArmAttachmentInterface.cs" />
     <Compile Include="src\AttachmentScripts\FirearmFeatureChangerAttachment.cs" />
     <Compile Include="src\AttachmentScripts\CustomOpenScripts2Attachment.cs" />
+    <Compile Include="src\AttachmentScripts\UniversalMount.cs" />
+    <Compile Include="src\CustomObjectTypes\SignalsDevicePhysicsDisabler.cs" />
     <Compile Include="src\CustomQuickBeltSlots\HeadQBSlot.cs" />
     <Compile Include="src\CustomQuickBeltSlots\HolsterStockQBSlot.cs" />
     <Compile Include="src\FirearmControl\BoltPointUpdater.cs" />
     <Compile Include="src\FirearmControl\ChargeTriggerBreakActionWeapon.cs" />
     <Compile Include="src\FirearmControl\ChargeTriggerPowerRevolverSpecial.cs" />
+    <Compile Include="src\FirearmControl\ClosedBoltQuickbolting.cs" />
     <Compile Include="src\FirearmControl\ClosedBoltRotatingChargingHandle.cs" />
     <Compile Include="src\FirearmControl\ClosedBoltSeparateBoltLock.cs" />
     <Compile Include="src\FirearmControl\FiredProjectileModification.cs" />

@@ -12,18 +12,19 @@ namespace OpenScripts2
     {
         public FVRPhysicalObject PhysicalObject;
 
-        [Header("Break Parts")]
+        [Header("Main Parts")]
         public HingeJoint Hinge;
         public float HingeLimit = 45f;
         public float HingeEjectThreshhold = 30f;
         public Transform CenterOfMassOverride;
         public Axis HingeAxis;
 
-        [Header("LatchGeo (leave at default if no visible latch)")]
+        [Header("Visible latch config")]
         public bool HasLatchObject;
         public Transform Latch;
         public float MaxLatchRot = 45f;
-        [Tooltip("If latch is below this angle the fore will latch. Latch rot dependend on how far up you press on touchpad (like break action shotgun)")]
+
+        [Tooltip("If the latch is rotated below this angle the fore will latch.\nLatch rotation magnitude dependend on how far up you press on touchpad (like a break action shotgun)")]
         public float LatchLatchingRot = 5f;
 
         [Header("Objects that turn off or on dependend on break state")]
@@ -38,11 +39,17 @@ namespace OpenScripts2
         public AudioEvent BreakOpenAudio;
         public AudioEvent BreakCloseAudio;
 
+        [Header("Misc")]
+        [Tooltip("If you want to control the unlatching with an external script and want to disable the button input, use this.")]
+        public bool DisableLatchButtonInput = false;
+
         private float _latchRot;
         private Vector3 _foreStartPos;
 
-        private bool _isLatched = true;
-        private bool _latchHeldOpen;
+        [HideInInspector]
+        public bool _isLatched = true;
+        [HideInInspector]
+        public bool _latchHeldOpen;
         private bool _hasEjectedMag = false;
 
         private static readonly Dictionary<FVRPhysicalObject, BreakOpenTrigger> _exisitingBreakOpenTriggers = new();
@@ -73,6 +80,7 @@ namespace OpenScripts2
 
         public void Update()
         {
+            if (DisableLatchButtonInput) return;
             FVRViveHand hand = PhysicalObject.m_hand;
             if (hand != null) UpdateInputAndAnimate(hand);
             else _latchHeldOpen = false;
