@@ -44,7 +44,7 @@ namespace OpenScripts2
             1f,
             8f
         };
-        
+        private bool _heatingDisabled = false;
 
         // Emission weight system
         [Header("Emission modification config")]
@@ -242,11 +242,12 @@ namespace OpenScripts2
         {
             Hook();
 #if !DEBUG
-                _canExplode = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.Value;
-                _canChangeAccuracy = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeAccuracy.Value;
-                _canCookOff = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanCookOff.Value;
-                CanRecoverFromExplosion = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.Value;
-                RevertHeatThreshold = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.Value;
+            _canExplode = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanExplode.Value;
+            _canChangeAccuracy = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanChangeAccuracy.Value;
+            _canCookOff = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanCookOff.Value;
+            CanRecoverFromExplosion = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_CanRecover.Value;
+            RevertHeatThreshold = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_RecoverThreshold.Value;
+            _heatingDisabled = OpenScripts2_BepInExPlugin.FirearmHeatingEffect_HeatingDisabled.Value;
 #endif
             if (FireArm != null)
             {
@@ -571,7 +572,7 @@ namespace OpenScripts2
 
         private void OnShotFired(FVRFireArm firearm)
         {
-            if (FireArm != null && firearm == FireArm)
+            if (!_heatingDisabled && FireArm != null && firearm == FireArm)
             {
                 float powerMult = 1f;
                 if (ChangesWithCartridgePower)

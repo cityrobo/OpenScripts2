@@ -11,7 +11,7 @@ using FistVR;
 namespace OpenScripts2
 {
 #if !DEBUG
-    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.13.0")]
+    [BepInPlugin("h3vr.OpenScripts2", "OpenScripts2", "2.13.1")]
 #endif
     public class OpenScripts2_BepInExPlugin : BaseUnityPlugin
     {
@@ -22,6 +22,7 @@ namespace OpenScripts2
         public static ConfigEntry<bool> FirearmHeatingEffect_CanChangeFirerate;
         public static ConfigEntry<bool> FirearmHeatingEffect_CanChangeAccuracy;
         public static ConfigEntry<bool> FirearmHeatingEffect_CanCookOff;
+        public static ConfigEntry<bool> FirearmHeatingEffect_HeatingDisabled;
 
         // Advanced MagGrab Trigger Config Entries
         public static ConfigEntry<bool> AdvancedMagGrabSimpleMagRelease;
@@ -47,6 +48,7 @@ namespace OpenScripts2
             FirearmHeatingEffect_CanChangeFirerate = Config.Bind("Firearm Heating Effect", "Gun can change firerate", true, "If true, enables firearm firerate changes based on heat.");
             FirearmHeatingEffect_CanChangeAccuracy = Config.Bind("Firearm Heating Effect", "Gun can change accuracy", true, "If true, enables firearm accuracy changes based on heat.");
             FirearmHeatingEffect_CanCookOff = Config.Bind("Firearm Heating Effect", "Gun can cook off", true, "If true, enables firearm cookoff chance based on heat.");
+            FirearmHeatingEffect_HeatingDisabled = Config.Bind("Firearm Heating Effect", "Heating disabled", false, "If true, disables heating effects on all parts.");
 
             // Advanced MagGrab Trigger Config Bindings
             AdvancedMagGrabSimpleMagRelease = Config.Bind("Advanced Magazine Grab Trigger", "Simple Magazine Release", false, "If true, disables input requirements from advanced magazine wells.");

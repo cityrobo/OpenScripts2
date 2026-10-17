@@ -1,5 +1,6 @@
 using FistVR;
 using MonoMod.Cil;
+using Mono.Cecil.Cil;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
+using HarmonyLib;
 
 namespace OpenScripts2
 {
@@ -51,79 +53,117 @@ namespace OpenScripts2
 #if !DEBUG
         static MagazineCutoff()
         {
-            On.FistVR.FVRFireArmRound.GetNumRoundsPulled += FVRFireArmRound_GetNumRoundsPulled;
-            On.FistVR.FVRFireArmRound.DuplicateFromSpawnLock += FVRFireArmRound_DuplicateFromSpawnLock;
+            //On.FistVR.FVRFireArmRound.GetNumRoundsPulled += FVRFireArmRound_GetNumRoundsPulled;
+            //On.FistVR.FVRFireArmRound.DuplicateFromSpawnLock += FVRFireArmRound_DuplicateFromSpawnLock;
+            IL.FistVR.FVRFireArmRound.DuplicateFromSpawnLock += FVRFireArmRound_DuplicateFromSpawnLock_IL;
+        }
+
+        // Patched FVRFireArmRound.DuplicateFromSpawnLock to make smart ammo palming logic aware of an engaged magazine cutoff by way of "FVRFireArmMagazine.IsDropInLoadable"
+        private static void FVRFireArmRound_DuplicateFromSpawnLock_IL(ILContext il)
+        {
+            ILCursor c = new(il);
+
+            c.GotoNext(
+                MoveType.After,
+                i => i.MatchLdloc(4),
+                i => i.MatchLdnull(),
+                i => i.MatchCall<UnityEngine.Object>("op_Inequality")
+            );
+
+            // Original brfalse
+            Instruction originalBranch = c.Next;
+
+            // Existing branch destination
+            ILLabel target = (ILLabel)originalBranch.Operand;
+
+            // Move past original brfalse
+            c.Index++;
+
+            // ldloc magazine
+            c.Emit(OpCodes.Ldloc, 4);
+
+            // ldfld bool FistVR.FVRFireArmMagazine::IsDropInLoadable
+            c.Emit(
+                OpCodes.Ldfld,
+                AccessTools.Field(
+                    typeof(FVRFireArmMagazine),
+                    nameof(FVRFireArmMagazine.IsDropInLoadable)
+                )
+            );
+
+            // brfalse <original target>
+            c.Emit(OpCodes.Brfalse, target);
         }
 
         // Patched FVRFireArmRound.DuplicateFromSpawnLock to make smart ammo palming logic aware of an engaged magazine cutoff
-        private static GameObject FVRFireArmRound_DuplicateFromSpawnLock(On.FistVR.FVRFireArmRound.orig_DuplicateFromSpawnLock orig, FVRFireArmRound self, FVRViveHand hand)
-        {
-            GameObject gO = orig(self, hand);
-            FVRFireArmRound component = gO.GetComponent<FVRFireArmRound>();
-            if (GM.Options.ControlOptions.SmartAmmoPalming == ControlOptions.SmartAmmoPalmingMode.Enabled && component != null && hand.OtherHand.CurrentInteractable != null)
-            {
-                int num = 0;
-                if (hand.OtherHand.CurrentInteractable is FVRFireArm fireArm && s_firearmsWithMagazineCutoff.Contains(fireArm))
-                {
-                    if (fireArm.RoundType == self.RoundType)
-                    {
-                        FVRFireArmMagazine magazine = fireArm.Magazine;
-                        if (magazine != null && magazine.IsDropInLoadable)
-                        {
-                            num = magazine.m_capacity - magazine.m_numRounds;
-                        }
-                        for (int i = 0; i < fireArm.GetChambers().Count; i++)
-                        {
-                            FVRFireArmChamber fvrfireArmChamber = fireArm.GetChambers()[i];
-                            if (fvrfireArmChamber.IsManuallyChamberable && (!fvrfireArmChamber.IsFull || fvrfireArmChamber.IsSpent))
-                            {
-                                num++;
-                            }
-                        }
-                    }
-                    component.DestroyAllProxies();
-                    if (num < 1)
-                    {
-                        num = self.ProxyRounds.Count;
-                    }
-                    int num2 = Mathf.Min(self.ProxyRounds.Count, num - 1);
-                    for (int k = 0; k < num2; k++)
-                    {
-                        component.AddProxy(self.ProxyRounds[k].Class, self.ProxyRounds[k].ObjectWrapper);
-                    }
-                }
-                component.UpdateProxyDisplay();
-            }
+        //private static GameObject FVRFireArmRound_DuplicateFromSpawnLock(On.FistVR.FVRFireArmRound.orig_DuplicateFromSpawnLock orig, FVRFireArmRound self, FVRViveHand hand)
+        //{
+        //    GameObject gO = orig(self, hand);
+        //    FVRFireArmRound component = gO.GetComponent<FVRFireArmRound>();
+        //    if (GM.Options.ControlOptions.SmartAmmoPalming == ControlOptions.SmartAmmoPalmingMode.Enabled && component != null && hand.OtherHand.CurrentInteractable != null)
+        //    {
+        //        int num = 0;
+        //        if (hand.OtherHand.CurrentInteractable is FVRFireArm fireArm && s_firearmsWithMagazineCutoff.Contains(fireArm))
+        //        {
+        //            if (fireArm.RoundType == self.RoundType)
+        //            {
+        //                FVRFireArmMagazine magazine = fireArm.Magazine;
+        //                if (magazine != null && magazine.IsDropInLoadable)
+        //                {
+        //                    num = magazine.m_capacity - magazine.m_numRounds;
+        //                }
+        //                for (int i = 0; i < fireArm.GetChambers().Count; i++)
+        //                {
+        //                    FVRFireArmChamber fvrfireArmChamber = fireArm.GetChambers()[i];
+        //                    if (fvrfireArmChamber.IsManuallyChamberable && (!fvrfireArmChamber.IsFull || fvrfireArmChamber.IsSpent))
+        //                    {
+        //                        num++;
+        //                    }
+        //                }
+        //            }
+        //            //component.DestroyAllProxies();
+        //            if (num < 1)
+        //            {
+        //                num = self.ProxyRounds.Count;
+        //            }
+        //            int num2 = Mathf.Min(self.ProxyRounds.Count, num - 1);
+        //            for (int k = 0; k < num2; k++)
+        //            {
+        //                component.AddProxy(self.ProxyRounds[k].Class, self.ProxyRounds[k].ObjectWrapper);
+        //            }
+        //        }
+        //        component.UpdateProxyDisplay();
+        //    }
 
-            return gO;
-        }
+        //    return gO;
+        //}
 
         // Patched FVRFireArmRound.GetNumRoundsPulled to make smart ammo palming logic aware of an engaged magazine cutoff
-        private static int FVRFireArmRound_GetNumRoundsPulled(On.FistVR.FVRFireArmRound.orig_GetNumRoundsPulled orig, FVRFireArmRound self, FVRViveHand hand)
-        {
-            int num = 0;
-            if (hand.OtherHand.CurrentInteractable is FVRFireArm fireArm && s_firearmsWithMagazineCutoff.Contains(fireArm))
-            {
-                if (fireArm.RoundType == self.RoundType)
-                {
-                    FVRFireArmMagazine magazine = fireArm.Magazine;
-                    if (magazine != null && magazine.IsDropInLoadable)
-                    {
-                        num = magazine.m_capacity - magazine.m_numRounds;
-                    }
-                    for (int i = 0; i < fireArm.GetChambers().Count; i++)
-                    {
-                        FVRFireArmChamber fvrfireArmChamber = fireArm.GetChambers()[i];
-                        if (fvrfireArmChamber.IsManuallyChamberable && (!fvrfireArmChamber.IsFull || fvrfireArmChamber.IsSpent))
-                        {
-                            num++;
-                        }
-                    }
-                }
-                return num;
-            } 
-            else return orig(self, hand);
-        }
+        //private static int FVRFireArmRound_GetNumRoundsPulled(On.FistVR.FVRFireArmRound.orig_GetNumRoundsPulled orig, FVRFireArmRound self, FVRViveHand hand)
+        //{
+        //    int num = 0;
+        //    if (hand.OtherHand.CurrentInteractable is FVRFireArm fireArm && s_firearmsWithMagazineCutoff.Contains(fireArm))
+        //    {
+        //        if (fireArm.RoundType == self.RoundType)
+        //        {
+        //            FVRFireArmMagazine magazine = fireArm.Magazine;
+        //            if (magazine != null && magazine.IsDropInLoadable)
+        //            {
+        //                num = magazine.m_capacity - magazine.m_numRounds;
+        //            }
+        //            for (int i = 0; i < fireArm.GetChambers().Count; i++)
+        //            {
+        //                FVRFireArmChamber fvrfireArmChamber = fireArm.GetChambers()[i];
+        //                if (fvrfireArmChamber.IsManuallyChamberable && (!fvrfireArmChamber.IsFull || fvrfireArmChamber.IsSpent))
+        //                {
+        //                    num++;
+        //                }
+        //            }
+        //        }
+        //        return num;
+        //    } 
+        //    else return orig(self, hand);
+        //}
 #endif
         public override void Awake()
         {
