@@ -1,6 +1,7 @@
 using FistVR;
 using Steamworks;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -48,9 +49,12 @@ namespace OpenScripts2
         // Pin Variables
         [HideInInspector]
         public string UnvaultingPinTransformPath = string.Empty;
+
+        private AdvancedMovingFireArmAttachmentMenu _menuComponent;
         private Transform _origParent;
         private Transform _pinTarget;
         private bool _isPinned = false;
+        private bool _isInteractionLocked = false;
 
         [Header("Primarily Muzzle Device Features")]
         public bool OverridesDisableOnHoverOfMount = false;
@@ -85,6 +89,7 @@ namespace OpenScripts2
         public const string SECONDARY_POSITION_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Secondary Position";
 
         public const string PIN_TRANFORM_PATH_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Pin Transform Path";
+        public const string INTERFACELOCK_FLAGDIC_KEY = "MovingFireArmAttachmentInterface Interaction Lock";
 
         private static AssetBundle _AMFAIM_AssetBundle;
         private static GameObject _AMFAIM_Prefab;
@@ -93,6 +98,7 @@ namespace OpenScripts2
         private const string PREFABNAME = "AdvancedMovingAttachmentInterfaceMenu";
 
         public bool IsPinned => _isPinned;
+        public bool IsInteractionLocked => _isInteractionLocked;
 
         public override void Awake()
         {
@@ -116,11 +122,12 @@ namespace OpenScripts2
                 transform.parent.gameObject.SetActive(false);
                 Menu = Instantiate(_AMFAIM_Prefab, transform.parent);
                 transform.parent.gameObject.SetActive(true);
+
+                _menuComponent = Menu.GetComponent<AdvancedMovingFireArmAttachmentMenu>();
+                _menuComponent.Interface = this;
+
+                Menu.SetActive(false);
             }
-
-            Menu.GetComponent<AdvancedMovingFireArmAttachmentMenu>().Interface = this;
-
-            Menu.SetActive(false);
             //if (ModeDisplay != null) ModeDisplay.text = MovementModes[_currentMode].ModeText;
         }
 
@@ -319,6 +326,12 @@ namespace OpenScripts2
             _lastHandPos = hand.Input.FilteredPos;
         }
 
+        public override bool IsInteractable()
+        {
+            return base.IsInteractable() && !_isInteractionLocked;
+        }
+
+        // Pin the attachment to a nearby object if possible, otherwise unpin it and return it to its original parent.
         public void TryPin()
         {
             if (!_isPinned)
@@ -328,21 +341,52 @@ namespace OpenScripts2
                     _isPinned = true;
                     _pinTarget = hit.collider.transform.parent;
                     Attachment.transform.parent = _pinTarget;
-                    Menu.GetComponent<AdvancedMovingFireArmAttachmentMenu>().SetPinButtonState(true);
+                    _menuComponent.SetPinButtonState(true);
                 }
                 else
                 {
                     _isPinned = false;
                     Attachment.transform.parent = _origParent;
-                    Menu.GetComponent<AdvancedMovingFireArmAttachmentMenu>().SetPinButtonState(false);
+                    _menuComponent.SetPinButtonState(false);
                 }
             }
             else
             {
                 _isPinned = false;
                 Attachment.transform.parent = _origParent;
-                Menu.GetComponent<AdvancedMovingFireArmAttachmentMenu>().SetPinButtonState(false);
+                _menuComponent.SetPinButtonState(false);
             }
+        }
+
+        // Toggle the interaction lock state. If locking, show the lockscreen for a brief moment before hiding the menu and lockscreen.
+        public void ToggleInteractionLock()
+        {
+            if (!_isInteractionLocked)
+            {
+                _isInteractionLocked = true;
+                StartCoroutine(LockScreenTimeout());
+            }
+            else
+            {
+                _isInteractionLocked = false;
+                Menu.SetActive(true);
+            }
+        }
+
+        public void LockInteraction()
+        {
+            _isInteractionLocked = true;
+        }
+
+        // Show lockscreen for a brief moment to indicate that the interface is now locked, then hide the menu and lockscreen.
+        private IEnumerator LockScreenTimeout()
+        {
+            _menuComponent.MenuContainer.SetActive(false);
+            _menuComponent.LockScreen.SetActive(true);
+            yield return new WaitForSeconds(2f);            
+            Menu.SetActive(false);
+            _menuComponent.MenuContainer.SetActive(true);
+            _menuComponent.LockScreen.SetActive(false);
         }
 
         public void RotateLeft()
@@ -377,20 +421,20 @@ namespace OpenScripts2
             }
         }
 
-        private void RotatePart(bool forward)
+        private void RotatePart(bool left)
         {
-            int forwardMult = forward ? 1 : -1;
+            int direction = left ? 1 : -1;
 
             switch (CurrentRotationalAxis)
             {
                 case OpenScripts2_BasePlugin.Axis.X:
-                    transform.Rotate(forwardMult * RotationStep, 0f, 0f);
+                    transform.Rotate(direction * RotationStep, 0f, 0f);
                     break;
                 case OpenScripts2_BasePlugin.Axis.Y:
-                    transform.Rotate(0f, forwardMult * RotationStep, 0f);
+                    transform.Rotate(0f, direction * RotationStep, 0f);
                     break;
                 case OpenScripts2_BasePlugin.Axis.Z:
-                    transform.Rotate(0f, 0f, forwardMult * RotationStep);
+                    transform.Rotate(0f, 0f, direction * RotationStep);
                     break;
             }
         }
@@ -551,7 +595,78 @@ namespace OpenScripts2
         //    DegreesOfFreedom = MovementModes[_currentMode].DegreesOfFreedom;
         //    LimitingAxis = MovementModes[_currentMode].LimitingAxis;
         //}
+
+#if !DEBUG
+        static AdvancedMovingFireArmAttachmentInterface()
+        {
+            On.FistVR.FVRViveHand.Update += FVRViveHand_Update;
+        }
+
+        // Patching FVRViveHand.Update to add Menu activation handling via the grabby laser
+        private static void FVRViveHand_Update(On.FistVR.FVRViveHand.orig_Update orig, FVRViveHand self)
+        {
+            orig(self);
+
+            bool touchpadHeld = self.IsInStreamlinedMode ? self.Input.BYButtonPressed : self.Input.TouchpadPressed;
+            if (touchpadHeld && self.m_state == FVRViveHand.HandState.Empty && self.CurrentHoveredQuickbeltSlot == null)
+            {
+                if (!self.GrabLaser.gameObject.activeSelf)
+                {
+                    self.GrabLaser.gameObject.SetActive(true);
+                }
+                bool validInterfaceFound = false;
+                AdvancedMovingFireArmAttachmentInterface advancedMovingAttachmentInterface = null;
+                if (self.m_grabHit.collider != null && self.m_grabHit.collider.gameObject.TryGetComponent<AdvancedMovingFireArmAttachmentInterface>(out advancedMovingAttachmentInterface))
+                {
+                    if (advancedMovingAttachmentInterface != null && !advancedMovingAttachmentInterface.IsHeld && advancedMovingAttachmentInterface._isInteractionLocked)
+                    {
+                        validInterfaceFound = true;
+                    }
+                }
+
+                self.GrabLaser.position = self.Input.OneEuroPointingPos;
+                self.GrabLaser.rotation = self.Input.OneEuroPointRotation;
+                if (validInterfaceFound)
+                {
+                    if (!self.BlueLaser.activeSelf)
+                    {
+                        self.BlueLaser.SetActive(true);
+                    }
+                    if (self.RedLaser.activeSelf)
+                    {
+                        self.RedLaser.SetActive(false);
+                    }
+
+                    if (self.Input.TriggerDown && advancedMovingAttachmentInterface != null)
+                    {
+                        advancedMovingAttachmentInterface.ToggleInteractionLock();
+                        if (self.GrabLaser.gameObject.activeSelf)
+                        {
+                            self.GrabLaser.gameObject.SetActive(false);
+                        }
+                    }
+                }
+                else
+                {
+                    if (self.BlueLaser.activeSelf)
+                    {
+                        self.BlueLaser.SetActive(false);
+                    }
+                    if (!self.RedLaser.activeSelf)
+                    {
+                        self.RedLaser.SetActive(true);
+                    }
+                }
+            }
+            else if (self.GrabLaser.gameObject.activeSelf)
+            {
+                self.GrabLaser.gameObject.SetActive(false);
+            }
+        }
+#endif
     }
+
+
 
 #if DEBUG
     [UnityEditor.CustomEditor(typeof(AdvancedMovingFireArmAttachmentInterface))]

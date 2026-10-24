@@ -124,6 +124,11 @@ namespace OpenScripts2
                     value = i.GetPinTargetPath();
                     flagDic.Add(AdvancedMovingFireArmAttachmentInterface.PIN_TRANFORM_PATH_FLAGDIC_KEY, value);
                 }
+
+                if (i.IsInteractionLocked)
+                {
+                    flagDic.Add(AdvancedMovingFireArmAttachmentInterface.INTERFACELOCK_FLAGDIC_KEY, "true");
+                }
             }
             else if (flagDic.TryGetValue(AdvancedMovingFireArmAttachmentInterface.POSITION_FLAGDIC_KEY, out value))
             {
@@ -145,6 +150,11 @@ namespace OpenScripts2
                 if (flagDic.TryGetValue(AdvancedMovingFireArmAttachmentInterface.PIN_TRANFORM_PATH_FLAGDIC_KEY, out value))
                 {
                     i.UnvaultingPinTransformPath = value;
+                }
+
+                if (flagDic.ContainsKey(AdvancedMovingFireArmAttachmentInterface.INTERFACELOCK_FLAGDIC_KEY))
+                {
+                    i.ToggleInteractionLock();
                 }
             }
         }

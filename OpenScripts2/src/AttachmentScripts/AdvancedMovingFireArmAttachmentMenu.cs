@@ -11,6 +11,7 @@ namespace OpenScripts2
 {
     public class AdvancedMovingFireArmAttachmentMenu : OpenScripts2_BasePlugin
     {
+        [HideInInspector]
         public AdvancedMovingFireArmAttachmentInterface Interface;
 
         public Text ModeText;
@@ -20,6 +21,10 @@ namespace OpenScripts2
         public Text ResetMode;
 
         public OptionsPanel_ButtonSet PinButtonSet;
+        public OptionsPanel_ButtonSet PadlockButtonSet;
+
+        public GameObject MenuContainer;
+        public GameObject LockScreen;
 
         public BoxCollider OverlapCollider;
 
@@ -36,9 +41,11 @@ namespace OpenScripts2
             
             _halfExtends = OverlapCollider.transform.lossyScale.MultiplyComponentWise(OverlapCollider.size) / 2f;
             _halfExtends.z = 0.005f;
-            gameObject.SetActive(false);
 
-            
+            MenuContainer.SetActive(true);
+            LockScreen.SetActive(false);
+
+            gameObject.SetActive(false);
         }
 
         public void Update()
@@ -147,6 +154,8 @@ namespace OpenScripts2
 
         public void SetPinButtonState(bool state) => PinButtonSet.SetSelectedButton(state);
 
+        public void SetPadlockButtonState(bool state) => PadlockButtonSet.SetSelectedButton(state);
+
         public void NextResetMode() => Interface.NextResetMode();
 
         public void PreviousResetMode() => Interface.PreviousResetMode();
@@ -176,5 +185,8 @@ namespace OpenScripts2
         public void RotateRight() => Interface.RotateRight();
 
         public void TryPin() => Interface.TryPin();
+
+        public void ToggleInteractionLock() => Interface.ToggleInteractionLock();
+
     }
 }
